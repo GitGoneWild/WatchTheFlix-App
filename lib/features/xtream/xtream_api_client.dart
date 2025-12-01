@@ -7,6 +7,66 @@ import '../../data/models/movie_model.dart';
 import '../../data/models/series_model.dart';
 import '../../domain/entities/playlist_source.dart';
 
+/// EPG (Electronic Program Guide) entry model
+class EpgEntry {
+  final String channelId;
+  final String title;
+  final String? description;
+  final DateTime startTime;
+  final DateTime endTime;
+  final String? language;
+
+  const EpgEntry({
+    required this.channelId,
+    required this.title,
+    this.description,
+    required this.startTime,
+    required this.endTime,
+    this.language,
+  });
+
+  /// Check if this program is currently airing
+  bool get isCurrentlyAiring {
+    final now = DateTime.now();
+    return now.isAfter(startTime) && now.isBefore(endTime);
+  }
+
+  /// Calculate progress percentage (0.0 to 1.0)
+  double get progress {
+    if (!isCurrentlyAiring) return 0.0;
+    final now = DateTime.now();
+    final totalDuration = endTime.difference(startTime).inSeconds;
+    final elapsed = now.difference(startTime).inSeconds;
+    return elapsed / totalDuration;
+  }
+
+  factory EpgEntry.fromJson(Map<String, dynamic> json) {
+    return EpgEntry(
+      channelId: json['epg_id']?.toString() ?? json['channel_id']?.toString() ?? '',
+      title: json['title'] ?? '',
+      description: json['description'] ?? json['desc'],
+      startTime: _parseDateTime(json['start'] ?? json['start_timestamp']),
+      endTime: _parseDateTime(json['end'] ?? json['stop_timestamp']),
+      language: json['lang'],
+    );
+  }
+
+  static DateTime _parseDateTime(dynamic value) {
+    if (value == null) return DateTime.now();
+    if (value is DateTime) return value;
+    if (value is int) return DateTime.fromMillisecondsSinceEpoch(value * 1000);
+    if (value is String) {
+      // Try ISO format first
+      final parsed = DateTime.tryParse(value);
+      if (parsed != null) return parsed;
+      // Try Unix timestamp
+      final timestamp = int.tryParse(value);
+      if (timestamp != null) return DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
+    }
+    return DateTime.now();
+  }
+}
+
 /// Xtream API login response
 class XtreamLoginResponse {
   final String username;
@@ -131,6 +191,18 @@ abstract class XtreamApiClient {
     String streamId, {
     String extension = 'mp4',
   });
+
+  /// Fetch short EPG (current and next program) for a stream
+  Future<List<EpgEntry>> fetchShortEpg(
+    XtreamCredentials credentials,
+    String streamId, {
+    int limit = 2,
+  });
+
+  /// Fetch EPG for all live streams
+  Future<Map<String, List<EpgEntry>>> fetchAllEpg(
+    XtreamCredentials credentials,
+  );
 }
 
 /// Xtream API client implementation
@@ -391,5 +463,59 @@ class XtreamApiClientImpl implements XtreamApiClient {
     String extension = 'mp4',
   }) {
     return '${credentials.baseUrl}/series/${credentials.username}/${credentials.password}/$streamId.$extension';
+  }
+
+  @override
+  Future<List<EpgEntry>> fetchShortEpg(
+    XtreamCredentials credentials,
+    String streamId, {
+    int limit = 2,
+  }) async {
+    try {
+      final url = '${_buildUrl(credentials, 'get_short_epg')}&stream_id=$streamId&limit=$limit';
+      final response = await _apiClient.get<Map<String, dynamic>>(url);
+
+      if (response.data == null) {
+        return [];
+      }
+
+      final data = response.data!;
+      final epgListings = data['epg_listings'] as List? ?? [];
+
+      return epgListings
+          .map((json) => EpgEntry.fromJson(json))
+          .toList();
+    } catch (e) {
+      AppLogger.error('Failed to fetch short EPG', e);
+      return [];
+    }
+  }
+
+  @override
+  Future<Map<String, List<EpgEntry>>> fetchAllEpg(
+    XtreamCredentials credentials,
+  ) async {
+    try {
+      final url = _buildUrl(credentials, 'get_simple_data_table');
+      final response = await _apiClient.get<Map<String, dynamic>>(url);
+
+      if (response.data == null) {
+        return {};
+      }
+
+      final data = response.data!;
+      final epgListings = data['epg_listings'] as List? ?? [];
+      final result = <String, List<EpgEntry>>{};
+
+      for (final json in epgListings) {
+        final entry = EpgEntry.fromJson(json);
+        result.putIfAbsent(entry.channelId, () => []).add(entry);
+      }
+
+      return result;
+    } catch (e) {
+      AppLogger.error('Failed to fetch all EPG', e);
+      return {};
+    }
   }
 }
