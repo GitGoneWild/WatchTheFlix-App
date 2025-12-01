@@ -1,0 +1,51 @@
+{
+  "channels": [
+    {
+      "id": "1",
+      "name": "ESPN",
+      "stream_url": "http://example.com/espn.m3u8",
+      "logo_url": "http://example.com/espn.png",
+      "group_title": "Sports",
+      "type": "live"
+    },
+    {
+      "id": "2",
+      "name": "CNN",
+      "stream_url": "http://example.com/cnn.m3u8",
+      "logo_url": "http://example.com/cnn.png",
+      "group_title": "News",
+      "type": "live"
+    },
+    {
+      "id": "3",
+      "name": "HBO",
+      "stream_url": "http://example.com/hbo.m3u8",
+      "logo_url": "http://example.com/hbo.png",
+      "group_title": "Entertainment",
+      "type": "live"
+    }
+  ],
+  "movies": [
+    {
+      "id": "101",
+      "name": "Sample Movie",
+      "stream_url": "http://example.com/movie.mp4",
+      "poster_url": "http://example.com/poster.jpg",
+      "category_id": "1",
+      "description": "A sample movie description",
+      "release_date": "2024",
+      "rating": 8.5
+    }
+  ],
+  "series": [
+    {
+      "id": "201",
+      "name": "Sample Series",
+      "poster_url": "http://example.com/series.jpg",
+      "category_id": "2",
+      "description": "A sample series description",
+      "release_date": "2024",
+      "rating": 9.0
+    }
+  ]
+}
