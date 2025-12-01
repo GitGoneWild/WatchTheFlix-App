@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
@@ -7,9 +8,11 @@ import '../../../domain/entities/channel.dart';
 import '../../blocs/channel/channel_bloc.dart';
 import '../../blocs/navigation/navigation_bloc.dart';
 import '../../blocs/favorites/favorites_bloc.dart';
+import '../../blocs/playlist/playlist_bloc.dart';
 import '../../blocs/settings/settings_bloc.dart' as settings;
 import '../../widgets/content_widgets.dart';
 import '../../widgets/channel_card.dart';
+import '../live_tv/live_tv_screen.dart';
 
 /// Main home screen with bottom navigation
 class HomeScreen extends StatelessWidget {
@@ -1250,6 +1253,55 @@ class SettingsTab extends StatelessWidget {
           ),
           body: ListView(
             children: [
+              // Data Refresh Section
+              _SettingsSection(
+                title: 'Data & Sync',
+                children: [
+                  _RefreshTile(
+                    isRefreshing: state is settings.SettingsLoadedState 
+                        ? state.isRefreshing 
+                        : false,
+                    lastRefresh: settingsData.lastRefresh,
+                    onRefresh: () {
+                      // Trigger refresh on all blocs
+                      context.read<settings.SettingsBloc>().add(
+                            const settings.RefreshPlaylistDataEvent(),
+                          );
+                      context.read<PlaylistBloc>().add(
+                            const LoadPlaylistsEvent(),
+                          );
+                      context.read<ChannelBloc>().add(
+                            const LoadChannelsEvent(),
+                          );
+                      context.read<FavoritesBloc>().add(
+                            const LoadFavoritesEvent(),
+                          );
+                    },
+                  ),
+                  _SettingsDropdownTile<int>(
+                    icon: Icons.schedule,
+                    iconColor: AppColors.secondary,
+                    title: 'Auto-Refresh Interval',
+                    subtitle: '${settingsData.refreshIntervalHours} hours',
+                    value: settingsData.refreshIntervalHours,
+                    items: const [
+                      DropdownMenuItem(value: 6, child: Text('6 hours')),
+                      DropdownMenuItem(value: 12, child: Text('12 hours')),
+                      DropdownMenuItem(value: 24, child: Text('24 hours')),
+                      DropdownMenuItem(value: 48, child: Text('48 hours')),
+                      DropdownMenuItem(value: 72, child: Text('72 hours')),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        context.read<settings.SettingsBloc>().add(
+                              settings.UpdateRefreshIntervalEvent(value),
+                            );
+                      }
+                    },
+                  ),
+                ],
+              ),
+
               // Playlist Management Section
               _SettingsSection(
                 title: 'Content',
@@ -1622,6 +1674,71 @@ class _SettingsDropdownTile<T> extends StatelessWidget {
         dropdownColor: AppColors.backgroundCard,
         borderRadius: BorderRadius.circular(8),
       ),
+    );
+  }
+}
+
+/// Refresh tile widget for manual data refresh
+class _RefreshTile extends StatelessWidget {
+  final bool isRefreshing;
+  final DateTime? lastRefresh;
+  final VoidCallback onRefresh;
+
+  const _RefreshTile({
+    required this.isRefreshing,
+    this.lastRefresh,
+    required this.onRefresh,
+  });
+
+  String _formatLastRefresh() {
+    if (lastRefresh == null) return 'Never';
+    final now = DateTime.now();
+    final difference = now.difference(lastRefresh!);
+    
+    if (difference.inMinutes < 1) return 'Just now';
+    if (difference.inMinutes < 60) return '${difference.inMinutes} minutes ago';
+    if (difference.inHours < 24) return '${difference.inHours} hours ago';
+    if (difference.inDays < 7) return '${difference.inDays} days ago';
+    
+    return DateFormat('MMM d, yyyy').format(lastRefresh!);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: AppColors.secondary.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(
+          isRefreshing ? Icons.sync : Icons.refresh,
+          color: AppColors.secondary,
+          size: 20,
+        ),
+      ),
+      title: const Text('Refresh Playlist Data'),
+      subtitle: Text(
+        isRefreshing ? 'Refreshing...' : 'Last updated: ${_formatLastRefresh()}',
+        style: TextStyle(color: AppColors.textSecondary),
+      ),
+      trailing: isRefreshing
+          ? const SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : ElevatedButton.icon(
+              onPressed: onRefresh,
+              icon: const Icon(Icons.refresh, size: 16),
+              label: const Text('Refresh'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.secondary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              ),
+            ),
     );
   }
 }

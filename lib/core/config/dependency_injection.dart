@@ -13,6 +13,7 @@ import '../../domain/usecases/get_channels.dart';
 import '../../domain/usecases/get_categories.dart';
 import '../../features/m3u/m3u_parser.dart';
 import '../../features/xtream/xtream_api_client.dart';
+import '../../features/xtream/xtream_service.dart';
 import '../../presentation/blocs/playlist/playlist_bloc.dart';
 import '../../presentation/blocs/channel/channel_bloc.dart';
 import '../../presentation/blocs/player/player_bloc.dart';
@@ -44,6 +45,13 @@ Future<void> initDependencies() async {
 
   getIt.registerLazySingleton<XtreamApiClient>(
     () => XtreamApiClientImpl(apiClient: getIt()),
+  );
+
+  getIt.registerLazySingleton<XtreamService>(
+    () => XtreamService(
+      apiClient: getIt(),
+      localStorage: getIt(),
+    ),
   );
 
   // Repositories

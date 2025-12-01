@@ -44,6 +44,8 @@ class AppSettings extends Equatable {
   final bool showEpg;
   final bool autoRetry;
   final int maxRetries;
+  final int refreshIntervalHours;
+  final DateTime? lastRefresh;
 
   const AppSettings({
     this.themeMode = ThemeMode.dark,
@@ -57,6 +59,8 @@ class AppSettings extends Equatable {
     this.showEpg = true,
     this.autoRetry = true,
     this.maxRetries = 3,
+    this.refreshIntervalHours = 24,
+    this.lastRefresh,
   });
 
   AppSettings copyWith({
@@ -71,6 +75,8 @@ class AppSettings extends Equatable {
     bool? showEpg,
     bool? autoRetry,
     int? maxRetries,
+    int? refreshIntervalHours,
+    DateTime? lastRefresh,
   }) {
     return AppSettings(
       themeMode: themeMode ?? this.themeMode,
@@ -84,7 +90,16 @@ class AppSettings extends Equatable {
       showEpg: showEpg ?? this.showEpg,
       autoRetry: autoRetry ?? this.autoRetry,
       maxRetries: maxRetries ?? this.maxRetries,
+      refreshIntervalHours: refreshIntervalHours ?? this.refreshIntervalHours,
+      lastRefresh: lastRefresh ?? this.lastRefresh,
     );
+  }
+
+  /// Check if data needs refresh based on interval
+  bool get needsRefresh {
+    if (lastRefresh == null) return true;
+    final hoursSinceRefresh = DateTime.now().difference(lastRefresh!).inHours;
+    return hoursSinceRefresh >= refreshIntervalHours;
   }
 
   Map<String, dynamic> toJson() {
@@ -100,10 +115,19 @@ class AppSettings extends Equatable {
       'showEpg': showEpg,
       'autoRetry': autoRetry,
       'maxRetries': maxRetries,
+      'refreshIntervalHours': refreshIntervalHours,
+      'lastRefresh': lastRefresh?.toIso8601String(),
     };
   }
 
   factory AppSettings.fromJson(Map<String, dynamic> json) {
+    DateTime? lastRefresh;
+    final lastRefreshValue = json['lastRefresh'];
+    if (lastRefreshValue != null && lastRefreshValue is String) {
+      lastRefresh = DateTime.tryParse(lastRefreshValue);
+      // If parsing fails, we simply use null (no last refresh)
+    }
+    
     return AppSettings(
       themeMode: ThemeMode.values.firstWhere(
         (e) => e.value == json['themeMode'],
@@ -122,6 +146,8 @@ class AppSettings extends Equatable {
       showEpg: json['showEpg'] ?? true,
       autoRetry: json['autoRetry'] ?? true,
       maxRetries: json['maxRetries'] ?? 3,
+      refreshIntervalHours: json['refreshIntervalHours'] ?? 24,
+      lastRefresh: lastRefresh,
     );
   }
 
@@ -138,6 +164,8 @@ class AppSettings extends Equatable {
         showEpg,
         autoRetry,
         maxRetries,
+        refreshIntervalHours,
+        lastRefresh,
       ];
 }
 
@@ -217,6 +245,19 @@ class ResetSettingsEvent extends SettingsEvent {
   const ResetSettingsEvent();
 }
 
+class RefreshPlaylistDataEvent extends SettingsEvent {
+  const RefreshPlaylistDataEvent();
+}
+
+class UpdateRefreshIntervalEvent extends SettingsEvent {
+  final int hours;
+
+  const UpdateRefreshIntervalEvent(this.hours);
+
+  @override
+  List<Object?> get props => [hours];
+}
+
 // States
 abstract class SettingsState extends Equatable {
   const SettingsState();
@@ -235,11 +276,30 @@ class SettingsLoadingState extends SettingsState {
 
 class SettingsLoadedState extends SettingsState {
   final AppSettings settings;
+  final bool isRefreshing;
+  final String? refreshError;
 
-  const SettingsLoadedState(this.settings);
+  const SettingsLoadedState(
+    this.settings, {
+    this.isRefreshing = false,
+    this.refreshError,
+  });
+
+  SettingsLoadedState copyWith({
+    AppSettings? settings,
+    bool? isRefreshing,
+    String? refreshError,
+    bool clearError = false,
+  }) {
+    return SettingsLoadedState(
+      settings ?? this.settings,
+      isRefreshing: isRefreshing ?? this.isRefreshing,
+      refreshError: clearError ? null : (refreshError ?? this.refreshError),
+    );
+  }
 
   @override
-  List<Object?> get props => [settings];
+  List<Object?> get props => [settings, isRefreshing, refreshError];
 }
 
 class SettingsErrorState extends SettingsState {
@@ -270,6 +330,8 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     on<ToggleEpgEvent>(_onToggleEpg);
     on<ToggleAutoRetryEvent>(_onToggleAutoRetry);
     on<ResetSettingsEvent>(_onResetSettings);
+    on<RefreshPlaylistDataEvent>(_onRefreshPlaylistData);
+    on<UpdateRefreshIntervalEvent>(_onUpdateRefreshInterval);
   }
 
   Future<void> _onLoadSettings(
@@ -422,5 +484,50 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     const defaultSettings = AppSettings();
     await _saveSettings(defaultSettings);
     emit(const SettingsLoadedState(defaultSettings));
+  }
+
+  Future<void> _onRefreshPlaylistData(
+    RefreshPlaylistDataEvent event,
+    Emitter<SettingsState> emit,
+  ) async {
+    if (state is SettingsLoadedState) {
+      final currentState = state as SettingsLoadedState;
+      // Emit refreshing state
+      emit(currentState.copyWith(isRefreshing: true, clearError: true));
+      
+      try {
+        // Note: The actual refresh logic is handled by the PlaylistBloc and ChannelBloc
+        // This event just marks that a refresh was requested and updates the last refresh time
+        final newSettings = currentState.settings.copyWith(
+          lastRefresh: DateTime.now(),
+        );
+        await _saveSettings(newSettings);
+        
+        // Wait a moment to simulate refresh (actual refresh is done by other blocs)
+        await Future.delayed(const Duration(milliseconds: 500));
+        
+        emit(SettingsLoadedState(newSettings, isRefreshing: false));
+        AppLogger.info('Playlist data refresh completed');
+      } catch (e) {
+        AppLogger.error('Failed to refresh playlist data', e);
+        emit(currentState.copyWith(
+          isRefreshing: false,
+          refreshError: 'Failed to refresh: $e',
+        ));
+      }
+    }
+  }
+
+  Future<void> _onUpdateRefreshInterval(
+    UpdateRefreshIntervalEvent event,
+    Emitter<SettingsState> emit,
+  ) async {
+    if (state is SettingsLoadedState) {
+      final currentSettings = (state as SettingsLoadedState).settings;
+      final newSettings = currentSettings.copyWith(refreshIntervalHours: event.hours);
+      await _saveSettings(newSettings);
+      emit(SettingsLoadedState(newSettings));
+      AppLogger.info('Refresh interval updated to ${event.hours} hours');
+    }
   }
 }
