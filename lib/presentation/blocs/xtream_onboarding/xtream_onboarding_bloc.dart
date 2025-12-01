@@ -381,20 +381,12 @@ class XtreamOnboardingBloc
     required Emitter<XtreamOnboardingState> emit,
     required void Function(OnboardingStep step, Map<String, int> counts) onProgress,
   }) async {
-    await Future.any([
-      _performOnboardingSteps(
-        credentials: credentials,
-        completedSteps: completedSteps,
-        emit: emit,
-        onProgress: onProgress,
-      ),
-      Future.delayed(_onboardingTimeout).then((_) {
-        throw TimeoutException(
-          'Onboarding timed out after ${_onboardingTimeout.inMinutes} minutes',
-          _onboardingTimeout,
-        );
-      }),
-    ]);
+    await _performOnboardingSteps(
+      credentials: credentials,
+      completedSteps: completedSteps,
+      emit: emit,
+      onProgress: onProgress,
+    ).timeout(_onboardingTimeout);
   }
 
   /// Execute all onboarding steps

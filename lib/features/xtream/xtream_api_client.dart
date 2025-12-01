@@ -242,18 +242,10 @@ class XtreamApiClientImpl implements XtreamApiClient {
     required String operationName,
   }) async {
     try {
-      return await operation().timeout(
-        timeout,
-        onTimeout: () {
-          throw TimeoutException(
-            '$operationName timed out after ${timeout.inSeconds} seconds',
-            timeout,
-          );
-        },
-      );
-    } on TimeoutException catch (e) {
-      AppLogger.error('$operationName timeout', e);
-      throw ServerException(
+      return await operation().timeout(timeout);
+    } on TimeoutException catch (_) {
+      AppLogger.error('$operationName timed out after ${timeout.inSeconds}s');
+      throw const ServerException(
         message: 'Request timed out. The server may be slow or unreachable.',
       );
     }
