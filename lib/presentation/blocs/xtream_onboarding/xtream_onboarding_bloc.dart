@@ -241,7 +241,6 @@ class XtreamOnboardingBloc
   }
 
   Future<void> _onStartOnboarding(
-  Future<void> _onStartOnboarding(
     StartOnboardingEvent event,
     Emitter<XtreamOnboardingState> emit,
   ) async {
@@ -262,8 +261,6 @@ class XtreamOnboardingBloc
 
   Future<void> _onCancelOnboarding(
     CancelOnboardingEvent event,
-  Future<void> _onCancelOnboarding(
-    CancelOnboardingEvent event,
     Emitter<XtreamOnboardingState> emit,
   ) async {
     _isCancelled = true;
@@ -282,13 +279,17 @@ class XtreamOnboardingBloc
   /// Helper method to add a small delay between API requests
   /// Also checks for cancellation
   Future<void> _rateLimitDelay() async {
-  /// Helper method to add a small delay between API requests
-  /// Also checks for cancellation
-  Future<void> _rateLimitDelay() async {
     _checkCancelled();
     await Future<void>.delayed(const Duration(milliseconds: _requestDelayMs));
     _checkCancelled();
   }
+
+  /// Performs the onboarding process by authenticating and fetching all content.
+  /// Emits progress states and handles errors appropriately.
+  Future<void> _performOnboarding(Emitter<XtreamOnboardingState> emit) async {
+    final credentials = _currentCredentials;
+    if (credentials == null) return;
+
     final completedSteps = <OnboardingStepResult>[];
 
     int liveCategories = 0;
