@@ -5,6 +5,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/id_generator.dart';
 import '../../../domain/entities/playlist_source.dart';
 import '../../blocs/playlist/playlist_bloc.dart';
+import '../../routes/app_router.dart';
 
 /// Onboarding screen for first-time setup
 class OnboardingScreen extends StatefulWidget {
@@ -276,10 +277,21 @@ class _AddPlaylistScreenState extends State<AddPlaylistScreen>
       isActive: true,
     );
 
+    // Add the playlist first
     context.read<PlaylistBloc>().add(AddPlaylistEvent(playlist));
 
     setState(() => _isLoading = false);
-    Navigator.pushReplacementNamed(context, '/home');
+
+    // Navigate to Xtream onboarding screen for content fetching
+    Navigator.pushReplacementNamed(
+      context,
+      '/xtream-onboarding',
+      arguments: XtreamOnboardingArguments(
+        credentials: credentials,
+        playlistName: _xtreamNameController.text,
+        playlist: playlist,
+      ),
+    );
   }
 
   @override
