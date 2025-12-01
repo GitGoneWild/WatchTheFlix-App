@@ -1,44 +1,68 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// App theme colors
+/// App theme colors - GitHub-inspired dark theme with Netflix accent
 class AppColors {
   AppColors._();
 
-  // Primary colors (Netflix-inspired)
+  // Primary colors (Netflix-inspired accent)
   static const Color primary = Color(0xFFE50914);
   static const Color primaryLight = Color(0xFFFF4444);
   static const Color primaryDark = Color(0xFFB20710);
 
-  // Secondary colors
-  static const Color secondary = Color(0xFF1DB954);
-  static const Color secondaryLight = Color(0xFF1ED760);
-  static const Color secondaryDark = Color(0xFF169C46);
+  // Secondary colors (GitHub green accent)
+  static const Color secondary = Color(0xFF238636);
+  static const Color secondaryLight = Color(0xFF2EA043);
+  static const Color secondaryDark = Color(0xFF196C2E);
 
-  // Background colors
-  static const Color background = Color(0xFF0D0D0D);
-  static const Color backgroundLight = Color(0xFF141414);
-  static const Color backgroundCard = Color(0xFF1A1A1A);
-  static const Color surface = Color(0xFF1E1E1E);
-  static const Color surfaceLight = Color(0xFF2A2A2A);
+  // Accent colors for variety
+  static const Color accent = Color(0xFF58A6FF);
+  static const Color accentPurple = Color(0xFF8B5CF6);
+  static const Color accentOrange = Color(0xFFF97316);
 
-  // Text colors
-  static const Color textPrimary = Color(0xFFFFFFFF);
-  static const Color textSecondary = Color(0xFFB3B3B3);
-  static const Color textTertiary = Color(0xFF7A7A7A);
-  static const Color textDisabled = Color(0xFF4A4A4A);
+  // Background colors (GitHub dark theme)
+  static const Color background = Color(0xFF0D1117);
+  static const Color backgroundLight = Color(0xFF161B22);
+  static const Color backgroundCard = Color(0xFF21262D);
+  static const Color surface = Color(0xFF1C2128);
+  static const Color surfaceLight = Color(0xFF30363D);
+  static const Color surfaceHover = Color(0xFF484F58);
+
+  // Text colors (GitHub style)
+  static const Color textPrimary = Color(0xFFE6EDF3);
+  static const Color textSecondary = Color(0xFF8B949E);
+  static const Color textTertiary = Color(0xFF6E7681);
+  static const Color textDisabled = Color(0xFF484F58);
+  static const Color textLink = Color(0xFF58A6FF);
 
   // Status colors
-  static const Color success = Color(0xFF00C853);
-  static const Color error = Color(0xFFFF5252);
-  static const Color warning = Color(0xFFFFD600);
-  static const Color info = Color(0xFF2196F3);
+  static const Color success = Color(0xFF3FB950);
+  static const Color error = Color(0xFFF85149);
+  static const Color warning = Color(0xFFD29922);
+  static const Color info = Color(0xFF58A6FF);
+
+  // Border colors
+  static const Color border = Color(0xFF30363D);
+  static const Color borderMuted = Color(0xFF21262D);
 
   // Other colors
-  static const Color divider = Color(0xFF333333);
-  static const Color overlay = Color(0x80000000);
-  static const Color shimmer = Color(0xFF2A2A2A);
-  static const Color shimmerHighlight = Color(0xFF3A3A3A);
+  static const Color divider = Color(0xFF21262D);
+  static const Color overlay = Color(0x80010409);
+  static const Color shimmer = Color(0xFF21262D);
+  static const Color shimmerHighlight = Color(0xFF30363D);
+
+  // Gradient colors for cards and headers
+  static const LinearGradient primaryGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [primary, primaryDark],
+  );
+
+  static const LinearGradient cardGradient = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Colors.transparent, Color(0xCC0D1117)],
+  );
 }
 
 /// App theme configuration
@@ -195,6 +219,85 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: AppColors.backgroundLight,
+        indicatorColor: AppColors.primary.withOpacity(0.15),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            );
+          }
+          return const TextStyle(
+            color: AppColors.textSecondary,
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          );
+        }),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const IconThemeData(color: AppColors.textPrimary, size: 24);
+          }
+          return const IconThemeData(color: AppColors.textSecondary, size: 24);
+        }),
+        elevation: 0,
+        height: 65,
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+      ),
+      listTileTheme: ListTileThemeData(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        tileColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        titleTextStyle: const TextStyle(
+          color: AppColors.textPrimary,
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+        ),
+        subtitleTextStyle: const TextStyle(
+          color: AppColors.textSecondary,
+          fontSize: 14,
+        ),
+        iconColor: AppColors.textSecondary,
+      ),
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return AppColors.textPrimary;
+          }
+          return AppColors.textSecondary;
+        }),
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return AppColors.secondary;
+          }
+          return AppColors.surface;
+        }),
+        trackOutlineColor: WidgetStateProperty.resolveWith((states) {
+          return AppColors.border;
+        }),
+      ),
+    );
+  }
+
+  /// Light theme option
+  static ThemeData get lightTheme {
+    return darkTheme.copyWith(
+      brightness: Brightness.light,
+      scaffoldBackgroundColor: const Color(0xFFF6F8FA),
+      colorScheme: const ColorScheme.light(
+        primary: AppColors.primary,
+        onPrimary: Colors.white,
+        secondary: AppColors.secondary,
+        onSecondary: Colors.white,
+        surface: Colors.white,
+        onSurface: Color(0xFF24292F),
+        error: AppColors.error,
+        onError: Colors.white,
       ),
     );
   }

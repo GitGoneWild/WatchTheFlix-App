@@ -17,6 +17,8 @@ import '../../presentation/blocs/playlist/playlist_bloc.dart';
 import '../../presentation/blocs/channel/channel_bloc.dart';
 import '../../presentation/blocs/player/player_bloc.dart';
 import '../../presentation/blocs/navigation/navigation_bloc.dart';
+import '../../presentation/blocs/favorites/favorites_bloc.dart';
+import '../../presentation/blocs/settings/settings_bloc.dart';
 
 final getIt = GetIt.instance;
 
@@ -88,5 +90,17 @@ Future<void> initDependencies() async {
 
   getIt.registerFactory(
     () => NavigationBloc(),
+  );
+
+  getIt.registerFactory(
+    () => FavoritesBloc(
+      repository: getIt(),
+    ),
+  );
+
+  getIt.registerFactory(
+    () => SettingsBloc(
+      localStorage: getIt(),
+    ),
   );
 }
