@@ -340,6 +340,15 @@ class XtreamApiClientImpl implements XtreamApiClient {
         .replaceAll('SocketException: ', '');
   }
 
+  /// Helper method to safely parse a rating value that could be int, double, or String
+  double? _parseRating(dynamic value) {
+    if (value == null) return null;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) return double.tryParse(value);
+    return null;
+  }
+
   /// Helper method to safely parse a list response that might come back as
   /// a Map (error response) or empty
   List<dynamic> _safeParseList(dynamic data) {
@@ -574,8 +583,7 @@ class XtreamApiClientImpl implements XtreamApiClient {
                 : null,
             description: info['plot'],
             releaseDate: info['releaseDate'],
-            rating:
-                info['rating'] != null ? double.tryParse(info['rating'].toString()) : null,
+            rating: _parseRating(info['rating']),
             genre: info['genre'],
             seasons: seasons,
           );
