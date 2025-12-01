@@ -547,7 +547,12 @@ class XtreamApiClientImpl implements XtreamApiClient {
           // Build seasons with episodes
           final seasons = <SeasonModel>[];
           episodes.forEach((seasonNumber, episodeList) {
-            if (episodeList is! List) return;
+            if (episodeList is! List) {
+              AppLogger.warning(
+                'Season $seasonNumber has invalid episode data (expected List, got ${episodeList.runtimeType})',
+              );
+              return;
+            }
             final episodeModels = episodeList.map((e) {
               final streamId = e['id']?.toString() ?? '';
               final extension = e['container_extension'] ?? 'mp4';
@@ -684,8 +689,8 @@ class XtreamApiClientImpl implements XtreamApiClient {
               final entry = EpgEntry.fromJson(json);
               result.putIfAbsent(entry.channelId, () => []).add(entry);
             } catch (e) {
-              // Skip invalid entries
-              AppLogger.debug('Skipping invalid EPG entry: $e');
+              // Log but skip invalid entries - EPG data can be malformed
+              AppLogger.warning('Skipping invalid EPG entry: $e');
             }
           }
 

@@ -418,7 +418,9 @@ class XtreamOnboardingBloc
     _checkCancelled();
     
     if (!loginResponse.isAuthenticated) {
-      throw AuthException(message: 'Authentication failed: ${loginResponse.message}');
+      // Use a user-friendly message, with server message only for logging
+      AppLogger.warning('Login failed with server message: ${loginResponse.message}');
+      throw const AuthException(message: 'Invalid credentials or account expired');
     }
 
     completedSteps.add(const OnboardingStepResult(
