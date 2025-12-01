@@ -5,6 +5,7 @@ import '../../domain/entities/series.dart';
 import '../../domain/repositories/channel_repository.dart';
 import '../../domain/repositories/playlist_repository.dart';
 import '../../features/xtream/xtream_api_client.dart';
+import '../../features/xtream/xtream_service.dart';
 import '../datasources/local/local_storage.dart';
 import '../models/channel_model.dart';
 
@@ -12,6 +13,7 @@ import '../models/channel_model.dart';
 class ChannelRepositoryImpl implements ChannelRepository {
   final PlaylistRepository _playlistRepository;
   final XtreamApiClient _xtreamApiClient;
+  final XtreamService _xtreamService;
   final LocalStorage _localStorage;
 
   // In-memory cache
@@ -23,9 +25,11 @@ class ChannelRepositoryImpl implements ChannelRepository {
   ChannelRepositoryImpl({
     required PlaylistRepository playlistRepository,
     required XtreamApiClient xtreamApiClient,
+    required XtreamService xtreamService,
     required LocalStorage localStorage,
   })  : _playlistRepository = playlistRepository,
         _xtreamApiClient = xtreamApiClient,
+        _xtreamService = xtreamService,
         _localStorage = localStorage;
 
   @override
@@ -34,11 +38,19 @@ class ChannelRepositoryImpl implements ChannelRepository {
     if (activePlaylist == null) return [];
 
     if (activePlaylist.isXtream && activePlaylist.xtreamCredentials != null) {
-      final channels = await _xtreamApiClient.fetchLiveChannels(
+      // Use XtreamService to get channels with EPG info attached
+      final channels = await _xtreamService.getLiveChannelsWithEpg(
         activePlaylist.xtreamCredentials!,
         categoryId: categoryId,
       );
-      _channelCache = channels.map((c) => c.toEntity()).toList();
+      // Sort channels by category name and then by channel name
+      final sortedChannels = channels.toList()
+        ..sort((a, b) {
+          final categoryCompare = (a.groupTitle ?? '').compareTo(b.groupTitle ?? '');
+          if (categoryCompare != 0) return categoryCompare;
+          return a.name.compareTo(b.name);
+        });
+      _channelCache = sortedChannels.map((c) => c.toEntity()).toList();
       return _channelCache!;
     }
 

@@ -151,7 +151,18 @@ class XtreamService {
   /// Refresh EPG data
   Future<void> refreshEpg(XtreamCredentials credentials) async {
     final cacheKey = _getCacheKey(credentials);
-    final epg = await _apiClient.fetchAllEpg(credentials);
+    
+    // Try to use cached channel IDs to avoid fetching channels again
+    List<String>? channelIds;
+    final cachedChannels = _channelCache[cacheKey];
+    if (cachedChannels != null && !cachedChannels.isExpired) {
+      channelIds = cachedChannels.data.map((c) => c.id).toList();
+    }
+    
+    final epg = await _apiClient.fetchAllEpg(
+      credentials,
+      channelIds: channelIds,
+    );
     _epgCache[cacheKey] = _CacheEntry(epg);
     AppLogger.info('Refreshed EPG: ${epg.length} channels');
   }
@@ -168,7 +179,17 @@ class XtreamService {
       return cached.data;
     }
     
-    final epg = await _apiClient.fetchAllEpg(credentials);
+    // Try to use cached channel IDs to avoid fetching channels again
+    List<String>? channelIds;
+    final cachedChannels = _channelCache[cacheKey];
+    if (cachedChannels != null && !cachedChannels.isExpired) {
+      channelIds = cachedChannels.data.map((c) => c.id).toList();
+    }
+    
+    final epg = await _apiClient.fetchAllEpg(
+      credentials,
+      channelIds: channelIds,
+    );
     _epgCache[cacheKey] = _CacheEntry(epg);
     return epg;
   }
@@ -276,7 +297,12 @@ class XtreamService {
     if (cachedEpg != null && !cachedEpg.isExpired) {
       epgData = cachedEpg.data;
     } else {
-      epgData = await _apiClient.fetchAllEpg(credentials);
+      // Pass channel IDs to avoid fetching channels again in fetchAllEpg
+      final channelIds = channels.map((c) => c.id).toList();
+      epgData = await _apiClient.fetchAllEpg(
+        credentials,
+        channelIds: channelIds,
+      );
       _epgCache[cacheKey] = _CacheEntry(epgData);
     }
     

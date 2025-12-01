@@ -20,6 +20,15 @@ const Duration kXtreamExtendedTimeout = Duration(seconds: 60);
 /// Short timeout for quick requests like login (15 seconds)
 const Duration kXtreamShortTimeout = Duration(seconds: 15);
 
+/// Long timeout for full EPG fetch which may take several minutes for large channel lists
+const Duration kXtreamEpgFetchTimeout = Duration(minutes: 3);
+
+/// Number of channels to process in each EPG batch request
+const int kEpgBatchSize = 50;
+
+/// Delay between EPG batch requests to avoid rate limiting (in milliseconds)
+const Duration kEpgBatchDelay = Duration(milliseconds: 100);
+
 /// EPG (Electronic Program Guide) entry model
 class EpgEntry {
   final String channelId;
@@ -220,9 +229,11 @@ abstract class XtreamApiClient {
   });
 
   /// Fetch EPG for all live streams
+  /// If [channelIds] is provided, only fetches EPG for those channels
   Future<Map<String, List<EpgEntry>>> fetchAllEpg(
-    XtreamCredentials credentials,
-  );
+    XtreamCredentials credentials, {
+    List<String>? channelIds,
+  });
 }
 
 /// Xtream API client implementation
@@ -671,40 +682,68 @@ class XtreamApiClientImpl implements XtreamApiClient {
 
   @override
   Future<Map<String, List<EpgEntry>>> fetchAllEpg(
-    XtreamCredentials credentials,
-  ) async {
+    XtreamCredentials credentials, {
+    List<String>? channelIds,
+  }) async {
     // Use extended timeout for full EPG but handle failures gracefully
     return _withTimeout(
       () async {
         try {
-          // Try the standard EPG endpoint first
-          final url = _buildUrl(credentials, 'get_simple_data_table');
-          final response = await _apiClient.get<dynamic>(url);
-
-          if (response.data == null) {
-            return {};
-          }
-
-          final data = response.data;
-          if (data is! Map<String, dynamic>) {
-            AppLogger.warning('EPG response is not a map: ${data.runtimeType}');
-            return {};
-          }
-
-          final epgListings = data['epg_listings'] as List? ?? [];
           final result = <String, List<EpgEntry>>{};
-
-          for (final json in epgListings) {
-            if (json is! Map<String, dynamic>) continue;
-            try {
-              final entry = EpgEntry.fromJson(json);
-              result.putIfAbsent(entry.channelId, () => []).add(entry);
-            } catch (e) {
-              // Log but skip invalid entries - EPG data can be malformed
-              AppLogger.warning('Skipping invalid EPG entry: $e');
+          
+          // Determine which channel IDs to fetch EPG for
+          List<String> idsToFetch;
+          if (channelIds != null && channelIds.isNotEmpty) {
+            idsToFetch = channelIds;
+          } else {
+            // If no channel IDs provided, fetch all live channels first
+            final channels = await fetchLiveChannels(credentials);
+            if (channels.isEmpty) {
+              AppLogger.warning('No channels found for EPG loading');
+              return {};
+            }
+            idsToFetch = channels.map((c) => c.id).toList();
+          }
+          
+          AppLogger.info('Fetching EPG for ${idsToFetch.length} channels');
+          int successCount = 0;
+          int failCount = 0;
+          
+          // Fetch EPG for each channel using short EPG endpoint
+          // Process in batches to avoid overwhelming the server
+          for (var i = 0; i < idsToFetch.length; i += kEpgBatchSize) {
+            final batch = idsToFetch.skip(i).take(kEpgBatchSize).toList();
+            final futures = batch.map((channelId) async {
+              try {
+                final epgEntries = await fetchShortEpg(
+                  credentials,
+                  channelId,
+                  limit: 10, // Get current and next few programs
+                );
+                if (epgEntries.isNotEmpty) {
+                  result[channelId] = epgEntries;
+                  successCount++;
+                }
+              } catch (e) {
+                // Log but continue - individual EPG failures are not critical
+                failCount++;
+              }
+            });
+            
+            // Wait for batch to complete
+            await Future.wait(futures);
+            
+            // Small delay between batches to avoid rate limiting
+            if (i + kEpgBatchSize < idsToFetch.length) {
+              await Future<void>.delayed(kEpgBatchDelay);
             }
           }
-
+          
+          AppLogger.info(
+            'EPG fetch completed: $successCount channels with EPG, '
+            '$failCount failures out of ${idsToFetch.length} channels',
+          );
+          
           return result;
         } catch (e) {
           AppLogger.error('Failed to fetch all EPG', e);
@@ -712,7 +751,7 @@ class XtreamApiClientImpl implements XtreamApiClient {
           return {};
         }
       },
-      timeout: kXtreamExtendedTimeout,
+      timeout: kXtreamEpgFetchTimeout,
       operationName: 'Fetch all EPG',
     );
   }
