@@ -2,7 +2,7 @@
 // HTTP client wrapper with retry logic, interceptors, and error handling.
 // Provides a consistent network interface for all modules.
 
-import 'dart:async';
+import 'dart:math' as math;
 
 import '../config/app_config.dart';
 import '../logging/app_logger.dart';
@@ -112,19 +112,10 @@ class RetryConfig {
   /// Calculate delay for a given retry attempt
   Duration getDelayForAttempt(int attempt) {
     if (attempt <= 0) return Duration.zero;
-    final multiplier = _pow(backoffMultiplier, attempt - 1);
+    final multiplier = math.pow(backoffMultiplier, attempt - 1).toDouble();
     return Duration(
       milliseconds: (initialDelay.inMilliseconds * multiplier).round(),
     );
-  }
-
-  double _pow(double base, int exponent) {
-    if (exponent == 0) return 1;
-    double result = base;
-    for (int i = 1; i < exponent; i++) {
-      result *= base;
-    }
-    return result;
   }
 }
 

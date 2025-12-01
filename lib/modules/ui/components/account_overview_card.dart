@@ -2,7 +2,7 @@
 // Reusable component displaying Xtream account information.
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 
 import '../../xtreamcodes/account/xtream_account_models.dart';
 
@@ -402,7 +402,7 @@ class AccountOverviewCard extends StatelessWidget {
   }
 
   String _formatDate(DateTime date) {
-    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    return DateFormat.yMMMd().format(date);
   }
 
   Color? _getExpiryColor(XtreamUserInfo userInfo) {

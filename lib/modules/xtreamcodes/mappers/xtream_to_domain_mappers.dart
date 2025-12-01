@@ -193,11 +193,13 @@ class XtreamToDomainMappers {
     if (value == null) return null;
     if (value is DateTime) return value;
     if (value is int) {
+      // Unix timestamp (seconds) - convert to milliseconds for DateTime
       return DateTime.fromMillisecondsSinceEpoch(value * 1000);
     }
     if (value is String) {
       final timestamp = int.tryParse(value);
       if (timestamp != null) {
+        // Unix timestamp (seconds) - convert to milliseconds for DateTime
         return DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
       }
       return DateTime.tryParse(value);

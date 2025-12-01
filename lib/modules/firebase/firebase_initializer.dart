@@ -51,8 +51,12 @@ class FirebaseInitializer {
     try {
       moduleLogger.info('Initializing Firebase', tag: 'Firebase');
 
-      // Initialize Firebase core
-      // await Firebase.initializeApp();
+      // TODO: Add actual Firebase SDK initialization when Firebase packages are added:
+      // await Firebase.initializeApp(
+      //   options: DefaultFirebaseOptions.currentPlatform,
+      // );
+      // 
+      // See docs/firebase.md for setup instructions
 
       // Create service instances
       final analyticsService = FirebaseAnalyticsService(config: _config);

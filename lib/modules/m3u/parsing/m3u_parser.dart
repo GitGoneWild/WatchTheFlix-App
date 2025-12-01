@@ -165,6 +165,8 @@ class M3uParser implements IM3uParser {
   }
 
   /// Parse EXTINF line and extract attributes
+  /// Note: This regex does not handle escaped quotes within attribute values.
+  /// Standard M3U files typically don't use escaped quotes in attribute values.
   Map<String, String?> _parseExtInf(String line) {
     final result = <String, String?>{};
 
@@ -181,6 +183,7 @@ class M3uParser implements IM3uParser {
     }
 
     // Extract attributes using regex
+    // Limitation: Does not handle escaped quotes like \" within values
     final attributeRegex = RegExp(r'(\w[\w-]*)="([^"]*)"');
     final matches = attributeRegex.allMatches(line);
 
