@@ -20,6 +20,15 @@ const Duration kXtreamExtendedTimeout = Duration(seconds: 60);
 /// Short timeout for quick requests like login (15 seconds)
 const Duration kXtreamShortTimeout = Duration(seconds: 15);
 
+/// Long timeout for full EPG fetch which may take several minutes for large channel lists
+const Duration kXtreamEpgFetchTimeout = Duration(minutes: 3);
+
+/// Number of channels to process in each EPG batch request
+const int kEpgBatchSize = 50;
+
+/// Delay between EPG batch requests to avoid rate limiting (in milliseconds)
+const Duration kEpgBatchDelay = Duration(milliseconds: 100);
+
 /// EPG (Electronic Program Guide) entry model
 class EpgEntry {
   final String channelId;
@@ -702,9 +711,8 @@ class XtreamApiClientImpl implements XtreamApiClient {
           
           // Fetch EPG for each channel using short EPG endpoint
           // Process in batches to avoid overwhelming the server
-          const batchSize = 50;
-          for (var i = 0; i < idsToFetch.length; i += batchSize) {
-            final batch = idsToFetch.skip(i).take(batchSize).toList();
+          for (var i = 0; i < idsToFetch.length; i += kEpgBatchSize) {
+            final batch = idsToFetch.skip(i).take(kEpgBatchSize).toList();
             final futures = batch.map((channelId) async {
               try {
                 final epgEntries = await fetchShortEpg(
@@ -726,8 +734,8 @@ class XtreamApiClientImpl implements XtreamApiClient {
             await Future.wait(futures);
             
             // Small delay between batches to avoid rate limiting
-            if (i + batchSize < idsToFetch.length) {
-              await Future<void>.delayed(const Duration(milliseconds: 100));
+            if (i + kEpgBatchSize < idsToFetch.length) {
+              await Future<void>.delayed(kEpgBatchDelay);
             }
           }
           
@@ -743,7 +751,7 @@ class XtreamApiClientImpl implements XtreamApiClient {
           return {};
         }
       },
-      timeout: const Duration(minutes: 3), // Extended timeout for full EPG fetch
+      timeout: kXtreamEpgFetchTimeout,
       operationName: 'Fetch all EPG',
     );
   }
