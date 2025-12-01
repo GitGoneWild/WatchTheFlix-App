@@ -113,6 +113,144 @@ void main() {
         expect(result.length, equals(2));
         expect(result[0].name, equals('Sports'));
       });
+
+      test('should fetch movie categories from API', () async {
+        // Arrange
+        final categories = [
+          const CategoryModel(id: '1', name: 'Action'),
+          const CategoryModel(id: '2', name: 'Comedy'),
+        ];
+
+        when(() => mockApiClient.fetchMovieCategories(credentials))
+            .thenAnswer((_) async => categories);
+
+        // Act
+        final result = await service.getMovieCategories(credentials);
+
+        // Assert
+        expect(result.length, equals(2));
+        expect(result[0].name, equals('Action'));
+      });
+
+      test('should fetch series categories from API', () async {
+        // Arrange
+        final categories = [
+          const CategoryModel(id: '1', name: 'Drama'),
+          const CategoryModel(id: '2', name: 'Thriller'),
+        ];
+
+        when(() => mockApiClient.fetchSeriesCategories(credentials))
+            .thenAnswer((_) async => categories);
+
+        // Act
+        final result = await service.getSeriesCategories(credentials);
+
+        // Assert
+        expect(result.length, equals(2));
+        expect(result[0].name, equals('Drama'));
+      });
+
+      test('should cache movie categories', () async {
+        // Arrange
+        final categories = [
+          const CategoryModel(id: '1', name: 'Action'),
+        ];
+
+        when(() => mockApiClient.fetchMovieCategories(credentials))
+            .thenAnswer((_) async => categories);
+
+        // First call to populate cache
+        await service.getMovieCategories(credentials);
+
+        // Second call should use cache
+        final result = await service.getMovieCategories(credentials);
+
+        // Assert
+        expect(result.length, equals(1));
+        // API should only be called once
+        verify(() => mockApiClient.fetchMovieCategories(credentials)).called(1);
+      });
+
+      test('should cache series categories', () async {
+        // Arrange
+        final categories = [
+          const CategoryModel(id: '1', name: 'Drama'),
+        ];
+
+        when(() => mockApiClient.fetchSeriesCategories(credentials))
+            .thenAnswer((_) async => categories);
+
+        // First call to populate cache
+        await service.getSeriesCategories(credentials);
+
+        // Second call should use cache
+        final result = await service.getSeriesCategories(credentials);
+
+        // Assert
+        expect(result.length, equals(1));
+        // API should only be called once
+        verify(() => mockApiClient.fetchSeriesCategories(credentials)).called(1);
+      });
+    });
+
+    group('EPG Data', () {
+      test('should fetch EPG from API when cache is empty', () async {
+        // Arrange
+        final epgData = <String, List<EpgEntry>>{
+          'channel1': [],
+          'channel2': [],
+        };
+
+        when(() => mockApiClient.fetchAllEpg(credentials))
+            .thenAnswer((_) async => epgData);
+
+        // Act
+        final result = await service.getEpg(credentials);
+
+        // Assert
+        expect(result.length, equals(2));
+        verify(() => mockApiClient.fetchAllEpg(credentials)).called(1);
+      });
+
+      test('should cache EPG data', () async {
+        // Arrange
+        final epgData = <String, List<EpgEntry>>{
+          'channel1': [],
+        };
+
+        when(() => mockApiClient.fetchAllEpg(credentials))
+            .thenAnswer((_) async => epgData);
+
+        // First call to populate cache
+        await service.getEpg(credentials);
+
+        // Second call should use cache
+        final result = await service.getEpg(credentials);
+
+        // Assert
+        expect(result.length, equals(1));
+        // API should only be called once
+        verify(() => mockApiClient.fetchAllEpg(credentials)).called(1);
+      });
+
+      test('should force refresh EPG when requested', () async {
+        // Arrange
+        final epgData = <String, List<EpgEntry>>{
+          'channel1': [],
+        };
+
+        when(() => mockApiClient.fetchAllEpg(credentials))
+            .thenAnswer((_) async => epgData);
+
+        // First call
+        await service.getEpg(credentials);
+        
+        // Force refresh
+        await service.getEpg(credentials, forceRefresh: true);
+
+        // Assert - API should be called twice
+        verify(() => mockApiClient.fetchAllEpg(credentials)).called(2);
+      });
     });
 
     group('Full Refresh', () {

@@ -19,6 +19,8 @@ class XtreamService {
   // In-memory cache
   final Map<String, _CacheEntry<List<ChannelModel>>> _channelCache = {};
   final Map<String, _CacheEntry<List<CategoryModel>>> _categoryCache = {};
+  final Map<String, _CacheEntry<List<CategoryModel>>> _movieCategoryCache = {};
+  final Map<String, _CacheEntry<List<CategoryModel>>> _seriesCategoryCache = {};
   final Map<String, _CacheEntry<List<MovieModel>>> _movieCache = {};
   final Map<String, _CacheEntry<List<SeriesModel>>> _seriesCache = {};
   final Map<String, _CacheEntry<Map<String, List<EpgEntry>>>> _epgCache = {};
@@ -65,6 +67,8 @@ class XtreamService {
     stopAutoRefresh();
     _channelCache.clear();
     _categoryCache.clear();
+    _movieCategoryCache.clear();
+    _seriesCategoryCache.clear();
     _movieCache.clear();
     _seriesCache.clear();
     _epgCache.clear();
@@ -152,6 +156,23 @@ class XtreamService {
     AppLogger.info('Refreshed EPG: ${epg.length} channels');
   }
 
+  /// Get EPG data (from cache or fetch)
+  Future<Map<String, List<EpgEntry>>> getEpg(
+    XtreamCredentials credentials, {
+    bool forceRefresh = false,
+  }) async {
+    final cacheKey = _getCacheKey(credentials);
+    final cached = _epgCache[cacheKey];
+    
+    if (!forceRefresh && cached != null && !cached.isExpired) {
+      return cached.data;
+    }
+    
+    final epg = await _apiClient.fetchAllEpg(credentials);
+    _epgCache[cacheKey] = _CacheEntry(epg);
+    return epg;
+  }
+
   /// Full refresh of all data
   Future<void> fullRefresh(XtreamCredentials credentials) async {
     AppLogger.info('Starting full refresh for ${credentials.username}');
@@ -176,6 +197,40 @@ class XtreamService {
     
     final categories = await _apiClient.fetchLiveCategories(credentials);
     _categoryCache[cacheKey] = _CacheEntry(categories);
+    return categories;
+  }
+
+  /// Get movie categories (from cache or fetch)
+  Future<List<CategoryModel>> getMovieCategories(
+    XtreamCredentials credentials, {
+    bool forceRefresh = false,
+  }) async {
+    final cacheKey = _getCacheKey(credentials);
+    final cached = _movieCategoryCache[cacheKey];
+    
+    if (!forceRefresh && cached != null && !cached.isExpired) {
+      return cached.data;
+    }
+    
+    final categories = await _apiClient.fetchMovieCategories(credentials);
+    _movieCategoryCache[cacheKey] = _CacheEntry(categories);
+    return categories;
+  }
+
+  /// Get series categories (from cache or fetch)
+  Future<List<CategoryModel>> getSeriesCategories(
+    XtreamCredentials credentials, {
+    bool forceRefresh = false,
+  }) async {
+    final cacheKey = _getCacheKey(credentials);
+    final cached = _seriesCategoryCache[cacheKey];
+    
+    if (!forceRefresh && cached != null && !cached.isExpired) {
+      return cached.data;
+    }
+    
+    final categories = await _apiClient.fetchSeriesCategories(credentials);
+    _seriesCategoryCache[cacheKey] = _CacheEntry(categories);
     return categories;
   }
 
@@ -327,6 +382,8 @@ class XtreamService {
   void clearCache() {
     _channelCache.clear();
     _categoryCache.clear();
+    _movieCategoryCache.clear();
+    _seriesCategoryCache.clear();
     _movieCache.clear();
     _seriesCache.clear();
     _epgCache.clear();
@@ -339,6 +396,8 @@ class XtreamService {
     final cacheKey = _getCacheKey(credentials);
     _channelCache.remove(cacheKey);
     _categoryCache.remove(cacheKey);
+    _movieCategoryCache.remove(cacheKey);
+    _seriesCategoryCache.remove(cacheKey);
     _movieCache.remove(cacheKey);
     _seriesCache.remove(cacheKey);
     _epgCache.remove(cacheKey);
