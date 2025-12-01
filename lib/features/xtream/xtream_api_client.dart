@@ -140,16 +140,20 @@ class XtreamApiClientImpl implements XtreamApiClient {
   XtreamApiClientImpl({required ApiClient apiClient}) : _apiClient = apiClient;
 
   String _buildUrl(XtreamCredentials credentials, String action) {
+    final encodedUsername = Uri.encodeComponent(credentials.username);
+    final encodedPassword = Uri.encodeComponent(credentials.password);
     return '${credentials.baseUrl}/player_api.php?'
-        'username=${credentials.username}&password=${credentials.password}'
+        'username=$encodedUsername&password=$encodedPassword'
         '&action=$action';
   }
 
   @override
   Future<XtreamLoginResponse> login(XtreamCredentials credentials) async {
     try {
+      final encodedUsername = Uri.encodeComponent(credentials.username);
+      final encodedPassword = Uri.encodeComponent(credentials.password);
       final url =
-          '${credentials.baseUrl}/player_api.php?username=${credentials.username}&password=${credentials.password}';
+          '${credentials.baseUrl}/player_api.php?username=$encodedUsername&password=$encodedPassword';
       final response = await _apiClient.get<Map<String, dynamic>>(url);
 
       if (response.data == null) {

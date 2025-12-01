@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/id_generator.dart';
 import '../../../domain/entities/playlist_source.dart';
 import '../../blocs/playlist/playlist_bloc.dart';
 
@@ -232,7 +233,7 @@ class _AddPlaylistScreenState extends State<AddPlaylistScreen>
     setState(() => _isLoading = true);
 
     final playlist = PlaylistSource(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      id: IdGenerator.generate(),
       name: _m3uNameController.text,
       url: _m3uUrlController.text,
       type: PlaylistSourceType.m3uUrl,
@@ -266,7 +267,7 @@ class _AddPlaylistScreenState extends State<AddPlaylistScreen>
     );
 
     final playlist = PlaylistSource(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      id: IdGenerator.generate(),
       name: _xtreamNameController.text,
       url: _xtreamHostController.text,
       type: PlaylistSourceType.xtream,

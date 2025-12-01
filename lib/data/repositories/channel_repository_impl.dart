@@ -12,7 +12,7 @@ import '../models/channel_model.dart';
 class ChannelRepositoryImpl implements ChannelRepository {
   final PlaylistRepository _playlistRepository;
   final XtreamApiClient _xtreamApiClient;
-  late final LocalStorage _localStorage;
+  final LocalStorage _localStorage;
 
   // In-memory cache
   List<Channel>? _channelCache;
@@ -23,12 +23,10 @@ class ChannelRepositoryImpl implements ChannelRepository {
   ChannelRepositoryImpl({
     required PlaylistRepository playlistRepository,
     required XtreamApiClient xtreamApiClient,
+    required LocalStorage localStorage,
   })  : _playlistRepository = playlistRepository,
-        _xtreamApiClient = xtreamApiClient;
-
-  void setLocalStorage(LocalStorage localStorage) {
-    _localStorage = localStorage;
-  }
+        _xtreamApiClient = xtreamApiClient,
+        _localStorage = localStorage;
 
   @override
   Future<List<Channel>> getLiveChannels({String? categoryId}) async {

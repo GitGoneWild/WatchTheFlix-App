@@ -57,6 +57,7 @@ Future<void> initDependencies() async {
     () => ChannelRepositoryImpl(
       playlistRepository: getIt(),
       xtreamApiClient: getIt(),
+      localStorage: getIt(),
     ),
   );
 
