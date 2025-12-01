@@ -41,7 +41,7 @@ class SeriesModel {
       rating: json['rating'] != null
           ? double.tryParse(json['rating'].toString())
           : null,
-      genre: json['genre'],
+      genre: _parseGenre(json['genre']),
       seasons: json['seasons'] != null
           ? (json['seasons'] as List)
               .map((s) => SeasonModel.fromJson(s))
@@ -49,6 +49,14 @@ class SeriesModel {
           : null,
       metadata: json['metadata'],
     );
+  }
+
+  /// Parse genre field that can be String, List, or null
+  static String? _parseGenre(dynamic genre) {
+    if (genre == null) return null;
+    if (genre is String) return genre;
+    if (genre is List) return genre.join(', ');
+    return genre.toString();
   }
 
   /// Convert to JSON

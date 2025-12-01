@@ -54,36 +54,34 @@ void main() {
               serverUrl: 'http://test.server.com:8080',
             ),
           );
-          when(() => mockApiClient.fetchLiveCategories(credentials))
+          when(() => mockXtreamService.getLiveCategories(credentials, forceRefresh: true))
               .thenAnswer((_) async => [
                     const CategoryModel(id: '1', name: 'Sports'),
                     const CategoryModel(id: '2', name: 'News'),
                   ]);
-          when(() => mockApiClient.fetchLiveChannels(credentials))
+          when(() => mockXtreamService.getMovieCategories(credentials, forceRefresh: true))
+              .thenAnswer((_) async => [
+                    const CategoryModel(id: '1', name: 'Action'),
+                  ]);
+          when(() => mockXtreamService.getSeriesCategories(credentials, forceRefresh: true))
+              .thenAnswer((_) async => [
+                    const CategoryModel(id: '1', name: 'Drama'),
+                  ]);
+          when(() => mockXtreamService.getLiveChannels(credentials, forceRefresh: true))
               .thenAnswer((_) async => [
                     const ChannelModel(id: '1', name: 'Channel 1', streamUrl: 'url1'),
                     const ChannelModel(id: '2', name: 'Channel 2', streamUrl: 'url2'),
                   ]);
-          when(() => mockApiClient.fetchMovieCategories(credentials))
-              .thenAnswer((_) async => [
-                    const CategoryModel(id: '1', name: 'Action'),
-                  ]);
-          when(() => mockApiClient.fetchMovies(credentials))
+          when(() => mockXtreamService.getMovies(credentials, forceRefresh: true))
               .thenAnswer((_) async => [
                     const MovieModel(id: '1', name: 'Movie 1', streamUrl: 'url1'),
                   ]);
-          when(() => mockApiClient.fetchSeriesCategories(credentials))
-              .thenAnswer((_) async => [
-                    const CategoryModel(id: '1', name: 'Drama'),
-                  ]);
-          when(() => mockApiClient.fetchSeries(credentials))
+          when(() => mockXtreamService.getSeries(credentials, forceRefresh: true))
               .thenAnswer((_) async => [
                     const SeriesModel(id: '1', name: 'Series 1'),
                   ]);
-          when(() => mockApiClient.fetchAllEpg(credentials))
+          when(() => mockXtreamService.getEpg(credentials, forceRefresh: true))
               .thenAnswer((_) async => {});
-          when(() => mockXtreamService.fullRefresh(credentials))
-              .thenAnswer((_) async {});
         },
         build: () => XtreamOnboardingBloc(
           apiClient: mockApiClient,
@@ -101,11 +99,7 @@ void main() {
           isA<XtreamOnboardingInProgress>()
               .having((s) => s.currentStep, 'step', OnboardingStep.fetchingLiveChannels),
           isA<XtreamOnboardingInProgress>()
-              .having((s) => s.currentStep, 'step', OnboardingStep.fetchingMovieCategories),
-          isA<XtreamOnboardingInProgress>()
               .having((s) => s.currentStep, 'step', OnboardingStep.fetchingMovies),
-          isA<XtreamOnboardingInProgress>()
-              .having((s) => s.currentStep, 'step', OnboardingStep.fetchingSeriesCategories),
           isA<XtreamOnboardingInProgress>()
               .having((s) => s.currentStep, 'step', OnboardingStep.fetchingSeries),
           isA<XtreamOnboardingInProgress>()
@@ -114,15 +108,77 @@ void main() {
         ],
         verify: (_) {
           verify(() => mockApiClient.login(credentials)).called(1);
-          verify(() => mockApiClient.fetchLiveCategories(credentials)).called(1);
-          verify(() => mockApiClient.fetchLiveChannels(credentials)).called(1);
-          verify(() => mockApiClient.fetchMovieCategories(credentials)).called(1);
-          verify(() => mockApiClient.fetchMovies(credentials)).called(1);
-          verify(() => mockApiClient.fetchSeriesCategories(credentials)).called(1);
-          verify(() => mockApiClient.fetchSeries(credentials)).called(1);
-          verify(() => mockApiClient.fetchAllEpg(credentials)).called(1);
-          verify(() => mockXtreamService.fullRefresh(credentials)).called(1);
+          verify(() => mockXtreamService.getLiveCategories(credentials, forceRefresh: true)).called(1);
+          verify(() => mockXtreamService.getMovieCategories(credentials, forceRefresh: true)).called(1);
+          verify(() => mockXtreamService.getSeriesCategories(credentials, forceRefresh: true)).called(1);
+          verify(() => mockXtreamService.getLiveChannels(credentials, forceRefresh: true)).called(1);
+          verify(() => mockXtreamService.getMovies(credentials, forceRefresh: true)).called(1);
+          verify(() => mockXtreamService.getSeries(credentials, forceRefresh: true)).called(1);
+          verify(() => mockXtreamService.getEpg(credentials, forceRefresh: true)).called(1);
         },
+      );
+
+      blocTest<XtreamOnboardingBloc, XtreamOnboardingState>(
+        'emits [InProgress, ...steps..., Completed] when series fetching fails (bypassed)',
+        setUp: () {
+          when(() => mockApiClient.login(credentials)).thenAnswer(
+            (_) async => XtreamLoginResponse(
+              username: 'testuser',
+              password: 'testpass',
+              message: 'OK',
+              auth: 1,
+              status: 'Active',
+              serverUrl: 'http://test.server.com:8080',
+            ),
+          );
+          when(() => mockXtreamService.getLiveCategories(credentials, forceRefresh: true))
+              .thenAnswer((_) async => [
+                    const CategoryModel(id: '1', name: 'Sports'),
+                  ]);
+          when(() => mockXtreamService.getMovieCategories(credentials, forceRefresh: true))
+              .thenAnswer((_) async => [
+                    const CategoryModel(id: '1', name: 'Action'),
+                  ]);
+          // Series categories fail - should be bypassed
+          when(() => mockXtreamService.getSeriesCategories(credentials, forceRefresh: true))
+              .thenThrow(Exception('type \'List\' is not a subtype of type \'String?\' in type cast'));
+          when(() => mockXtreamService.getLiveChannels(credentials, forceRefresh: true))
+              .thenAnswer((_) async => [
+                    const ChannelModel(id: '1', name: 'Channel 1', streamUrl: 'url1'),
+                  ]);
+          when(() => mockXtreamService.getMovies(credentials, forceRefresh: true))
+              .thenAnswer((_) async => [
+                    const MovieModel(id: '1', name: 'Movie 1', streamUrl: 'url1'),
+                  ]);
+          // Series fetch fails - should be bypassed
+          when(() => mockXtreamService.getSeries(credentials, forceRefresh: true))
+              .thenThrow(Exception('type \'List\' is not a subtype of type \'String?\' in type cast'));
+          when(() => mockXtreamService.getEpg(credentials, forceRefresh: true))
+              .thenAnswer((_) async => {});
+        },
+        build: () => XtreamOnboardingBloc(
+          apiClient: mockApiClient,
+          xtreamService: mockXtreamService,
+        ),
+        act: (bloc) => bloc.add(StartOnboardingEvent(
+          credentials: credentials,
+          playlistName: 'Test Playlist',
+        )),
+        expect: () => [
+          isA<XtreamOnboardingInProgress>()
+              .having((s) => s.currentStep, 'step', OnboardingStep.authenticating),
+          isA<XtreamOnboardingInProgress>()
+              .having((s) => s.currentStep, 'step', OnboardingStep.fetchingLiveCategories),
+          isA<XtreamOnboardingInProgress>()
+              .having((s) => s.currentStep, 'step', OnboardingStep.fetchingLiveChannels),
+          isA<XtreamOnboardingInProgress>()
+              .having((s) => s.currentStep, 'step', OnboardingStep.fetchingMovies),
+          isA<XtreamOnboardingInProgress>()
+              .having((s) => s.currentStep, 'step', OnboardingStep.fetchingSeries),
+          isA<XtreamOnboardingInProgress>()
+              .having((s) => s.currentStep, 'step', OnboardingStep.fetchingEpg),
+          isA<XtreamOnboardingCompleted>(),
+        ],
       );
 
       blocTest<XtreamOnboardingBloc, XtreamOnboardingState>(
@@ -198,22 +254,20 @@ void main() {
               serverUrl: 'http://test.server.com:8080',
             );
           });
-          when(() => mockApiClient.fetchLiveCategories(credentials))
+          when(() => mockXtreamService.getLiveCategories(credentials, forceRefresh: true))
               .thenAnswer((_) async => []);
-          when(() => mockApiClient.fetchLiveChannels(credentials))
+          when(() => mockXtreamService.getMovieCategories(credentials, forceRefresh: true))
               .thenAnswer((_) async => []);
-          when(() => mockApiClient.fetchMovieCategories(credentials))
+          when(() => mockXtreamService.getSeriesCategories(credentials, forceRefresh: true))
               .thenAnswer((_) async => []);
-          when(() => mockApiClient.fetchMovies(credentials))
+          when(() => mockXtreamService.getLiveChannels(credentials, forceRefresh: true))
               .thenAnswer((_) async => []);
-          when(() => mockApiClient.fetchSeriesCategories(credentials))
+          when(() => mockXtreamService.getMovies(credentials, forceRefresh: true))
               .thenAnswer((_) async => []);
-          when(() => mockApiClient.fetchSeries(credentials))
+          when(() => mockXtreamService.getSeries(credentials, forceRefresh: true))
               .thenAnswer((_) async => []);
-          when(() => mockApiClient.fetchAllEpg(credentials))
+          when(() => mockXtreamService.getEpg(credentials, forceRefresh: true))
               .thenAnswer((_) async => {});
-          when(() => mockXtreamService.fullRefresh(credentials))
-              .thenAnswer((_) async {});
         },
         build: () => XtreamOnboardingBloc(
           apiClient: mockApiClient,
@@ -229,8 +283,6 @@ void main() {
         },
         skip: 2, // Skip the first error state
         expect: () => [
-          isA<XtreamOnboardingInProgress>(),
-          isA<XtreamOnboardingInProgress>(),
           isA<XtreamOnboardingInProgress>(),
           isA<XtreamOnboardingInProgress>(),
           isA<XtreamOnboardingInProgress>(),
