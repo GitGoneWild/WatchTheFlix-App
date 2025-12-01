@@ -1,6 +1,10 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/errors/exceptions.dart';
 import '../../../core/utils/logger.dart';
 import '../../../domain/entities/playlist_source.dart';
 import '../../../features/xtream/xtream_api_client.dart';
@@ -483,18 +487,37 @@ class XtreamOnboardingBloc
   }
 
   String _formatErrorMessage(dynamic error) {
+    // Check for specific exception types first
+    if (error is NetworkException) {
+      return 'Network error. Please check your internet connection.';
+    }
+    if (error is AuthException) {
+      return 'Invalid credentials. Please check your username and password.';
+    }
+    if (error is ServerException) {
+      final statusCode = error.statusCode;
+      if (statusCode == 401 || statusCode == 403) {
+        return 'Access denied. Please verify your subscription is active.';
+      }
+      return error.message;
+    }
+    if (error is AppException) {
+      return error.message;
+    }
+    if (error is SocketException) {
+      return 'Network error. Please check your internet connection.';
+    }
+    if (error is TimeoutException) {
+      return 'Connection timed out. The server may be slow or unreachable.';
+    }
+
+    // Fallback to string matching for unknown exceptions
     final message = error.toString();
     if (message.contains('SocketException')) {
       return 'Network error. Please check your internet connection.';
     }
     if (message.contains('TimeoutException')) {
       return 'Connection timed out. The server may be slow or unreachable.';
-    }
-    if (message.contains('Authentication failed')) {
-      return 'Invalid credentials. Please check your username and password.';
-    }
-    if (message.contains('401') || message.contains('403')) {
-      return 'Access denied. Please verify your subscription is active.';
     }
     // Return a cleaned up message
     return message.replaceAll('Exception: ', '');

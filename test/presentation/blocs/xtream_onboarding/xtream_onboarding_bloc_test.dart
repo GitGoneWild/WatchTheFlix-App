@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:watchtheflix/core/errors/exceptions.dart';
 import 'package:watchtheflix/domain/entities/playlist_source.dart';
 import 'package:watchtheflix/features/xtream/xtream_api_client.dart';
 import 'package:watchtheflix/features/xtream/xtream_service.dart';
@@ -159,7 +160,7 @@ void main() {
         'emits [InProgress, Error] when network error occurs',
         setUp: () {
           when(() => mockApiClient.login(credentials))
-              .thenThrow(Exception('SocketException: Connection refused'));
+              .thenThrow(const NetworkException(message: 'Connection refused'));
         },
         build: () => XtreamOnboardingBloc(
           apiClient: mockApiClient,
