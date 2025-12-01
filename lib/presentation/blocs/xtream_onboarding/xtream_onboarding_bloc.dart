@@ -435,10 +435,6 @@ class XtreamOnboardingBloc
     
     // Fetch all three category types in parallel using XtreamService
     // Series categories are optional and may fail on some servers
-    List<CategoryModel> liveCategoriesList = [];
-    List<CategoryModel> movieCategoriesList = [];
-    List<CategoryModel> seriesCategoriesList = [];
-    
     final categoryFutures = await Future.wait([
       _xtreamService.getLiveCategories(credentials, forceRefresh: true),
       _xtreamService.getMovieCategories(credentials, forceRefresh: true),
@@ -451,9 +447,9 @@ class XtreamOnboardingBloc
 
     _checkCancelled();
 
-    liveCategoriesList = categoryFutures[0];
-    movieCategoriesList = categoryFutures[1];
-    seriesCategoriesList = categoryFutures[2];
+    final liveCategoriesList = categoryFutures[0];
+    final movieCategoriesList = categoryFutures[1];
+    final seriesCategoriesList = categoryFutures[2];
 
     final liveCategories = liveCategoriesList.length;
     final movieCategories = movieCategoriesList.length;
