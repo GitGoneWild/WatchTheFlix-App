@@ -28,15 +28,16 @@ class ChannelModel {
   factory ChannelModel.fromJson(Map<String, dynamic> json) {
     return ChannelModel(
       id: json['id']?.toString() ?? json['stream_id']?.toString() ?? '',
-      name: json['name'] ?? json['title'] ?? '',
-      streamUrl: json['stream_url'] ?? json['url'] ?? '',
-      logoUrl: json['logo_url'] ?? json['stream_icon'] ?? json['tvg_logo'],
-      groupTitle: json['group_title'] ?? json['category_name'],
+      name: (json['name'] ?? json['title'] ?? '') as String,
+      streamUrl: (json['stream_url'] ?? json['url'] ?? '') as String,
+      logoUrl: (json['logo_url'] ?? json['stream_icon'] ?? json['tvg_logo'])
+          as String?,
+      groupTitle: (json['group_title'] ?? json['category_name']) as String?,
       categoryId: json['category_id']?.toString(),
-      type: json['type'] ?? 'live',
-      metadata: json['metadata'],
+      type: (json['type'] ?? 'live') as String,
+      metadata: json['metadata'] as Map<String, dynamic>?,
       epgInfo: json['epg_info'] != null
-          ? EpgInfoModel.fromJson(json['epg_info'])
+          ? EpgInfoModel.fromJson(json['epg_info'] as Map<String, dynamic>)
           : null,
     );
   }
@@ -118,14 +119,15 @@ class EpgInfoModel {
 
   factory EpgInfoModel.fromJson(Map<String, dynamic> json) {
     return EpgInfoModel(
-      currentProgram: json['current_program'],
-      nextProgram: json['next_program'],
+      currentProgram: json['current_program'] as String?,
+      nextProgram: json['next_program'] as String?,
       startTime: json['start_time'] != null
-          ? DateTime.tryParse(json['start_time'])
+          ? DateTime.tryParse(json['start_time'] as String)
           : null,
-      endTime:
-          json['end_time'] != null ? DateTime.tryParse(json['end_time']) : null,
-      description: json['description'],
+      endTime: json['end_time'] != null
+          ? DateTime.tryParse(json['end_time'] as String)
+          : null,
+      description: json['description'] as String?,
     );
   }
 

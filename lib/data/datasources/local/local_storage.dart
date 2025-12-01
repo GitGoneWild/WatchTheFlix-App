@@ -72,9 +72,10 @@ class LocalStorageImpl implements LocalStorage {
           _sharedPreferences.getString(AppConstants.keyPlaylistSources);
       if (jsonString == null) return [];
 
-      final List<dynamic> jsonList = json.decode(jsonString);
+      final List<dynamic> jsonList = json.decode(jsonString) as List<dynamic>;
       return jsonList
-          .map((json) => PlaylistSourceModel.fromJson(json))
+          .map((json) =>
+              PlaylistSourceModel.fromJson(json as Map<String, dynamic>))
           .toList();
     } catch (e) {
       throw CacheException(message: 'Failed to get playlists: $e');
@@ -125,8 +126,10 @@ class LocalStorageImpl implements LocalStorage {
           _sharedPreferences.getString('cached_channels_$playlistId');
       if (jsonString == null) return null;
 
-      final List<dynamic> jsonList = json.decode(jsonString);
-      return jsonList.map((json) => ChannelModel.fromJson(json)).toList();
+      final List<dynamic> jsonList = json.decode(jsonString) as List<dynamic>;
+      return jsonList
+          .map((json) => ChannelModel.fromJson(json as Map<String, dynamic>))
+          .toList();
     } catch (e) {
       return null;
     }
@@ -155,8 +158,10 @@ class LocalStorageImpl implements LocalStorage {
           _sharedPreferences.getString(AppConstants.keyFavorites);
       if (jsonString == null) return [];
 
-      final List<dynamic> jsonList = json.decode(jsonString);
-      return jsonList.map((json) => ChannelModel.fromJson(json)).toList();
+      final List<dynamic> jsonList = json.decode(jsonString) as List<dynamic>;
+      return jsonList
+          .map((json) => ChannelModel.fromJson(json as Map<String, dynamic>))
+          .toList();
     } catch (e) {
       return [];
     }
@@ -193,8 +198,10 @@ class LocalStorageImpl implements LocalStorage {
           _sharedPreferences.getString(AppConstants.keyRecentChannels);
       if (jsonString == null) return [];
 
-      final List<dynamic> jsonList = json.decode(jsonString);
-      return jsonList.map((json) => ChannelModel.fromJson(json)).toList();
+      final List<dynamic> jsonList = json.decode(jsonString) as List<dynamic>;
+      return jsonList
+          .map((json) => ChannelModel.fromJson(json as Map<String, dynamic>))
+          .toList();
     } catch (e) {
       return [];
     }
@@ -219,7 +226,7 @@ class LocalStorageImpl implements LocalStorage {
     try {
       final jsonString = _sharedPreferences.getString(AppConstants.keySettings);
       if (jsonString == null) return null;
-      return json.decode(jsonString);
+      return json.decode(jsonString) as Map<String, dynamic>;
     } catch (e) {
       return null;
     }

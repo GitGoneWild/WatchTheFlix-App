@@ -222,7 +222,6 @@ class XtreamOnboardingBloc
   final XtreamService _xtreamService;
 
   XtreamCredentials? _currentCredentials;
-  String? _currentPlaylistName;
   
   /// Flag to track if onboarding has been cancelled
   bool _isCancelled = false;
@@ -242,16 +241,15 @@ class XtreamOnboardingBloc
   }
 
   Future<void> _onStartOnboarding(
+  Future<void> _onStartOnboarding(
     StartOnboardingEvent event,
     Emitter<XtreamOnboardingState> emit,
   ) async {
     _currentCredentials = event.credentials;
-    _currentPlaylistName = event.playlistName;
     _isCancelled = false;
 
     await _performOnboarding(emit);
   }
-
   Future<void> _onRetryOnboarding(
     RetryOnboardingEvent event,
     Emitter<XtreamOnboardingState> emit,
@@ -264,15 +262,14 @@ class XtreamOnboardingBloc
 
   Future<void> _onCancelOnboarding(
     CancelOnboardingEvent event,
+  Future<void> _onCancelOnboarding(
+    CancelOnboardingEvent event,
     Emitter<XtreamOnboardingState> emit,
   ) async {
     _isCancelled = true;
     emit(const XtreamOnboardingInitial());
     _currentCredentials = null;
-    _currentPlaylistName = null;
   }
-  
-  /// Check if onboarding has been cancelled and throw if so
   void _checkCancelled() {
     if (_isCancelled) {
       throw const AppException(message: 'Onboarding cancelled');
@@ -285,13 +282,13 @@ class XtreamOnboardingBloc
   /// Helper method to add a small delay between API requests
   /// Also checks for cancellation
   Future<void> _rateLimitDelay() async {
+  /// Helper method to add a small delay between API requests
+  /// Also checks for cancellation
+  Future<void> _rateLimitDelay() async {
     _checkCancelled();
-    await Future.delayed(const Duration(milliseconds: _requestDelayMs));
+    await Future<void>.delayed(const Duration(milliseconds: _requestDelayMs));
     _checkCancelled();
   }
-
-  Future<void> _performOnboarding(Emitter<XtreamOnboardingState> emit) async {
-    final credentials = _currentCredentials!;
     final completedSteps = <OnboardingStepResult>[];
 
     int liveCategories = 0;
@@ -439,14 +436,11 @@ class XtreamOnboardingBloc
       _xtreamService.getLiveCategories(credentials, forceRefresh: true),
       _xtreamService.getMovieCategories(credentials, forceRefresh: true),
       _xtreamService.getSeriesCategories(credentials, forceRefresh: true)
-          .catchError((e) {
+          .catchError((Object e) {
         AppLogger.warning('Series categories not available: $e');
-        return <CategoryModel>[];
+        return [];
       }),
     ]);
-
-    _checkCancelled();
-
     final liveCategoriesList = categoryFutures[0];
     final movieCategoriesList = categoryFutures[1];
     final seriesCategoriesList = categoryFutures[2];

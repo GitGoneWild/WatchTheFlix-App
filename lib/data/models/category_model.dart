@@ -18,9 +18,9 @@ class CategoryModel {
   factory CategoryModel.fromJson(Map<String, dynamic> json) {
     return CategoryModel(
       id: json['category_id']?.toString() ?? json['id']?.toString() ?? '',
-      name: json['category_name'] ?? json['name'] ?? '',
+      name: (json['category_name'] ?? json['name'] ?? '') as String,
       parentId: json['parent_id']?.toString(),
-      channelCount: json['channel_count'] ?? 0,
+      channelCount: (json['channel_count'] ?? 0) as int,
     );
   }
 

@@ -38,21 +38,25 @@ class MovieModel {
   factory MovieModel.fromJson(Map<String, dynamic> json) {
     return MovieModel(
       id: json['stream_id']?.toString() ?? json['id']?.toString() ?? '',
-      name: json['name'] ?? json['title'] ?? '',
-      streamUrl: json['stream_url'] ?? '',
-      posterUrl: json['stream_icon'] ?? json['cover'] ?? json['poster_url'],
-      backdropUrl: json['cover_big'] ?? json['backdrop_url'],
+      name: (json['name'] ?? json['title'] ?? '') as String,
+      streamUrl: (json['stream_url'] ?? '') as String,
+      posterUrl: json['stream_icon'] as String? ??
+          json['cover'] as String? ??
+          json['poster_url'] as String?,
+      backdropUrl:
+          json['cover_big'] as String? ?? json['backdrop_url'] as String?,
       categoryId: json['category_id']?.toString(),
-      description: json['plot'] ?? json['description'],
-      releaseDate: json['releaseDate'] ?? json['release_date'],
+      description: json['plot'] as String? ?? json['description'] as String?,
+      releaseDate:
+          json['releaseDate'] as String? ?? json['release_date'] as String?,
       rating: json['rating'] != null
           ? double.tryParse(json['rating'].toString())
           : null,
-      duration: json['duration_secs'] ?? json['duration'],
+      duration: json['duration_secs'] as int? ?? json['duration'] as int?,
       genre: _parseGenre(json['genre']),
-      director: json['director'],
+      director: json['director'] as String?,
       cast: _parseCast(json['cast']),
-      metadata: json['metadata'],
+      metadata: json['metadata'] as Map<String, dynamic>?,
     );
   }
 

@@ -32,22 +32,22 @@ class SeriesModel {
   factory SeriesModel.fromJson(Map<String, dynamic> json) {
     return SeriesModel(
       id: json['series_id']?.toString() ?? json['id']?.toString() ?? '',
-      name: json['name'] ?? json['title'] ?? '',
-      posterUrl: json['cover'] ?? json['poster_url'],
-      backdropUrl: json['backdrop_path'] ?? json['backdrop_url'],
+      name: (json['name'] ?? json['title'] ?? '') as String,
+      posterUrl: (json['cover'] ?? json['poster_url']) as String?,
+      backdropUrl: (json['backdrop_path'] ?? json['backdrop_url']) as String?,
       categoryId: json['category_id']?.toString(),
-      description: json['plot'] ?? json['description'],
-      releaseDate: json['releaseDate'] ?? json['release_date'],
+      description: (json['plot'] ?? json['description']) as String?,
+      releaseDate: (json['releaseDate'] ?? json['release_date']) as String?,
       rating: json['rating'] != null
           ? double.tryParse(json['rating'].toString())
           : null,
       genre: _parseGenre(json['genre']),
       seasons: json['seasons'] != null
           ? (json['seasons'] as List)
-              .map((s) => SeasonModel.fromJson(s))
+              .map((s) => SeasonModel.fromJson(s as Map<String, dynamic>))
               .toList()
           : null,
-      metadata: json['metadata'],
+      metadata: json['metadata'] as Map<String, dynamic>?,
     );
   }
 
@@ -130,12 +130,12 @@ class SeasonModel {
   factory SeasonModel.fromJson(Map<String, dynamic> json) {
     return SeasonModel(
       id: json['id']?.toString() ?? '',
-      seasonNumber: json['season_number'] ?? 1,
-      name: json['name'],
-      posterUrl: json['cover'] ?? json['poster_url'],
+      seasonNumber: (json['season_number'] ?? 1) as int,
+      name: json['name'] as String?,
+      posterUrl: (json['cover'] ?? json['poster_url']) as String?,
       episodes: json['episodes'] != null
           ? (json['episodes'] as List)
-              .map((e) => EpisodeModel.fromJson(e))
+              .map((e) => EpisodeModel.fromJson(e as Map<String, dynamic>))
               .toList()
           : null,
     );
@@ -196,12 +196,13 @@ class EpisodeModel {
   factory EpisodeModel.fromJson(Map<String, dynamic> json) {
     return EpisodeModel(
       id: json['id']?.toString() ?? '',
-      episodeNumber: json['episode_num'] ?? 1,
-      name: json['title'] ?? json['name'] ?? '',
-      streamUrl: json['stream_url'] ?? '',
-      posterUrl: json['info']?['movie_image'] ?? json['poster_url'],
-      description: json['info']?['plot'] ?? json['description'],
-      duration: json['info']?['duration_secs'] ?? json['duration'],
+      episodeNumber: (json['episode_num'] ?? 1) as int,
+      name: (json['title'] ?? json['name'] ?? '') as String,
+      streamUrl: (json['stream_url'] ?? '') as String,
+      posterUrl:
+          (json['info']?['movie_image'] ?? json['poster_url']) as String?,
+      description: (json['info']?['plot'] ?? json['description']) as String?,
+      duration: (json['info']?['duration_secs'] ?? json['duration']) as int?,
     );
   }
 

@@ -56,14 +56,15 @@ class EpgEntry {
   factory EpgEntry.fromJson(Map<String, dynamic> json) {
     final startTime = _parseDateTime(json['start'] ?? json['start_timestamp']);
     final endTime = _parseDateTime(json['end'] ?? json['stop_timestamp']);
-    
+
     return EpgEntry(
-      channelId: json['epg_id']?.toString() ?? json['channel_id']?.toString() ?? '',
-      title: json['title'] ?? '',
-      description: json['description'] ?? json['desc'],
+      channelId:
+          json['epg_id']?.toString() ?? json['channel_id']?.toString() ?? '',
+      title: (json['title'] ?? '').toString(),
+      description: json['description']?.toString() ?? json['desc']?.toString(),
       startTime: startTime ?? DateTime.now(),
       endTime: endTime ?? DateTime.now().add(const Duration(hours: 1)),
-      language: json['lang'],
+      language: json['lang']?.toString(),
     );
   }
 
@@ -77,7 +78,8 @@ class EpgEntry {
       if (parsed != null) return parsed;
       // Try Unix timestamp
       final timestamp = int.tryParse(value);
-      if (timestamp != null) return DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
+      if (timestamp != null)
+        return DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
     }
     return null;
   }
@@ -117,15 +119,17 @@ class XtreamLoginResponse {
     Map<String, dynamic> json,
     String serverUrl,
   ) {
-    final userInfo = json['user_info'] ?? {};
-    final serverInfo = json['server_info'] ?? {};
+    final userInfo =
+        json['user_info'] as Map<String, dynamic>? ?? <String, dynamic>{};
+    final serverInfo =
+        json['server_info'] as Map<String, dynamic>? ?? <String, dynamic>{};
 
     return XtreamLoginResponse(
-      username: userInfo['username'] ?? '',
-      password: userInfo['password'] ?? '',
-      message: userInfo['message'] ?? '',
-      auth: userInfo['auth'] ?? 0,
-      status: userInfo['status'] ?? '',
+      username: (userInfo['username'] ?? '').toString(),
+      password: (userInfo['password'] ?? '').toString(),
+      message: (userInfo['message'] ?? '').toString(),
+      auth: userInfo['auth'] as int? ?? 0,
+      status: (userInfo['status'] ?? '').toString(),
       expDate: userInfo['exp_date'] != null
           ? DateTime.tryParse(userInfo['exp_date'].toString())
           : null,
@@ -260,7 +264,7 @@ class XtreamApiClientImpl implements XtreamApiClient {
           final encodedPassword = Uri.encodeComponent(credentials.password);
           final url =
               '${credentials.baseUrl}/player_api.php?username=$encodedUsername&password=$encodedPassword';
-          
+
           final response = await _apiClient.get<Map<String, dynamic>>(url);
 
           if (response.data == null) {
@@ -359,12 +363,14 @@ class XtreamApiClientImpl implements XtreamApiClient {
           final response = await _apiClient.get<dynamic>(url);
 
           return _safeParseList(response.data)
-              .map((json) => CategoryModel.fromJson(json as Map<String, dynamic>))
+              .map((json) =>
+                  CategoryModel.fromJson(json as Map<String, dynamic>))
               .toList();
         } catch (e) {
           AppLogger.error('Failed to fetch live categories', e);
           if (e is AppException) rethrow;
-          throw ServerException(message: 'Failed to fetch categories: ${_getErrorMessage(e)}');
+          throw ServerException(
+              message: 'Failed to fetch categories: ${_getErrorMessage(e)}');
         }
       },
       timeout: kXtreamDefaultTimeout,
@@ -396,7 +402,8 @@ class XtreamApiClientImpl implements XtreamApiClient {
         } catch (e) {
           AppLogger.error('Failed to fetch live channels', e);
           if (e is AppException) rethrow;
-          throw ServerException(message: 'Failed to fetch channels: ${_getErrorMessage(e)}');
+          throw ServerException(
+              message: 'Failed to fetch channels: ${_getErrorMessage(e)}');
         }
       },
       timeout: kXtreamExtendedTimeout,
@@ -415,12 +422,15 @@ class XtreamApiClientImpl implements XtreamApiClient {
           final response = await _apiClient.get<dynamic>(url);
 
           return _safeParseList(response.data)
-              .map((json) => CategoryModel.fromJson(json as Map<String, dynamic>))
+              .map((json) =>
+                  CategoryModel.fromJson(json as Map<String, dynamic>))
               .toList();
         } catch (e) {
           AppLogger.error('Failed to fetch movie categories', e);
           if (e is AppException) rethrow;
-          throw ServerException(message: 'Failed to fetch movie categories: ${_getErrorMessage(e)}');
+          throw ServerException(
+              message:
+                  'Failed to fetch movie categories: ${_getErrorMessage(e)}');
         }
       },
       timeout: kXtreamDefaultTimeout,
@@ -444,7 +454,7 @@ class XtreamApiClientImpl implements XtreamApiClient {
 
           return _safeParseList(response.data).map((json) {
             final streamId = json['stream_id']?.toString() ?? '';
-            final extension = json['container_extension'] ?? 'mp4';
+            final extension = (json['container_extension'] ?? 'mp4').toString();
             return MovieModel.fromJson({
               ...json as Map<String, dynamic>,
               'stream_url': getMovieStreamUrl(
@@ -457,7 +467,8 @@ class XtreamApiClientImpl implements XtreamApiClient {
         } catch (e) {
           AppLogger.error('Failed to fetch movies', e);
           if (e is AppException) rethrow;
-          throw ServerException(message: 'Failed to fetch movies: ${_getErrorMessage(e)}');
+          throw ServerException(
+              message: 'Failed to fetch movies: ${_getErrorMessage(e)}');
         }
       },
       timeout: kXtreamExtendedTimeout,
@@ -476,12 +487,15 @@ class XtreamApiClientImpl implements XtreamApiClient {
           final response = await _apiClient.get<dynamic>(url);
 
           return _safeParseList(response.data)
-              .map((json) => CategoryModel.fromJson(json as Map<String, dynamic>))
+              .map((json) =>
+                  CategoryModel.fromJson(json as Map<String, dynamic>))
               .toList();
         } catch (e) {
           AppLogger.error('Failed to fetch series categories', e);
           if (e is AppException) rethrow;
-          throw ServerException(message: 'Failed to fetch series categories: ${_getErrorMessage(e)}');
+          throw ServerException(
+              message:
+                  'Failed to fetch series categories: ${_getErrorMessage(e)}');
         }
       },
       timeout: kXtreamDefaultTimeout,
@@ -509,7 +523,8 @@ class XtreamApiClientImpl implements XtreamApiClient {
         } catch (e) {
           AppLogger.error('Failed to fetch series', e);
           if (e is AppException) rethrow;
-          throw ServerException(message: 'Failed to fetch series: ${_getErrorMessage(e)}');
+          throw ServerException(
+              message: 'Failed to fetch series: ${_getErrorMessage(e)}');
         }
       },
       timeout: kXtreamExtendedTimeout,
@@ -525,7 +540,8 @@ class XtreamApiClientImpl implements XtreamApiClient {
     return _withTimeout(
       () async {
         try {
-          final url = '${_buildUrl(credentials, 'get_series_info')}&series_id=$seriesId';
+          final url =
+              '${_buildUrl(credentials, 'get_series_info')}&series_id=$seriesId';
           final response = await _apiClient.get<Map<String, dynamic>>(url);
 
           if (response.data == null) {
@@ -533,7 +549,8 @@ class XtreamApiClientImpl implements XtreamApiClient {
           }
 
           final data = response.data!;
-          final info = data['info'] ?? {};
+          final info =
+              data['info'] as Map<String, dynamic>? ?? <String, dynamic>{};
           final episodes = data['episodes'] as Map<String, dynamic>? ?? {};
 
           // Build seasons with episodes
@@ -547,7 +564,7 @@ class XtreamApiClientImpl implements XtreamApiClient {
             }
             final episodeModels = episodeList.map((e) {
               final streamId = e['id']?.toString() ?? '';
-              final extension = e['container_extension'] ?? 'mp4';
+              final extension = (e['container_extension'] ?? 'mp4').toString();
               return EpisodeModel.fromJson({
                 ...e as Map<String, dynamic>,
                 'stream_url': getSeriesStreamUrl(
@@ -567,21 +584,22 @@ class XtreamApiClientImpl implements XtreamApiClient {
 
           return SeriesModel(
             id: seriesId,
-            name: info['name'] ?? '',
-            posterUrl: info['cover'],
+            name: (info['name'] ?? '').toString(),
+            posterUrl: info['cover']?.toString(),
             backdropUrl: info['backdrop_path']?.isNotEmpty == true
-                ? info['backdrop_path'][0]
+                ? info['backdrop_path'][0]?.toString()
                 : null,
-            description: info['plot'],
-            releaseDate: info['releaseDate'],
+            description: info['plot']?.toString(),
+            releaseDate: info['releaseDate']?.toString(),
             rating: _parseRating(info['rating']),
-            genre: info['genre'],
+            genre: info['genre']?.toString(),
             seasons: seasons,
           );
         } catch (e) {
           AppLogger.error('Failed to fetch series info', e);
           if (e is AppException) rethrow;
-          throw ServerException(message: 'Failed to fetch series info: ${_getErrorMessage(e)}');
+          throw ServerException(
+              message: 'Failed to fetch series info: ${_getErrorMessage(e)}');
         }
       },
       timeout: kXtreamDefaultTimeout,
@@ -626,7 +644,8 @@ class XtreamApiClientImpl implements XtreamApiClient {
     return _withTimeout(
       () async {
         try {
-          final url = '${_buildUrl(credentials, 'get_short_epg')}&stream_id=$streamId&limit=$limit';
+          final url =
+              '${_buildUrl(credentials, 'get_short_epg')}&stream_id=$streamId&limit=$limit';
           final response = await _apiClient.get<Map<String, dynamic>>(url);
 
           if (response.data == null) {

@@ -25,18 +25,20 @@ class PlaylistSourceModel {
   /// Create from JSON
   factory PlaylistSourceModel.fromJson(Map<String, dynamic> json) {
     return PlaylistSourceModel(
-      id: json['id'] ?? '',
-      name: json['name'] ?? '',
-      url: json['url'] ?? '',
-      type: json['type'] ?? 'm3uUrl',
-      addedAt: DateTime.tryParse(json['added_at'] ?? '') ?? DateTime.now(),
+      id: json['id'] as String? ?? '',
+      name: json['name'] as String? ?? '',
+      url: json['url'] as String? ?? '',
+      type: json['type'] as String? ?? 'm3uUrl',
+      addedAt: DateTime.tryParse(json['added_at'] as String? ?? '') ??
+          DateTime.now(),
       lastUpdated: json['last_updated'] != null
-          ? DateTime.tryParse(json['last_updated'])
+          ? DateTime.tryParse(json['last_updated'] as String)
           : null,
       xtreamCredentials: json['xtream_credentials'] != null
-          ? XtreamCredentialsModel.fromJson(json['xtream_credentials'])
+          ? XtreamCredentialsModel.fromJson(
+              json['xtream_credentials'] as Map<String, dynamic>)
           : null,
-      isActive: json['is_active'] ?? true,
+      isActive: json['is_active'] as bool? ?? true,
     );
   }
 
@@ -112,10 +114,10 @@ class XtreamCredentialsModel {
 
   factory XtreamCredentialsModel.fromJson(Map<String, dynamic> json) {
     return XtreamCredentialsModel(
-      host: json['host'] ?? '',
-      username: json['username'] ?? '',
-      password: json['password'] ?? '',
-      serverInfo: json['server_info'],
+      host: json['host'] as String? ?? '',
+      username: json['username'] as String? ?? '',
+      password: json['password'] as String? ?? '',
+      serverInfo: json['server_info'] as String?,
     );
   }
 

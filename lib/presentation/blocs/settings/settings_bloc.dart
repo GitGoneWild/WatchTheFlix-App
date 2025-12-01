@@ -85,7 +85,8 @@ class AppSettings extends Equatable {
       subtitlesEnabled: subtitlesEnabled ?? this.subtitlesEnabled,
       subtitleLanguage: subtitleLanguage ?? this.subtitleLanguage,
       pipEnabled: pipEnabled ?? this.pipEnabled,
-      backgroundPlayEnabled: backgroundPlayEnabled ?? this.backgroundPlayEnabled,
+      backgroundPlayEnabled:
+          backgroundPlayEnabled ?? this.backgroundPlayEnabled,
       bufferDuration: bufferDuration ?? this.bufferDuration,
       showEpg: showEpg ?? this.showEpg,
       autoRetry: autoRetry ?? this.autoRetry,
@@ -127,7 +128,7 @@ class AppSettings extends Equatable {
       lastRefresh = DateTime.tryParse(lastRefreshValue);
       // If parsing fails, we simply use null (no last refresh)
     }
-    
+
     return AppSettings(
       themeMode: ThemeMode.values.firstWhere(
         (e) => e.value == json['themeMode'],
@@ -137,16 +138,16 @@ class AppSettings extends Equatable {
         (e) => e.value == json['videoQuality'],
         orElse: () => VideoQuality.auto,
       ),
-      autoPlay: json['autoPlay'] ?? true,
-      subtitlesEnabled: json['subtitlesEnabled'] ?? false,
-      subtitleLanguage: json['subtitleLanguage'] ?? 'en',
-      pipEnabled: json['pipEnabled'] ?? true,
-      backgroundPlayEnabled: json['backgroundPlayEnabled'] ?? false,
-      bufferDuration: (json['bufferDuration'] ?? 10.0).toDouble(),
-      showEpg: json['showEpg'] ?? true,
-      autoRetry: json['autoRetry'] ?? true,
-      maxRetries: json['maxRetries'] ?? 3,
-      refreshIntervalHours: json['refreshIntervalHours'] ?? 24,
+      autoPlay: (json['autoPlay'] as bool?) ?? true,
+      subtitlesEnabled: (json['subtitlesEnabled'] as bool?) ?? false,
+      subtitleLanguage: (json['subtitleLanguage'] as String?) ?? 'en',
+      pipEnabled: (json['pipEnabled'] as bool?) ?? true,
+      backgroundPlayEnabled: (json['backgroundPlayEnabled'] as bool?) ?? false,
+      bufferDuration: ((json['bufferDuration'] as num?) ?? 10.0).toDouble(),
+      showEpg: (json['showEpg'] as bool?) ?? true,
+      autoRetry: (json['autoRetry'] as bool?) ?? true,
+      maxRetries: (json['maxRetries'] as int?) ?? 3,
+      refreshIntervalHours: (json['refreshIntervalHours'] as int?) ?? 24,
       lastRefresh: lastRefresh,
     );
   }
@@ -341,7 +342,8 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     emit(const SettingsLoadingState());
     try {
       final json = await _localStorage.getSettings();
-      final settings = json != null ? AppSettings.fromJson(json) : const AppSettings();
+      final settings =
+          json != null ? AppSettings.fromJson(json) : const AppSettings();
       emit(SettingsLoadedState(settings));
     } catch (e) {
       AppLogger.error('Failed to load settings', e);
@@ -391,7 +393,8 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   ) async {
     if (state is SettingsLoadedState) {
       final currentSettings = (state as SettingsLoadedState).settings;
-      final newSettings = currentSettings.copyWith(autoPlay: !currentSettings.autoPlay);
+      final newSettings =
+          currentSettings.copyWith(autoPlay: !currentSettings.autoPlay);
       await _saveSettings(newSettings);
       emit(SettingsLoadedState(newSettings));
     }
@@ -459,7 +462,8 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   ) async {
     if (state is SettingsLoadedState) {
       final currentSettings = (state as SettingsLoadedState).settings;
-      final newSettings = currentSettings.copyWith(showEpg: !currentSettings.showEpg);
+      final newSettings =
+          currentSettings.copyWith(showEpg: !currentSettings.showEpg);
       await _saveSettings(newSettings);
       emit(SettingsLoadedState(newSettings));
     }
@@ -471,7 +475,8 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   ) async {
     if (state is SettingsLoadedState) {
       final currentSettings = (state as SettingsLoadedState).settings;
-      final newSettings = currentSettings.copyWith(autoRetry: !currentSettings.autoRetry);
+      final newSettings =
+          currentSettings.copyWith(autoRetry: !currentSettings.autoRetry);
       await _saveSettings(newSettings);
       emit(SettingsLoadedState(newSettings));
     }
@@ -494,7 +499,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       final currentState = state as SettingsLoadedState;
       // Emit refreshing state
       emit(currentState.copyWith(isRefreshing: true, clearError: true));
-      
+
       try {
         // Note: The actual refresh logic is handled by the PlaylistBloc and ChannelBloc
         // This event just marks that a refresh was requested and updates the last refresh time
@@ -502,10 +507,10 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
           lastRefresh: DateTime.now(),
         );
         await _saveSettings(newSettings);
-        
+
         // Wait a moment to simulate refresh (actual refresh is done by other blocs)
-        await Future.delayed(const Duration(milliseconds: 500));
-        
+        await Future<void>.delayed(const Duration(milliseconds: 500));
+
         emit(SettingsLoadedState(newSettings, isRefreshing: false));
         AppLogger.info('Playlist data refresh completed');
       } catch (e) {
@@ -524,7 +529,8 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   ) async {
     if (state is SettingsLoadedState) {
       final currentSettings = (state as SettingsLoadedState).settings;
-      final newSettings = currentSettings.copyWith(refreshIntervalHours: event.hours);
+      final newSettings =
+          currentSettings.copyWith(refreshIntervalHours: event.hours);
       await _saveSettings(newSettings);
       emit(SettingsLoadedState(newSettings));
       AppLogger.info('Refresh interval updated to ${event.hours} hours');
