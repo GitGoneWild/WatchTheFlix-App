@@ -235,22 +235,16 @@ class FavoritesBloc extends Bloc<FavoritesEvent, FavoritesState> {
       await _repository.addToRecent(event.channel);
       if (state is FavoritesLoadedState) {
         final currentState = state as FavoritesLoadedState;
-        final recentList = [event.channel, ...currentState.recentlyWatched]
-            .where((c) => c.id != event.channel.id || c == event.channel)
-            .take(20)
-            .toList();
         
-        // Remove duplicates, keeping the most recent
-        final seen = <String>{};
-        final uniqueRecent = <Channel>[];
-        for (final channel in recentList) {
-          if (!seen.contains(channel.id)) {
-            seen.add(channel.id);
-            uniqueRecent.add(channel);
+        // Create a new list with the new channel first, then filter out duplicates
+        final newList = <Channel>[event.channel];
+        for (final channel in currentState.recentlyWatched) {
+          if (channel.id != event.channel.id && newList.length < 20) {
+            newList.add(channel);
           }
         }
         
-        emit(currentState.copyWith(recentlyWatched: uniqueRecent));
+        emit(currentState.copyWith(recentlyWatched: newList));
       }
     } catch (e) {
       AppLogger.error('Failed to add to recent', e);

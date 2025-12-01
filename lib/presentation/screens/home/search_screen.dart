@@ -19,17 +19,18 @@ class SearchScreen extends StatefulWidget {
 
 class _SearchScreenState extends State<SearchScreen> {
   final _searchController = TextEditingController();
-  final _focusNode = FocusNode();
+  late final FocusNode _focusNode;
   Timer? _debounceTimer;
   String? _selectedFilter;
   bool _showSuggestions = false;
 
   final List<String> _filters = ['All', 'Live TV', 'Movies', 'Series'];
-  final List<String> _recentSearches = [];
+  List<String> _recentSearches = [];
 
   @override
   void initState() {
     super.initState();
+    _focusNode = FocusNode();
     _focusNode.addListener(_onFocusChange);
   }
 
@@ -269,7 +270,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     return GestureDetector(
                       onTap: () {
                         context.read<FavoritesBloc>().add(AddRecentEvent(channel));
-                        Navigator.pushNamed(context, '/player', arguments: channel);
+                        Navigator.pushNamed(context, AppRoutes.player, arguments: channel);
                       },
                       child: Column(
                         children: [
@@ -431,7 +432,7 @@ class _SearchScreenState extends State<SearchScreen> {
                             context.read<FavoritesBloc>().add(AddRecentEvent(channel));
                             Navigator.pushNamed(
                               context,
-                              '/player',
+                              AppRoutes.player,
                               arguments: channel,
                             );
                           },

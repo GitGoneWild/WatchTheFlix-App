@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../domain/entities/channel.dart';
 import '../../blocs/channel/channel_bloc.dart';
@@ -129,7 +130,7 @@ class HomeTab extends StatelessWidget {
                 ),
                 IconButton(
                   icon: const Icon(Icons.search),
-                  onPressed: () => Navigator.pushNamed(context, '/search'),
+                  onPressed: () => Navigator.pushNamed(context, AppRoutes.search),
                   tooltip: 'Search',
                 ),
                 const SizedBox(width: 8),
@@ -197,16 +198,18 @@ class HomeTab extends StatelessWidget {
                     separatorBuilder: (_, __) => const SizedBox(width: 12),
                     itemBuilder: (context, index) {
                       final channel = favoritesState.recentlyWatched[index];
+                      // Progress tracking placeholder - actual progress would come from playback state
+                      final progress = (index + 1) * 0.1 % 1.0; // Simulated progress
                       return SizedBox(
                         width: 140,
                         child: _ContinueWatchingCard(
                           channel: channel,
-                          progress: 0.5,
+                          progress: progress,
                           onTap: () {
                             context.read<FavoritesBloc>().add(AddRecentEvent(channel));
                             Navigator.pushNamed(
                               context,
-                              '/player',
+                              AppRoutes.player,
                               arguments: channel,
                             );
                           },
@@ -228,7 +231,7 @@ class HomeTab extends StatelessWidget {
                     title: 'My Favorites',
                     icon: Icons.favorite,
                     iconColor: AppColors.primary,
-                    onSeeAll: () => Navigator.pushNamed(context, '/favorites'),
+                    onSeeAll: () => Navigator.pushNamed(context, AppRoutes.favorites),
                   ),
                 ),
               ),
@@ -250,7 +253,7 @@ class HomeTab extends StatelessWidget {
                             context.read<FavoritesBloc>().add(AddRecentEvent(channel));
                             Navigator.pushNamed(
                               context,
-                              '/player',
+                              AppRoutes.player,
                               arguments: channel,
                             );
                           },
@@ -298,7 +301,7 @@ class HomeTab extends StatelessWidget {
                                       context.read<FavoritesBloc>().add(AddRecentEvent(channel));
                                       Navigator.pushNamed(
                                         context,
-                                        '/player',
+                                        AppRoutes.player,
                                         arguments: channel,
                                       );
                                     },
@@ -660,7 +663,7 @@ class _EmptyHomeState extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
-            onPressed: () => Navigator.pushNamed(context, '/add-playlist'),
+            onPressed: () => Navigator.pushNamed(context, AppRoutes.addPlaylist),
             icon: const Icon(Icons.add),
             label: const Text('Add Playlist'),
           ),
@@ -693,7 +696,7 @@ class LiveTVTab extends StatelessWidget {
                     ),
                     IconButton(
                       icon: const Icon(Icons.search),
-                      onPressed: () => Navigator.pushNamed(context, '/search'),
+                      onPressed: () => Navigator.pushNamed(context, AppRoutes.search),
                       tooltip: 'Search',
                     ),
                   ],
@@ -729,7 +732,7 @@ class LiveTVTab extends StatelessWidget {
                               isFavorite: true,
                               onTap: () {
                                 context.read<FavoritesBloc>().add(AddRecentEvent(channel));
-                                Navigator.pushNamed(context, '/player', arguments: channel);
+                                Navigator.pushNamed(context, AppRoutes.player, arguments: channel);
                               },
                               onFavoriteToggle: () {
                                 context.read<FavoritesBloc>().add(ToggleFavoriteEvent(channel));
@@ -796,7 +799,7 @@ class LiveTVTab extends StatelessWidget {
                             isFavorite: isFavorite,
                             onTap: () {
                               context.read<FavoritesBloc>().add(AddRecentEvent(channel));
-                              Navigator.pushNamed(context, '/player', arguments: channel);
+                              Navigator.pushNamed(context, AppRoutes.player, arguments: channel);
                             },
                             onFavoriteToggle: () {
                               context.read<FavoritesBloc>().add(ToggleFavoriteEvent(channel));
@@ -1081,7 +1084,7 @@ class _EmptyChannelState extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
-            onPressed: () => Navigator.pushNamed(context, '/add-playlist'),
+            onPressed: () => Navigator.pushNamed(context, AppRoutes.addPlaylist),
             icon: const Icon(Icons.add),
             label: const Text('Add Playlist'),
           ),
@@ -1112,7 +1115,7 @@ class MoviesTab extends StatelessWidget {
                 ),
                 IconButton(
                   icon: const Icon(Icons.search),
-                  onPressed: () => Navigator.pushNamed(context, '/search'),
+                  onPressed: () => Navigator.pushNamed(context, AppRoutes.search),
                   tooltip: 'Search',
                 ),
               ],
@@ -1181,7 +1184,7 @@ class SeriesTab extends StatelessWidget {
                 ),
                 IconButton(
                   icon: const Icon(Icons.search),
-                  onPressed: () => Navigator.pushNamed(context, '/search'),
+                  onPressed: () => Navigator.pushNamed(context, AppRoutes.search),
                   tooltip: 'Search',
                 ),
               ],
@@ -1256,14 +1259,14 @@ class SettingsTab extends StatelessWidget {
                     iconColor: AppColors.accent,
                     title: 'Manage Playlists',
                     subtitle: 'Add, edit, or remove playlists',
-                    onTap: () => Navigator.pushNamed(context, '/add-playlist'),
+                    onTap: () => Navigator.pushNamed(context, AppRoutes.addPlaylist),
                   ),
                   _SettingsTile(
                     icon: Icons.favorite,
                     iconColor: AppColors.primary,
                     title: 'Favorites',
                     subtitle: 'Your favorite channels and content',
-                    onTap: () => Navigator.pushNamed(context, '/favorites'),
+                    onTap: () => Navigator.pushNamed(context, AppRoutes.favorites),
                   ),
                   _SettingsTile(
                     icon: Icons.history,
