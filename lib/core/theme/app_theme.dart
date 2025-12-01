@@ -82,7 +82,7 @@ class AppTheme {
         type: BottomNavigationBarType.fixed,
         elevation: 0,
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: AppColors.backgroundCard,
         elevation: 0,
         shape: RoundedRectangleBorder(
@@ -158,7 +158,7 @@ class AppTheme {
           borderRadius: BorderRadius.circular(8),
         ),
       ),
-      dialogTheme: DialogTheme(
+      dialogTheme: DialogThemeData(
         backgroundColor: AppColors.backgroundCard,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
@@ -181,7 +181,7 @@ class AppTheme {
         thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
         trackHeight: 4,
       ),
-      tabBarTheme: const TabBarTheme(
+      tabBarTheme: const TabBarThemeData(
         labelColor: AppColors.textPrimary,
         unselectedLabelColor: AppColors.textSecondary,
         indicatorColor: AppColors.primary,
