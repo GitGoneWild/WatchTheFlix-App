@@ -54,11 +54,13 @@ class XtreamToDomainMappers {
       name: json['name']?.toString() ?? '',
       streamUrl: streamUrl,
       posterUrl: json['stream_icon']?.toString() ?? json['cover']?.toString(),
-      backdropUrl: json['cover_big']?.toString() ?? json['backdrop_path']?.toString(),
+      backdropUrl:
+          json['cover_big']?.toString() ?? json['backdrop_path']?.toString(),
       description: json['plot']?.toString() ?? json['description']?.toString(),
       categoryId: json['category_id']?.toString(),
       genre: json['genre']?.toString(),
-      releaseDate: json['releaseDate']?.toString() ?? json['release_date']?.toString(),
+      releaseDate:
+          json['releaseDate']?.toString() ?? json['release_date']?.toString(),
       rating: _parseRating(json['rating']),
       duration: _parseInt(json['duration_secs']),
       type: ContentType.movie,
@@ -94,7 +96,8 @@ class XtreamToDomainMappers {
       description: json['plot']?.toString(),
       categoryId: json['category_id']?.toString(),
       genre: json['genre']?.toString(),
-      releaseDate: json['releaseDate']?.toString() ?? json['release_date']?.toString(),
+      releaseDate:
+          json['releaseDate']?.toString() ?? json['release_date']?.toString(),
       rating: _parseRating(json['rating']),
       seasons: seasons,
       metadata: _extractMetadata(json, [
@@ -117,7 +120,7 @@ class XtreamToDomainMappers {
     Map<String, dynamic> json,
     String Function(String streamId, String extension) buildStreamUrl,
   ) {
-    final info = json['info'] ?? {};
+    final info = json['info'] as Map<String, dynamic>? ?? {};
     final episodesMap = json['episodes'] as Map<String, dynamic>? ?? {};
 
     final seasons = <Season>[];
@@ -127,7 +130,8 @@ class XtreamToDomainMappers {
       final episodes = episodeList.map((e) {
         final streamId = e['id']?.toString() ?? '';
         final extension = e['container_extension']?.toString() ?? 'mp4';
-        return mapEpisode(e as Map<String, dynamic>, buildStreamUrl(streamId, extension));
+        return mapEpisode(
+            e as Map<String, dynamic>, buildStreamUrl(streamId, extension));
       }).toList();
 
       seasons.add(Season(
@@ -148,8 +152,10 @@ class XtreamToDomainMappers {
       episodeNumber: _parseInt(json['episode_num'], defaultValue: 1),
       name: json['title']?.toString() ?? json['name']?.toString() ?? '',
       streamUrl: streamUrl,
-      description: json['info']?['plot']?.toString() ?? json['plot']?.toString(),
-      thumbnailUrl: json['info']?['movie_image']?.toString() ?? json['cover']?.toString(),
+      description:
+          json['info']?['plot']?.toString() ?? json['plot']?.toString(),
+      thumbnailUrl:
+          json['info']?['movie_image']?.toString() ?? json['cover']?.toString(),
       duration: _parseInt(json['info']?['duration_secs']),
       airDate: json['info']?['releasedate']?.toString(),
     );
