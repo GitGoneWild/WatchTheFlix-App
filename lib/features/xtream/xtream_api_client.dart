@@ -41,18 +41,21 @@ class EpgEntry {
   }
 
   factory EpgEntry.fromJson(Map<String, dynamic> json) {
+    final startTime = _parseDateTime(json['start'] ?? json['start_timestamp']);
+    final endTime = _parseDateTime(json['end'] ?? json['stop_timestamp']);
+    
     return EpgEntry(
       channelId: json['epg_id']?.toString() ?? json['channel_id']?.toString() ?? '',
       title: json['title'] ?? '',
       description: json['description'] ?? json['desc'],
-      startTime: _parseDateTime(json['start'] ?? json['start_timestamp']),
-      endTime: _parseDateTime(json['end'] ?? json['stop_timestamp']),
+      startTime: startTime ?? DateTime.now(),
+      endTime: endTime ?? DateTime.now().add(const Duration(hours: 1)),
       language: json['lang'],
     );
   }
 
-  static DateTime _parseDateTime(dynamic value) {
-    if (value == null) return DateTime.now();
+  static DateTime? _parseDateTime(dynamic value) {
+    if (value == null) return null;
     if (value is DateTime) return value;
     if (value is int) return DateTime.fromMillisecondsSinceEpoch(value * 1000);
     if (value is String) {
@@ -63,7 +66,7 @@ class EpgEntry {
       final timestamp = int.tryParse(value);
       if (timestamp != null) return DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
     }
-    return DateTime.now();
+    return null;
   }
 }
 

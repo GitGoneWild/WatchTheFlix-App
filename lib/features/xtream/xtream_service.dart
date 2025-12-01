@@ -71,12 +71,12 @@ class XtreamService {
   }
 
   void _restartAutoRefresh() {
-    if (_autoRefreshTimer != null) {
-      _autoRefreshTimer!.cancel();
-      _autoRefreshTimer = Timer.periodic(_refreshInterval, (_) {
-        // Refresh will be triggered by the timer
-      });
-    }
+    // Note: Auto-refresh requires credentials to be stored
+    // This is a placeholder - actual implementation would need
+    // to store and retrieve the credentials from persistent storage
+    _autoRefreshTimer?.cancel();
+    _autoRefreshTimer = null;
+    // Timer restart is handled by startAutoRefresh with credentials
   }
 
   Future<void> _performAutoRefresh(XtreamCredentials credentials) async {
@@ -228,10 +228,23 @@ class XtreamService {
     // Attach EPG info to channels
     return channels.map((channel) {
       final epgList = epgData[channel.id] ?? [];
-      final currentProgram = epgList.where((e) => e.isCurrentlyAiring).firstOrNull;
-      final nextProgram = epgList.where((e) => 
-        e.startTime.isAfter(currentProgram?.endTime ?? DateTime.now())
-      ).firstOrNull;
+      EpgEntry? currentProgram;
+      EpgEntry? nextProgram;
+      
+      for (final epg in epgList) {
+        if (epg.isCurrentlyAiring) {
+          currentProgram = epg;
+        }
+      }
+      
+      if (currentProgram != null) {
+        for (final epg in epgList) {
+          if (epg.startTime.isAfter(currentProgram.endTime)) {
+            nextProgram = epg;
+            break;
+          }
+        }
+      }
       
       if (currentProgram != null) {
         return ChannelModel(

@@ -124,10 +124,23 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
                   separatorBuilder: (_, __) => const SizedBox(width: 12),
                   itemBuilder: (context, index) {
                     final channel = recentlyWatched[index];
+                    // Calculate progress based on EPG data if available
+                    double progress = 0.0;
+                    if (channel.epgInfo?.startTime != null && 
+                        channel.epgInfo?.endTime != null) {
+                      final now = DateTime.now();
+                      final start = channel.epgInfo!.startTime!;
+                      final end = channel.epgInfo!.endTime!;
+                      if (now.isAfter(start) && now.isBefore(end)) {
+                        final total = end.difference(start).inSeconds;
+                        final elapsed = now.difference(start).inSeconds;
+                        progress = (elapsed / total).clamp(0.0, 1.0);
+                      }
+                    }
                     return _QuickAccessCard(
                       channel: channel,
                       showProgress: true,
-                      progress: 0.3 + (index * 0.1), // Mock progress
+                      progress: progress,
                       onTap: () => _onChannelSelected(channel),
                     );
                   },

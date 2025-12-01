@@ -121,6 +121,13 @@ class AppSettings extends Equatable {
   }
 
   factory AppSettings.fromJson(Map<String, dynamic> json) {
+    DateTime? lastRefresh;
+    final lastRefreshValue = json['lastRefresh'];
+    if (lastRefreshValue != null && lastRefreshValue is String) {
+      lastRefresh = DateTime.tryParse(lastRefreshValue);
+      // If parsing fails, we simply use null (no last refresh)
+    }
+    
     return AppSettings(
       themeMode: ThemeMode.values.firstWhere(
         (e) => e.value == json['themeMode'],
@@ -140,9 +147,7 @@ class AppSettings extends Equatable {
       autoRetry: json['autoRetry'] ?? true,
       maxRetries: json['maxRetries'] ?? 3,
       refreshIntervalHours: json['refreshIntervalHours'] ?? 24,
-      lastRefresh: json['lastRefresh'] != null 
-          ? DateTime.tryParse(json['lastRefresh']) 
-          : null,
+      lastRefresh: lastRefresh,
     );
   }
 
