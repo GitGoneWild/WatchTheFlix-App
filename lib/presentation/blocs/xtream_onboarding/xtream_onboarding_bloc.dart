@@ -263,6 +263,14 @@ class XtreamOnboardingBloc
     _currentPlaylistName = null;
   }
 
+  /// Delay between API requests to avoid rate limiting (in milliseconds)
+  static const int _requestDelayMs = 100;
+
+  /// Helper method to add a small delay between API requests
+  Future<void> _rateLimitDelay() async {
+    await Future.delayed(const Duration(milliseconds: _requestDelayMs));
+  }
+
   Future<void> _performOnboarding(Emitter<XtreamOnboardingState> emit) async {
     final credentials = _currentCredentials!;
     final completedSteps = <OnboardingStepResult>[];
@@ -298,16 +306,31 @@ class XtreamOnboardingBloc
 
       AppLogger.info('Authentication successful');
 
-      // Step 2: Fetch Live Categories
+      // Step 2: Fetch all categories in parallel
+      // Fetches live, movie, and series categories simultaneously via XtreamService.
+      // All results are cached by the service for later use.
       emit(XtreamOnboardingInProgress(
         currentStep: OnboardingStep.fetchingLiveCategories,
-        statusMessage: 'Loading Live TV categories...',
+        statusMessage: 'Loading all categories...',
         completedSteps: List.from(completedSteps),
       ));
 
-      final liveCategoriesList =
-          await _apiClient.fetchLiveCategories(credentials);
+      await _rateLimitDelay();
+      
+      // Fetch all three category types in parallel using XtreamService
+      final categoriesResults = await Future.wait([
+        _xtreamService.getLiveCategories(credentials, forceRefresh: true),
+        _xtreamService.getMovieCategories(credentials, forceRefresh: true),
+        _xtreamService.getSeriesCategories(credentials, forceRefresh: true),
+      ]);
+
+      final liveCategoriesList = categoriesResults[0];
+      final movieCategoriesList = categoriesResults[1];
+      final seriesCategoriesList = categoriesResults[2];
+
       liveCategories = liveCategoriesList.length;
+      movieCategories = movieCategoriesList.length;
+      seriesCategories = seriesCategoriesList.length;
 
       completedSteps.add(OnboardingStepResult(
         step: OnboardingStep.fetchingLiveCategories,
@@ -317,6 +340,23 @@ class XtreamOnboardingBloc
 
       AppLogger.info('Loaded $liveCategories live categories');
 
+      // Mark movie and series categories as completed too
+      completedSteps.add(OnboardingStepResult(
+        step: OnboardingStep.fetchingMovieCategories,
+        success: true,
+        itemCount: movieCategories,
+      ));
+
+      AppLogger.info('Loaded $movieCategories movie categories');
+
+      completedSteps.add(OnboardingStepResult(
+        step: OnboardingStep.fetchingSeriesCategories,
+        success: true,
+        itemCount: seriesCategories,
+      ));
+
+      AppLogger.info('Loaded $seriesCategories series categories');
+
       // Step 3: Fetch Live Channels
       emit(XtreamOnboardingInProgress(
         currentStep: OnboardingStep.fetchingLiveChannels,
@@ -324,7 +364,13 @@ class XtreamOnboardingBloc
         completedSteps: List.from(completedSteps),
       ));
 
-      final liveChannelsList = await _apiClient.fetchLiveChannels(credentials);
+      await _rateLimitDelay();
+
+      // Use XtreamService which caches the results
+      final liveChannelsList = await _xtreamService.getLiveChannels(
+        credentials,
+        forceRefresh: true,
+      );
       liveChannels = liveChannelsList.length;
 
       completedSteps.add(OnboardingStepResult(
@@ -335,33 +381,20 @@ class XtreamOnboardingBloc
 
       AppLogger.info('Loaded $liveChannels live channels');
 
-      // Step 4: Fetch Movie Categories
-      emit(XtreamOnboardingInProgress(
-        currentStep: OnboardingStep.fetchingMovieCategories,
-        statusMessage: 'Loading movie categories...',
-        completedSteps: List.from(completedSteps),
-      ));
-
-      final movieCategoriesList =
-          await _apiClient.fetchMovieCategories(credentials);
-      movieCategories = movieCategoriesList.length;
-
-      completedSteps.add(OnboardingStepResult(
-        step: OnboardingStep.fetchingMovieCategories,
-        success: true,
-        itemCount: movieCategories,
-      ));
-
-      AppLogger.info('Loaded $movieCategories movie categories');
-
-      // Step 5: Fetch Movies
+      // Step 4: Fetch Movies
       emit(XtreamOnboardingInProgress(
         currentStep: OnboardingStep.fetchingMovies,
         statusMessage: 'Loading movies...',
         completedSteps: List.from(completedSteps),
       ));
 
-      final moviesList = await _apiClient.fetchMovies(credentials);
+      await _rateLimitDelay();
+
+      // Use XtreamService which caches the results
+      final moviesList = await _xtreamService.getMovies(
+        credentials,
+        forceRefresh: true,
+      );
       movies = moviesList.length;
 
       completedSteps.add(OnboardingStepResult(
@@ -372,33 +405,20 @@ class XtreamOnboardingBloc
 
       AppLogger.info('Loaded $movies movies');
 
-      // Step 6: Fetch Series Categories
-      emit(XtreamOnboardingInProgress(
-        currentStep: OnboardingStep.fetchingSeriesCategories,
-        statusMessage: 'Loading series categories...',
-        completedSteps: List.from(completedSteps),
-      ));
-
-      final seriesCategoriesList =
-          await _apiClient.fetchSeriesCategories(credentials);
-      seriesCategories = seriesCategoriesList.length;
-
-      completedSteps.add(OnboardingStepResult(
-        step: OnboardingStep.fetchingSeriesCategories,
-        success: true,
-        itemCount: seriesCategories,
-      ));
-
-      AppLogger.info('Loaded $seriesCategories series categories');
-
-      // Step 7: Fetch Series
+      // Step 5: Fetch Series
       emit(XtreamOnboardingInProgress(
         currentStep: OnboardingStep.fetchingSeries,
         statusMessage: 'Loading series...',
         completedSteps: List.from(completedSteps),
       ));
 
-      final seriesList = await _apiClient.fetchSeries(credentials);
+      await _rateLimitDelay();
+
+      // Use XtreamService which caches the results
+      final seriesList = await _xtreamService.getSeries(
+        credentials,
+        forceRefresh: true,
+      );
       series = seriesList.length;
 
       completedSteps.add(OnboardingStepResult(
@@ -409,15 +429,21 @@ class XtreamOnboardingBloc
 
       AppLogger.info('Loaded $series series');
 
-      // Step 8: Fetch EPG (optional, may fail on some providers)
+      // Step 6: Fetch EPG (optional, may fail on some providers)
       emit(XtreamOnboardingInProgress(
         currentStep: OnboardingStep.fetchingEpg,
         statusMessage: 'Loading EPG data...',
         completedSteps: List.from(completedSteps),
       ));
 
+      await _rateLimitDelay();
+
       try {
-        final epgData = await _apiClient.fetchAllEpg(credentials);
+        // Use XtreamService for EPG - it fetches and caches the results
+        final epgData = await _xtreamService.getEpg(
+          credentials,
+          forceRefresh: true,
+        );
         epgChannels = epgData.length;
         completedSteps.add(OnboardingStepResult(
           step: OnboardingStep.fetchingEpg,
@@ -436,8 +462,8 @@ class XtreamOnboardingBloc
         ));
       }
 
-      // Refresh cache in XtreamService
-      await _xtreamService.fullRefresh(credentials);
+      // Data is now cached by XtreamService - no need to call fullRefresh()
+      // which would duplicate all the API calls we just made.
 
       // Complete
       final result = OnboardingResult(
