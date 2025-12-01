@@ -434,17 +434,26 @@ class XtreamOnboardingBloc
     await _rateLimitDelay();
     
     // Fetch all three category types in parallel using XtreamService
-    final categoriesResults = await Future.wait([
+    // Series categories are optional and may fail on some servers
+    List<CategoryModel> liveCategoriesList = [];
+    List<CategoryModel> movieCategoriesList = [];
+    List<CategoryModel> seriesCategoriesList = [];
+    
+    final categoryFutures = await Future.wait([
       _xtreamService.getLiveCategories(credentials, forceRefresh: true),
       _xtreamService.getMovieCategories(credentials, forceRefresh: true),
-      _xtreamService.getSeriesCategories(credentials, forceRefresh: true),
+      _xtreamService.getSeriesCategories(credentials, forceRefresh: true)
+          .catchError((e) {
+        AppLogger.warning('Series categories not available: $e');
+        return <CategoryModel>[];
+      }),
     ]);
 
     _checkCancelled();
 
-    final liveCategoriesList = categoriesResults[0];
-    final movieCategoriesList = categoriesResults[1];
-    final seriesCategoriesList = categoriesResults[2];
+    liveCategoriesList = categoryFutures[0];
+    movieCategoriesList = categoryFutures[1];
+    seriesCategoriesList = categoryFutures[2];
 
     final liveCategories = liveCategoriesList.length;
     final movieCategories = movieCategoriesList.length;
@@ -537,7 +546,7 @@ class XtreamOnboardingBloc
 
     AppLogger.info('Loaded $movies movies');
 
-    // Step 5: Fetch Series
+    // Step 5: Fetch Series (optional, may fail on some providers)
     _checkCancelled();
     emit(XtreamOnboardingInProgress(
       currentStep: OnboardingStep.fetchingSeries,
@@ -547,23 +556,34 @@ class XtreamOnboardingBloc
 
     await _rateLimitDelay();
 
-    // Use XtreamService which caches the results
-    final seriesList = await _xtreamService.getSeries(
-      credentials,
-      forceRefresh: true,
-    );
-    _checkCancelled();
-    
-    final series = seriesList.length;
-    onProgress(OnboardingStep.fetchingSeries, {'series': series});
+    try {
+      // Use XtreamService which caches the results
+      final seriesList = await _xtreamService.getSeries(
+        credentials,
+        forceRefresh: true,
+      );
+      _checkCancelled();
+      
+      final series = seriesList.length;
+      onProgress(OnboardingStep.fetchingSeries, {'series': series});
 
-    completedSteps.add(OnboardingStepResult(
-      step: OnboardingStep.fetchingSeries,
-      success: true,
-      itemCount: series,
-    ));
+      completedSteps.add(OnboardingStepResult(
+        step: OnboardingStep.fetchingSeries,
+        success: true,
+        itemCount: series,
+      ));
 
-    AppLogger.info('Loaded $series series');
+      AppLogger.info('Loaded $series series');
+    } catch (e) {
+      // Series is optional, log but don't fail
+      AppLogger.warning('Series data not available: $e');
+      completedSteps.add(OnboardingStepResult(
+        step: OnboardingStep.fetchingSeries,
+        success: false,
+        itemCount: 0,
+        errorMessage: 'Series data not available',
+      ));
+    }
 
     // Step 6: Fetch EPG (optional, may fail on some providers)
     _checkCancelled();

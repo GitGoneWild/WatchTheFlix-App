@@ -49,13 +49,31 @@ class MovieModel {
           ? double.tryParse(json['rating'].toString())
           : null,
       duration: json['duration_secs'] ?? json['duration'],
-      genre: json['genre'],
+      genre: _parseGenre(json['genre']),
       director: json['director'],
-      cast: json['cast'] != null
-          ? (json['cast'] as String).split(',').map((e) => e.trim()).toList()
-          : null,
+      cast: _parseCast(json['cast']),
       metadata: json['metadata'],
     );
+  }
+
+  /// Parse genre field that can be String, List, or null
+  static String? _parseGenre(dynamic genre) {
+    if (genre == null) return null;
+    if (genre is String) return genre;
+    if (genre is List) return genre.join(', ');
+    return genre.toString();
+  }
+
+  /// Parse cast field that can be String, List, or null
+  static List<String>? _parseCast(dynamic cast) {
+    if (cast == null) return null;
+    if (cast is String) {
+      return cast.split(',').map((e) => e.trim()).toList();
+    }
+    if (cast is List) {
+      return cast.map((e) => e.toString()).toList();
+    }
+    return null;
   }
 
   /// Convert to JSON
