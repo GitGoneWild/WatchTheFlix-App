@@ -1,3 +1,7 @@
+import 'dart:async';
+
+import 'package:dio/dio.dart';
+
 import '../../core/errors/exceptions.dart';
 import '../../core/utils/logger.dart';
 import '../../data/datasources/remote/api_client.dart';
@@ -6,6 +10,15 @@ import '../../data/models/channel_model.dart';
 import '../../data/models/movie_model.dart';
 import '../../data/models/series_model.dart';
 import '../../domain/entities/playlist_source.dart';
+
+/// Default timeout for Xtream API requests (30 seconds)
+const Duration kXtreamDefaultTimeout = Duration(seconds: 30);
+
+/// Extended timeout for large data requests like movies/series lists (60 seconds)
+const Duration kXtreamExtendedTimeout = Duration(seconds: 60);
+
+/// Short timeout for quick requests like login (15 seconds)
+const Duration kXtreamShortTimeout = Duration(seconds: 15);
 
 /// EPG (Electronic Program Guide) entry model
 class EpgEntry {
@@ -222,52 +235,146 @@ class XtreamApiClientImpl implements XtreamApiClient {
         '&action=$action';
   }
 
+  /// Wrap API call with timeout to prevent hanging
+  Future<T> _withTimeout<T>(
+    Future<T> Function() operation, {
+    Duration timeout = kXtreamDefaultTimeout,
+    required String operationName,
+  }) async {
+    try {
+      return await operation().timeout(
+        timeout,
+        onTimeout: () {
+          throw TimeoutException(
+            '$operationName timed out after ${timeout.inSeconds} seconds',
+            timeout,
+          );
+        },
+      );
+    } on TimeoutException catch (e) {
+      AppLogger.error('$operationName timeout', e);
+      throw ServerException(
+        message: 'Request timed out. The server may be slow or unreachable.',
+      );
+    }
+  }
+
   @override
   Future<XtreamLoginResponse> login(XtreamCredentials credentials) async {
-    try {
-      final encodedUsername = Uri.encodeComponent(credentials.username);
-      final encodedPassword = Uri.encodeComponent(credentials.password);
-      final url =
-          '${credentials.baseUrl}/player_api.php?username=$encodedUsername&password=$encodedPassword';
-      final response = await _apiClient.get<Map<String, dynamic>>(url);
+    return _withTimeout(
+      () async {
+        try {
+          final encodedUsername = Uri.encodeComponent(credentials.username);
+          final encodedPassword = Uri.encodeComponent(credentials.password);
+          final url =
+              '${credentials.baseUrl}/player_api.php?username=$encodedUsername&password=$encodedPassword';
+          
+          final response = await _apiClient.get<Map<String, dynamic>>(
+            url,
+            options: Options(
+              receiveTimeout: kXtreamShortTimeout,
+              sendTimeout: kXtreamShortTimeout,
+            ),
+          );
 
-      if (response.data == null) {
-        throw const AuthException(message: 'Invalid response from server');
+          if (response.data == null) {
+            throw const AuthException(message: 'Invalid response from server');
+          }
+
+          // Check for error responses (some servers return error in JSON)
+          final data = response.data!;
+          if (data['user_info'] == null && data['error'] != null) {
+            throw AuthException(message: data['error'].toString());
+          }
+
+          final loginResponse = XtreamLoginResponse.fromJson(
+            data,
+            credentials.baseUrl,
+          );
+
+          if (!loginResponse.isAuthenticated) {
+            final msg = loginResponse.message.isNotEmpty
+                ? loginResponse.message
+                : 'Authentication failed';
+            throw AuthException(message: msg);
+          }
+
+          AppLogger.info('Xtream login successful for ${credentials.username}');
+          return loginResponse;
+        } catch (e) {
+          AppLogger.error('Xtream login failed', e);
+          if (e is AppException) rethrow;
+          throw AuthException(message: 'Login failed: ${_getErrorMessage(e)}');
+        }
+      },
+      timeout: kXtreamShortTimeout,
+      operationName: 'Login',
+    );
+  }
+
+  /// Extract user-friendly error message from exception
+  String _getErrorMessage(dynamic error) {
+    if (error is DioException) {
+      switch (error.type) {
+        case DioExceptionType.connectionTimeout:
+        case DioExceptionType.sendTimeout:
+        case DioExceptionType.receiveTimeout:
+          return 'Connection timed out';
+        case DioExceptionType.connectionError:
+          return 'Unable to connect to server';
+        case DioExceptionType.badResponse:
+          final statusCode = error.response?.statusCode;
+          if (statusCode == 401 || statusCode == 403) {
+            return 'Invalid credentials';
+          }
+          return 'Server error (${statusCode ?? 'unknown'})';
+        default:
+          return error.message ?? 'Network error';
       }
-
-      final loginResponse = XtreamLoginResponse.fromJson(
-        response.data!,
-        credentials.baseUrl,
-      );
-
-      if (!loginResponse.isAuthenticated) {
-        throw const AuthException(message: 'Authentication failed');
-      }
-
-      AppLogger.info('Xtream login successful for ${credentials.username}');
-      return loginResponse;
-    } catch (e) {
-      AppLogger.error('Xtream login failed', e);
-      if (e is AppException) rethrow;
-      throw AuthException(message: 'Login failed: $e');
     }
+    final msg = error.toString();
+    // Clean up common prefixes
+    return msg
+        .replaceAll('Exception: ', '')
+        .replaceAll('DioException: ', '')
+        .replaceAll('SocketException: ', '');
+  }
+
+  /// Helper method to safely parse a list response that might come back as
+  /// a Map (error response) or empty
+  List<dynamic> _safeParseList(dynamic data) {
+    if (data == null) return [];
+    if (data is List) return data;
+    // Some servers return {} or {"error": "..."} instead of []
+    if (data is Map) {
+      AppLogger.warning('Expected list but got map: $data');
+      return [];
+    }
+    return [];
   }
 
   @override
   Future<List<CategoryModel>> fetchLiveCategories(
     XtreamCredentials credentials,
   ) async {
-    try {
-      final url = _buildUrl(credentials, 'get_live_categories');
-      final response = await _apiClient.get<List<dynamic>>(url);
+    return _withTimeout(
+      () async {
+        try {
+          final url = _buildUrl(credentials, 'get_live_categories');
+          final response = await _apiClient.get<dynamic>(url);
 
-      return (response.data ?? [])
-          .map((json) => CategoryModel.fromJson(json))
-          .toList();
-    } catch (e) {
-      AppLogger.error('Failed to fetch live categories', e);
-      throw ServerException(message: 'Failed to fetch categories: $e');
-    }
+          return _safeParseList(response.data)
+              .map((json) => CategoryModel.fromJson(json as Map<String, dynamic>))
+              .toList();
+        } catch (e) {
+          AppLogger.error('Failed to fetch live categories', e);
+          if (e is AppException) rethrow;
+          throw ServerException(message: 'Failed to fetch categories: ${_getErrorMessage(e)}');
+        }
+      },
+      timeout: kXtreamDefaultTimeout,
+      operationName: 'Fetch live categories',
+    );
   }
 
   @override
@@ -275,41 +382,55 @@ class XtreamApiClientImpl implements XtreamApiClient {
     XtreamCredentials credentials, {
     String? categoryId,
   }) async {
-    try {
-      String url = _buildUrl(credentials, 'get_live_streams');
-      if (categoryId != null) {
-        url += '&category_id=$categoryId';
-      }
-      final response = await _apiClient.get<List<dynamic>>(url);
+    return _withTimeout(
+      () async {
+        try {
+          String url = _buildUrl(credentials, 'get_live_streams');
+          if (categoryId != null) {
+            url += '&category_id=$categoryId';
+          }
+          final response = await _apiClient.get<dynamic>(url);
 
-      return (response.data ?? []).map((json) {
-        final streamId = json['stream_id']?.toString() ?? '';
-        return ChannelModel.fromJson({
-          ...json,
-          'stream_url': getLiveStreamUrl(credentials, streamId),
-        });
-      }).toList();
-    } catch (e) {
-      AppLogger.error('Failed to fetch live channels', e);
-      throw ServerException(message: 'Failed to fetch channels: $e');
-    }
+          return _safeParseList(response.data).map((json) {
+            final streamId = json['stream_id']?.toString() ?? '';
+            return ChannelModel.fromJson({
+              ...json as Map<String, dynamic>,
+              'stream_url': getLiveStreamUrl(credentials, streamId),
+            });
+          }).toList();
+        } catch (e) {
+          AppLogger.error('Failed to fetch live channels', e);
+          if (e is AppException) rethrow;
+          throw ServerException(message: 'Failed to fetch channels: ${_getErrorMessage(e)}');
+        }
+      },
+      timeout: kXtreamExtendedTimeout,
+      operationName: 'Fetch live channels',
+    );
   }
 
   @override
   Future<List<CategoryModel>> fetchMovieCategories(
     XtreamCredentials credentials,
   ) async {
-    try {
-      final url = _buildUrl(credentials, 'get_vod_categories');
-      final response = await _apiClient.get<List<dynamic>>(url);
+    return _withTimeout(
+      () async {
+        try {
+          final url = _buildUrl(credentials, 'get_vod_categories');
+          final response = await _apiClient.get<dynamic>(url);
 
-      return (response.data ?? [])
-          .map((json) => CategoryModel.fromJson(json))
-          .toList();
-    } catch (e) {
-      AppLogger.error('Failed to fetch movie categories', e);
-      throw ServerException(message: 'Failed to fetch movie categories: $e');
-    }
+          return _safeParseList(response.data)
+              .map((json) => CategoryModel.fromJson(json as Map<String, dynamic>))
+              .toList();
+        } catch (e) {
+          AppLogger.error('Failed to fetch movie categories', e);
+          if (e is AppException) rethrow;
+          throw ServerException(message: 'Failed to fetch movie categories: ${_getErrorMessage(e)}');
+        }
+      },
+      timeout: kXtreamDefaultTimeout,
+      operationName: 'Fetch movie categories',
+    );
   }
 
   @override
@@ -317,46 +438,60 @@ class XtreamApiClientImpl implements XtreamApiClient {
     XtreamCredentials credentials, {
     String? categoryId,
   }) async {
-    try {
-      String url = _buildUrl(credentials, 'get_vod_streams');
-      if (categoryId != null) {
-        url += '&category_id=$categoryId';
-      }
-      final response = await _apiClient.get<List<dynamic>>(url);
+    return _withTimeout(
+      () async {
+        try {
+          String url = _buildUrl(credentials, 'get_vod_streams');
+          if (categoryId != null) {
+            url += '&category_id=$categoryId';
+          }
+          final response = await _apiClient.get<dynamic>(url);
 
-      return (response.data ?? []).map((json) {
-        final streamId = json['stream_id']?.toString() ?? '';
-        final extension = json['container_extension'] ?? 'mp4';
-        return MovieModel.fromJson({
-          ...json,
-          'stream_url': getMovieStreamUrl(
-            credentials,
-            streamId,
-            extension: extension,
-          ),
-        });
-      }).toList();
-    } catch (e) {
-      AppLogger.error('Failed to fetch movies', e);
-      throw ServerException(message: 'Failed to fetch movies: $e');
-    }
+          return _safeParseList(response.data).map((json) {
+            final streamId = json['stream_id']?.toString() ?? '';
+            final extension = json['container_extension'] ?? 'mp4';
+            return MovieModel.fromJson({
+              ...json as Map<String, dynamic>,
+              'stream_url': getMovieStreamUrl(
+                credentials,
+                streamId,
+                extension: extension,
+              ),
+            });
+          }).toList();
+        } catch (e) {
+          AppLogger.error('Failed to fetch movies', e);
+          if (e is AppException) rethrow;
+          throw ServerException(message: 'Failed to fetch movies: ${_getErrorMessage(e)}');
+        }
+      },
+      timeout: kXtreamExtendedTimeout,
+      operationName: 'Fetch movies',
+    );
   }
 
   @override
   Future<List<CategoryModel>> fetchSeriesCategories(
     XtreamCredentials credentials,
   ) async {
-    try {
-      final url = _buildUrl(credentials, 'get_series_categories');
-      final response = await _apiClient.get<List<dynamic>>(url);
+    return _withTimeout(
+      () async {
+        try {
+          final url = _buildUrl(credentials, 'get_series_categories');
+          final response = await _apiClient.get<dynamic>(url);
 
-      return (response.data ?? [])
-          .map((json) => CategoryModel.fromJson(json))
-          .toList();
-    } catch (e) {
-      AppLogger.error('Failed to fetch series categories', e);
-      throw ServerException(message: 'Failed to fetch series categories: $e');
-    }
+          return _safeParseList(response.data)
+              .map((json) => CategoryModel.fromJson(json as Map<String, dynamic>))
+              .toList();
+        } catch (e) {
+          AppLogger.error('Failed to fetch series categories', e);
+          if (e is AppException) rethrow;
+          throw ServerException(message: 'Failed to fetch series categories: ${_getErrorMessage(e)}');
+        }
+      },
+      timeout: kXtreamDefaultTimeout,
+      operationName: 'Fetch series categories',
+    );
   }
 
   @override
@@ -364,20 +499,27 @@ class XtreamApiClientImpl implements XtreamApiClient {
     XtreamCredentials credentials, {
     String? categoryId,
   }) async {
-    try {
-      String url = _buildUrl(credentials, 'get_series');
-      if (categoryId != null) {
-        url += '&category_id=$categoryId';
-      }
-      final response = await _apiClient.get<List<dynamic>>(url);
+    return _withTimeout(
+      () async {
+        try {
+          String url = _buildUrl(credentials, 'get_series');
+          if (categoryId != null) {
+            url += '&category_id=$categoryId';
+          }
+          final response = await _apiClient.get<dynamic>(url);
 
-      return (response.data ?? [])
-          .map((json) => SeriesModel.fromJson(json))
-          .toList();
-    } catch (e) {
-      AppLogger.error('Failed to fetch series', e);
-      throw ServerException(message: 'Failed to fetch series: $e');
-    }
+          return _safeParseList(response.data)
+              .map((json) => SeriesModel.fromJson(json as Map<String, dynamic>))
+              .toList();
+        } catch (e) {
+          AppLogger.error('Failed to fetch series', e);
+          if (e is AppException) rethrow;
+          throw ServerException(message: 'Failed to fetch series: ${_getErrorMessage(e)}');
+        }
+      },
+      timeout: kXtreamExtendedTimeout,
+      operationName: 'Fetch series',
+    );
   }
 
   @override
@@ -385,60 +527,67 @@ class XtreamApiClientImpl implements XtreamApiClient {
     XtreamCredentials credentials,
     String seriesId,
   ) async {
-    try {
-      final url = '${_buildUrl(credentials, 'get_series_info')}&series_id=$seriesId';
-      final response = await _apiClient.get<Map<String, dynamic>>(url);
+    return _withTimeout(
+      () async {
+        try {
+          final url = '${_buildUrl(credentials, 'get_series_info')}&series_id=$seriesId';
+          final response = await _apiClient.get<Map<String, dynamic>>(url);
 
-      if (response.data == null) {
-        throw const ServerException(message: 'Series not found');
-      }
+          if (response.data == null) {
+            throw const ServerException(message: 'Series not found');
+          }
 
-      final data = response.data!;
-      final info = data['info'] ?? {};
-      final episodes = data['episodes'] as Map<String, dynamic>? ?? {};
+          final data = response.data!;
+          final info = data['info'] ?? {};
+          final episodes = data['episodes'] as Map<String, dynamic>? ?? {};
 
-      // Build seasons with episodes
-      final seasons = <SeasonModel>[];
-      episodes.forEach((seasonNumber, episodeList) {
-        final episodeModels = (episodeList as List).map((e) {
-          final streamId = e['id']?.toString() ?? '';
-          final extension = e['container_extension'] ?? 'mp4';
-          return EpisodeModel.fromJson({
-            ...e,
-            'stream_url': getSeriesStreamUrl(
-              credentials,
-              streamId,
-              extension: extension,
-            ),
+          // Build seasons with episodes
+          final seasons = <SeasonModel>[];
+          episodes.forEach((seasonNumber, episodeList) {
+            if (episodeList is! List) return;
+            final episodeModels = episodeList.map((e) {
+              final streamId = e['id']?.toString() ?? '';
+              final extension = e['container_extension'] ?? 'mp4';
+              return EpisodeModel.fromJson({
+                ...e as Map<String, dynamic>,
+                'stream_url': getSeriesStreamUrl(
+                  credentials,
+                  streamId,
+                  extension: extension,
+                ),
+              });
+            }).toList();
+
+            seasons.add(SeasonModel(
+              id: seasonNumber,
+              seasonNumber: int.tryParse(seasonNumber) ?? 1,
+              episodes: episodeModels,
+            ));
           });
-        }).toList();
 
-        seasons.add(SeasonModel(
-          id: seasonNumber,
-          seasonNumber: int.tryParse(seasonNumber) ?? 1,
-          episodes: episodeModels,
-        ));
-      });
-
-      return SeriesModel(
-        id: seriesId,
-        name: info['name'] ?? '',
-        posterUrl: info['cover'],
-        backdropUrl: info['backdrop_path']?.isNotEmpty == true
-            ? info['backdrop_path'][0]
-            : null,
-        description: info['plot'],
-        releaseDate: info['releaseDate'],
-        rating:
-            info['rating'] != null ? double.tryParse(info['rating']) : null,
-        genre: info['genre'],
-        seasons: seasons,
-      );
-    } catch (e) {
-      AppLogger.error('Failed to fetch series info', e);
-      if (e is AppException) rethrow;
-      throw ServerException(message: 'Failed to fetch series info: $e');
-    }
+          return SeriesModel(
+            id: seriesId,
+            name: info['name'] ?? '',
+            posterUrl: info['cover'],
+            backdropUrl: info['backdrop_path']?.isNotEmpty == true
+                ? info['backdrop_path'][0]
+                : null,
+            description: info['plot'],
+            releaseDate: info['releaseDate'],
+            rating:
+                info['rating'] != null ? double.tryParse(info['rating'].toString()) : null,
+            genre: info['genre'],
+            seasons: seasons,
+          );
+        } catch (e) {
+          AppLogger.error('Failed to fetch series info', e);
+          if (e is AppException) rethrow;
+          throw ServerException(message: 'Failed to fetch series info: ${_getErrorMessage(e)}');
+        }
+      },
+      timeout: kXtreamDefaultTimeout,
+      operationName: 'Fetch series info',
+    );
   }
 
   @override
@@ -474,51 +623,79 @@ class XtreamApiClientImpl implements XtreamApiClient {
     String streamId, {
     int limit = 2,
   }) async {
-    try {
-      final url = '${_buildUrl(credentials, 'get_short_epg')}&stream_id=$streamId&limit=$limit';
-      final response = await _apiClient.get<Map<String, dynamic>>(url);
+    // Use a shorter timeout for EPG as it's not critical
+    return _withTimeout(
+      () async {
+        try {
+          final url = '${_buildUrl(credentials, 'get_short_epg')}&stream_id=$streamId&limit=$limit';
+          final response = await _apiClient.get<Map<String, dynamic>>(url);
 
-      if (response.data == null) {
-        return [];
-      }
+          if (response.data == null) {
+            return [];
+          }
 
-      final data = response.data!;
-      final epgListings = data['epg_listings'] as List? ?? [];
+          final data = response.data!;
+          final epgListings = data['epg_listings'] as List? ?? [];
 
-      return epgListings
-          .map((json) => EpgEntry.fromJson(json))
-          .toList();
-    } catch (e) {
-      AppLogger.error('Failed to fetch short EPG', e);
-      return [];
-    }
+          return epgListings
+              .map((json) => EpgEntry.fromJson(json as Map<String, dynamic>))
+              .toList();
+        } catch (e) {
+          AppLogger.error('Failed to fetch short EPG', e);
+          // Return empty list on failure - EPG is not critical
+          return [];
+        }
+      },
+      timeout: kXtreamShortTimeout,
+      operationName: 'Fetch short EPG',
+    );
   }
 
   @override
   Future<Map<String, List<EpgEntry>>> fetchAllEpg(
     XtreamCredentials credentials,
   ) async {
-    try {
-      final url = _buildUrl(credentials, 'get_simple_data_table');
-      final response = await _apiClient.get<Map<String, dynamic>>(url);
+    // Use extended timeout for full EPG but handle failures gracefully
+    return _withTimeout(
+      () async {
+        try {
+          // Try the standard EPG endpoint first
+          final url = _buildUrl(credentials, 'get_simple_data_table');
+          final response = await _apiClient.get<dynamic>(url);
 
-      if (response.data == null) {
-        return {};
-      }
+          if (response.data == null) {
+            return {};
+          }
 
-      final data = response.data!;
-      final epgListings = data['epg_listings'] as List? ?? [];
-      final result = <String, List<EpgEntry>>{};
+          final data = response.data;
+          if (data is! Map<String, dynamic>) {
+            AppLogger.warning('EPG response is not a map: ${data.runtimeType}');
+            return {};
+          }
 
-      for (final json in epgListings) {
-        final entry = EpgEntry.fromJson(json);
-        result.putIfAbsent(entry.channelId, () => []).add(entry);
-      }
+          final epgListings = data['epg_listings'] as List? ?? [];
+          final result = <String, List<EpgEntry>>{};
 
-      return result;
-    } catch (e) {
-      AppLogger.error('Failed to fetch all EPG', e);
-      return {};
-    }
+          for (final json in epgListings) {
+            if (json is! Map<String, dynamic>) continue;
+            try {
+              final entry = EpgEntry.fromJson(json);
+              result.putIfAbsent(entry.channelId, () => []).add(entry);
+            } catch (e) {
+              // Skip invalid entries
+              AppLogger.debug('Skipping invalid EPG entry: $e');
+            }
+          }
+
+          return result;
+        } catch (e) {
+          AppLogger.error('Failed to fetch all EPG', e);
+          // Return empty map on failure - EPG is optional
+          return {};
+        }
+      },
+      timeout: kXtreamExtendedTimeout,
+      operationName: 'Fetch all EPG',
+    );
   }
 }

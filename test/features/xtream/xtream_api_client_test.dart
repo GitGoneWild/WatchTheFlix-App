@@ -7,7 +7,14 @@ import 'package:watchtheflix/domain/entities/playlist_source.dart';
 
 class MockApiClient extends Mock implements ApiClient {}
 
+// Register fallback values for Options
+class FakeOptions extends Fake implements Options {}
+
 void main() {
+  setUpAll(() {
+    registerFallbackValue(FakeOptions());
+  });
+  
   group('XtreamApiClient', () {
     late MockApiClient mockApiClient;
     late XtreamApiClientImpl xtreamClient;
@@ -43,11 +50,14 @@ void main() {
           },
         };
 
-        when(() => mockApiClient.get<Map<String, dynamic>>(any()))
-            .thenAnswer((_) async => Response(
-                  data: responseData,
-                  requestOptions: RequestOptions(path: ''),
-                ));
+        when(() => mockApiClient.get<Map<String, dynamic>>(
+          any(),
+          queryParameters: any(named: 'queryParameters'),
+          options: any(named: 'options'),
+        )).thenAnswer((_) async => Response(
+              data: responseData,
+              requestOptions: RequestOptions(path: ''),
+            ));
 
         // Act
         final result = await xtreamClient.login(credentials);
@@ -71,11 +81,14 @@ void main() {
           'server_info': {},
         };
 
-        when(() => mockApiClient.get<Map<String, dynamic>>(any()))
-            .thenAnswer((_) async => Response(
-                  data: responseData,
-                  requestOptions: RequestOptions(path: ''),
-                ));
+        when(() => mockApiClient.get<Map<String, dynamic>>(
+          any(),
+          queryParameters: any(named: 'queryParameters'),
+          options: any(named: 'options'),
+        )).thenAnswer((_) async => Response(
+              data: responseData,
+              requestOptions: RequestOptions(path: ''),
+            ));
 
         // Act & Assert
         expect(
@@ -147,11 +160,14 @@ void main() {
           },
         ];
 
-        when(() => mockApiClient.get<List<dynamic>>(any()))
-            .thenAnswer((_) async => Response(
-                  data: responseData,
-                  requestOptions: RequestOptions(path: ''),
-                ));
+        when(() => mockApiClient.get<dynamic>(
+          any(),
+          queryParameters: any(named: 'queryParameters'),
+          options: any(named: 'options'),
+        )).thenAnswer((_) async => Response(
+              data: responseData,
+              requestOptions: RequestOptions(path: ''),
+            ));
 
         // Act
         final result = await xtreamClient.fetchLiveChannels(credentials);
@@ -174,11 +190,14 @@ void main() {
           },
         ];
 
-        when(() => mockApiClient.get<List<dynamic>>(any()))
-            .thenAnswer((_) async => Response(
-                  data: responseData,
-                  requestOptions: RequestOptions(path: ''),
-                ));
+        when(() => mockApiClient.get<dynamic>(
+          any(),
+          queryParameters: any(named: 'queryParameters'),
+          options: any(named: 'options'),
+        )).thenAnswer((_) async => Response(
+              data: responseData,
+              requestOptions: RequestOptions(path: ''),
+            ));
 
         // Act
         final result = await xtreamClient.fetchLiveChannels(
@@ -210,11 +229,14 @@ void main() {
           },
         ];
 
-        when(() => mockApiClient.get<List<dynamic>>(any()))
-            .thenAnswer((_) async => Response(
-                  data: responseData,
-                  requestOptions: RequestOptions(path: ''),
-                ));
+        when(() => mockApiClient.get<dynamic>(
+          any(),
+          queryParameters: any(named: 'queryParameters'),
+          options: any(named: 'options'),
+        )).thenAnswer((_) async => Response(
+              data: responseData,
+              requestOptions: RequestOptions(path: ''),
+            ));
 
         // Act
         final result = await xtreamClient.fetchLiveCategories(credentials);

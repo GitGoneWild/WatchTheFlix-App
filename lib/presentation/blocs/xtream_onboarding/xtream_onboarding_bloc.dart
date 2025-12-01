@@ -223,6 +223,12 @@ class XtreamOnboardingBloc
 
   XtreamCredentials? _currentCredentials;
   String? _currentPlaylistName;
+  
+  /// Flag to track if onboarding has been cancelled
+  bool _isCancelled = false;
+
+  /// Maximum time for the entire onboarding process (5 minutes)
+  static const Duration _onboardingTimeout = Duration(minutes: 5);
 
   XtreamOnboardingBloc({
     required XtreamApiClient apiClient,
@@ -241,6 +247,7 @@ class XtreamOnboardingBloc
   ) async {
     _currentCredentials = event.credentials;
     _currentPlaylistName = event.playlistName;
+    _isCancelled = false;
 
     await _performOnboarding(emit);
   }
@@ -250,6 +257,7 @@ class XtreamOnboardingBloc
     Emitter<XtreamOnboardingState> emit,
   ) async {
     if (_currentCredentials != null) {
+      _isCancelled = false;
       await _performOnboarding(emit);
     }
   }
@@ -258,17 +266,28 @@ class XtreamOnboardingBloc
     CancelOnboardingEvent event,
     Emitter<XtreamOnboardingState> emit,
   ) async {
+    _isCancelled = true;
     emit(const XtreamOnboardingInitial());
     _currentCredentials = null;
     _currentPlaylistName = null;
   }
+  
+  /// Check if onboarding has been cancelled and throw if so
+  void _checkCancelled() {
+    if (_isCancelled) {
+      throw const AppException(message: 'Onboarding cancelled');
+    }
+  }
 
   /// Delay between API requests to avoid rate limiting (in milliseconds)
-  static const int _requestDelayMs = 100;
+  static const int _requestDelayMs = 150;
 
   /// Helper method to add a small delay between API requests
+  /// Also checks for cancellation
   Future<void> _rateLimitDelay() async {
+    _checkCancelled();
     await Future.delayed(const Duration(milliseconds: _requestDelayMs));
+    _checkCancelled();
   }
 
   Future<void> _performOnboarding(Emitter<XtreamOnboardingState> emit) async {
@@ -284,186 +303,21 @@ class XtreamOnboardingBloc
     int epgChannels = 0;
 
     try {
-      // Step 1: Authenticate
-      emit(XtreamOnboardingInProgress(
-        currentStep: OnboardingStep.authenticating,
-        statusMessage: 'Verifying credentials...',
+      // Wrap the entire onboarding in a global timeout
+      await _performOnboardingWithTimeout(
+        credentials: credentials,
         completedSteps: completedSteps,
-      ));
-
-      AppLogger.info('Starting Xtream onboarding for ${credentials.username}');
-
-      final loginResponse = await _apiClient.login(credentials);
-      if (!loginResponse.isAuthenticated) {
-        throw Exception('Authentication failed: ${loginResponse.message}');
-      }
-
-      completedSteps.add(const OnboardingStepResult(
-        step: OnboardingStep.authenticating,
-        success: true,
-        itemCount: 1,
-      ));
-
-      AppLogger.info('Authentication successful');
-
-      // Step 2: Fetch all categories in parallel
-      // Fetches live, movie, and series categories simultaneously via XtreamService.
-      // All results are cached by the service for later use.
-      emit(XtreamOnboardingInProgress(
-        currentStep: OnboardingStep.fetchingLiveCategories,
-        statusMessage: 'Loading all categories...',
-        completedSteps: List.from(completedSteps),
-      ));
-
-      await _rateLimitDelay();
-      
-      // Fetch all three category types in parallel using XtreamService
-      final categoriesResults = await Future.wait([
-        _xtreamService.getLiveCategories(credentials, forceRefresh: true),
-        _xtreamService.getMovieCategories(credentials, forceRefresh: true),
-        _xtreamService.getSeriesCategories(credentials, forceRefresh: true),
-      ]);
-
-      final liveCategoriesList = categoriesResults[0];
-      final movieCategoriesList = categoriesResults[1];
-      final seriesCategoriesList = categoriesResults[2];
-
-      liveCategories = liveCategoriesList.length;
-      movieCategories = movieCategoriesList.length;
-      seriesCategories = seriesCategoriesList.length;
-
-      completedSteps.add(OnboardingStepResult(
-        step: OnboardingStep.fetchingLiveCategories,
-        success: true,
-        itemCount: liveCategories,
-      ));
-
-      AppLogger.info('Loaded $liveCategories live categories');
-
-      // Mark movie and series categories as completed too
-      completedSteps.add(OnboardingStepResult(
-        step: OnboardingStep.fetchingMovieCategories,
-        success: true,
-        itemCount: movieCategories,
-      ));
-
-      AppLogger.info('Loaded $movieCategories movie categories');
-
-      completedSteps.add(OnboardingStepResult(
-        step: OnboardingStep.fetchingSeriesCategories,
-        success: true,
-        itemCount: seriesCategories,
-      ));
-
-      AppLogger.info('Loaded $seriesCategories series categories');
-
-      // Step 3: Fetch Live Channels
-      emit(XtreamOnboardingInProgress(
-        currentStep: OnboardingStep.fetchingLiveChannels,
-        statusMessage: 'Loading Live TV channels...',
-        completedSteps: List.from(completedSteps),
-      ));
-
-      await _rateLimitDelay();
-
-      // Use XtreamService which caches the results
-      final liveChannelsList = await _xtreamService.getLiveChannels(
-        credentials,
-        forceRefresh: true,
+        emit: emit,
+        onProgress: (step, counts) {
+          liveCategories = counts['liveCategories'] ?? liveCategories;
+          liveChannels = counts['liveChannels'] ?? liveChannels;
+          movieCategories = counts['movieCategories'] ?? movieCategories;
+          movies = counts['movies'] ?? movies;
+          seriesCategories = counts['seriesCategories'] ?? seriesCategories;
+          series = counts['series'] ?? series;
+          epgChannels = counts['epgChannels'] ?? epgChannels;
+        },
       );
-      liveChannels = liveChannelsList.length;
-
-      completedSteps.add(OnboardingStepResult(
-        step: OnboardingStep.fetchingLiveChannels,
-        success: true,
-        itemCount: liveChannels,
-      ));
-
-      AppLogger.info('Loaded $liveChannels live channels');
-
-      // Step 4: Fetch Movies
-      emit(XtreamOnboardingInProgress(
-        currentStep: OnboardingStep.fetchingMovies,
-        statusMessage: 'Loading movies...',
-        completedSteps: List.from(completedSteps),
-      ));
-
-      await _rateLimitDelay();
-
-      // Use XtreamService which caches the results
-      final moviesList = await _xtreamService.getMovies(
-        credentials,
-        forceRefresh: true,
-      );
-      movies = moviesList.length;
-
-      completedSteps.add(OnboardingStepResult(
-        step: OnboardingStep.fetchingMovies,
-        success: true,
-        itemCount: movies,
-      ));
-
-      AppLogger.info('Loaded $movies movies');
-
-      // Step 5: Fetch Series
-      emit(XtreamOnboardingInProgress(
-        currentStep: OnboardingStep.fetchingSeries,
-        statusMessage: 'Loading series...',
-        completedSteps: List.from(completedSteps),
-      ));
-
-      await _rateLimitDelay();
-
-      // Use XtreamService which caches the results
-      final seriesList = await _xtreamService.getSeries(
-        credentials,
-        forceRefresh: true,
-      );
-      series = seriesList.length;
-
-      completedSteps.add(OnboardingStepResult(
-        step: OnboardingStep.fetchingSeries,
-        success: true,
-        itemCount: series,
-      ));
-
-      AppLogger.info('Loaded $series series');
-
-      // Step 6: Fetch EPG (optional, may fail on some providers)
-      emit(XtreamOnboardingInProgress(
-        currentStep: OnboardingStep.fetchingEpg,
-        statusMessage: 'Loading EPG data...',
-        completedSteps: List.from(completedSteps),
-      ));
-
-      await _rateLimitDelay();
-
-      try {
-        // Use XtreamService for EPG - it fetches and caches the results
-        final epgData = await _xtreamService.getEpg(
-          credentials,
-          forceRefresh: true,
-        );
-        epgChannels = epgData.length;
-        completedSteps.add(OnboardingStepResult(
-          step: OnboardingStep.fetchingEpg,
-          success: true,
-          itemCount: epgChannels,
-        ));
-        AppLogger.info('Loaded EPG for $epgChannels channels');
-      } catch (e) {
-        // EPG is optional, log but don't fail
-        AppLogger.warning('EPG data not available: $e');
-        completedSteps.add(OnboardingStepResult(
-          step: OnboardingStep.fetchingEpg,
-          success: false,
-          itemCount: 0,
-          errorMessage: 'EPG data not available',
-        ));
-      }
-
-      // Data is now cached by XtreamService - no need to call fullRefresh()
-      // which would duplicate all the API calls we just made.
 
       // Complete
       final result = OnboardingResult(
@@ -483,7 +337,21 @@ class XtreamOnboardingBloc
       );
 
       emit(XtreamOnboardingCompleted(result));
+    } on TimeoutException catch (_) {
+      final currentStep = _getCurrentStep(completedSteps);
+      AppLogger.error(
+        'Xtream onboarding timed out at step: ${currentStep.displayName}',
+      );
+
+      emit(XtreamOnboardingError(
+        message: 'Onboarding timed out. The server may be slow or unresponsive.',
+        failedStep: currentStep,
+        canRetry: true,
+      ));
     } catch (e, stackTrace) {
+      // Don't emit error for cancellation
+      if (_isCancelled) return;
+      
       final currentStep = _getCurrentStep(completedSteps);
       AppLogger.error(
         'Xtream onboarding failed at step: ${currentStep.displayName}',
@@ -494,9 +362,253 @@ class XtreamOnboardingBloc
       emit(XtreamOnboardingError(
         message: _formatErrorMessage(e),
         failedStep: currentStep,
-        canRetry: true,
+        canRetry: _isRetryableError(e),
       ));
     }
+  }
+
+  /// Check if the error is something we can retry
+  bool _isRetryableError(dynamic error) {
+    if (error is AuthException) return false; // Don't retry auth errors
+    if (error.toString().contains('cancelled')) return false;
+    return true;
+  }
+
+  /// Perform onboarding steps with a global timeout
+  Future<void> _performOnboardingWithTimeout({
+    required XtreamCredentials credentials,
+    required List<OnboardingStepResult> completedSteps,
+    required Emitter<XtreamOnboardingState> emit,
+    required void Function(OnboardingStep step, Map<String, int> counts) onProgress,
+  }) async {
+    await Future.any([
+      _performOnboardingSteps(
+        credentials: credentials,
+        completedSteps: completedSteps,
+        emit: emit,
+        onProgress: onProgress,
+      ),
+      Future.delayed(_onboardingTimeout).then((_) {
+        throw TimeoutException(
+          'Onboarding timed out after ${_onboardingTimeout.inMinutes} minutes',
+          _onboardingTimeout,
+        );
+      }),
+    ]);
+  }
+
+  /// Execute all onboarding steps
+  Future<void> _performOnboardingSteps({
+    required XtreamCredentials credentials,
+    required List<OnboardingStepResult> completedSteps,
+    required Emitter<XtreamOnboardingState> emit,
+    required void Function(OnboardingStep step, Map<String, int> counts) onProgress,
+  }) async {
+    // Step 1: Authenticate
+    _checkCancelled();
+    emit(XtreamOnboardingInProgress(
+      currentStep: OnboardingStep.authenticating,
+      statusMessage: 'Verifying credentials...',
+      completedSteps: completedSteps,
+    ));
+
+    AppLogger.info('Starting Xtream onboarding for ${credentials.username}');
+
+    final loginResponse = await _apiClient.login(credentials);
+    _checkCancelled();
+    
+    if (!loginResponse.isAuthenticated) {
+      throw AuthException(message: 'Authentication failed: ${loginResponse.message}');
+    }
+
+    completedSteps.add(const OnboardingStepResult(
+      step: OnboardingStep.authenticating,
+      success: true,
+      itemCount: 1,
+    ));
+
+    AppLogger.info('Authentication successful');
+
+    // Step 2: Fetch all categories in parallel
+    _checkCancelled();
+    emit(XtreamOnboardingInProgress(
+      currentStep: OnboardingStep.fetchingLiveCategories,
+      statusMessage: 'Loading all categories...',
+      completedSteps: List.from(completedSteps),
+    ));
+
+    await _rateLimitDelay();
+    
+    // Fetch all three category types in parallel using XtreamService
+    final categoriesResults = await Future.wait([
+      _xtreamService.getLiveCategories(credentials, forceRefresh: true),
+      _xtreamService.getMovieCategories(credentials, forceRefresh: true),
+      _xtreamService.getSeriesCategories(credentials, forceRefresh: true),
+    ]);
+
+    _checkCancelled();
+
+    final liveCategoriesList = categoriesResults[0];
+    final movieCategoriesList = categoriesResults[1];
+    final seriesCategoriesList = categoriesResults[2];
+
+    final liveCategories = liveCategoriesList.length;
+    final movieCategories = movieCategoriesList.length;
+    final seriesCategories = seriesCategoriesList.length;
+    
+    onProgress(OnboardingStep.fetchingLiveCategories, {
+      'liveCategories': liveCategories,
+      'movieCategories': movieCategories,
+      'seriesCategories': seriesCategories,
+    });
+
+    completedSteps.add(OnboardingStepResult(
+      step: OnboardingStep.fetchingLiveCategories,
+      success: true,
+      itemCount: liveCategories,
+    ));
+
+    AppLogger.info('Loaded $liveCategories live categories');
+
+    // Mark movie and series categories as completed too
+    completedSteps.add(OnboardingStepResult(
+      step: OnboardingStep.fetchingMovieCategories,
+      success: true,
+      itemCount: movieCategories,
+    ));
+
+    AppLogger.info('Loaded $movieCategories movie categories');
+
+    completedSteps.add(OnboardingStepResult(
+      step: OnboardingStep.fetchingSeriesCategories,
+      success: true,
+      itemCount: seriesCategories,
+    ));
+
+    AppLogger.info('Loaded $seriesCategories series categories');
+
+    // Step 3: Fetch Live Channels
+    _checkCancelled();
+    emit(XtreamOnboardingInProgress(
+      currentStep: OnboardingStep.fetchingLiveChannels,
+      statusMessage: 'Loading Live TV channels...',
+      completedSteps: List.from(completedSteps),
+    ));
+
+    await _rateLimitDelay();
+
+    // Use XtreamService which caches the results
+    final liveChannelsList = await _xtreamService.getLiveChannels(
+      credentials,
+      forceRefresh: true,
+    );
+    _checkCancelled();
+    
+    final liveChannels = liveChannelsList.length;
+    onProgress(OnboardingStep.fetchingLiveChannels, {'liveChannels': liveChannels});
+
+    completedSteps.add(OnboardingStepResult(
+      step: OnboardingStep.fetchingLiveChannels,
+      success: true,
+      itemCount: liveChannels,
+    ));
+
+    AppLogger.info('Loaded $liveChannels live channels');
+
+    // Step 4: Fetch Movies
+    _checkCancelled();
+    emit(XtreamOnboardingInProgress(
+      currentStep: OnboardingStep.fetchingMovies,
+      statusMessage: 'Loading movies...',
+      completedSteps: List.from(completedSteps),
+    ));
+
+    await _rateLimitDelay();
+
+    // Use XtreamService which caches the results
+    final moviesList = await _xtreamService.getMovies(
+      credentials,
+      forceRefresh: true,
+    );
+    _checkCancelled();
+    
+    final movies = moviesList.length;
+    onProgress(OnboardingStep.fetchingMovies, {'movies': movies});
+
+    completedSteps.add(OnboardingStepResult(
+      step: OnboardingStep.fetchingMovies,
+      success: true,
+      itemCount: movies,
+    ));
+
+    AppLogger.info('Loaded $movies movies');
+
+    // Step 5: Fetch Series
+    _checkCancelled();
+    emit(XtreamOnboardingInProgress(
+      currentStep: OnboardingStep.fetchingSeries,
+      statusMessage: 'Loading series...',
+      completedSteps: List.from(completedSteps),
+    ));
+
+    await _rateLimitDelay();
+
+    // Use XtreamService which caches the results
+    final seriesList = await _xtreamService.getSeries(
+      credentials,
+      forceRefresh: true,
+    );
+    _checkCancelled();
+    
+    final series = seriesList.length;
+    onProgress(OnboardingStep.fetchingSeries, {'series': series});
+
+    completedSteps.add(OnboardingStepResult(
+      step: OnboardingStep.fetchingSeries,
+      success: true,
+      itemCount: series,
+    ));
+
+    AppLogger.info('Loaded $series series');
+
+    // Step 6: Fetch EPG (optional, may fail on some providers)
+    _checkCancelled();
+    emit(XtreamOnboardingInProgress(
+      currentStep: OnboardingStep.fetchingEpg,
+      statusMessage: 'Loading EPG data...',
+      completedSteps: List.from(completedSteps),
+    ));
+
+    await _rateLimitDelay();
+
+    try {
+      // Use XtreamService for EPG - it fetches and caches the results
+      final epgData = await _xtreamService.getEpg(
+        credentials,
+        forceRefresh: true,
+      );
+      final epgChannels = epgData.length;
+      onProgress(OnboardingStep.fetchingEpg, {'epgChannels': epgChannels});
+      
+      completedSteps.add(OnboardingStepResult(
+        step: OnboardingStep.fetchingEpg,
+        success: true,
+        itemCount: epgChannels,
+      ));
+      AppLogger.info('Loaded EPG for $epgChannels channels');
+    } catch (e) {
+      // EPG is optional, log but don't fail
+      AppLogger.warning('EPG data not available: $e');
+      completedSteps.add(OnboardingStepResult(
+        step: OnboardingStep.fetchingEpg,
+        success: false,
+        itemCount: 0,
+        errorMessage: 'EPG data not available',
+      ));
+    }
+
+    // Data is now cached by XtreamService - no need to call fullRefresh()
+    // which would duplicate all the API calls we just made.
   }
 
   OnboardingStep _getCurrentStep(List<OnboardingStepResult> completedSteps) {
