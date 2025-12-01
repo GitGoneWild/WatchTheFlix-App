@@ -20,6 +20,7 @@ import '../../presentation/blocs/player/player_bloc.dart';
 import '../../presentation/blocs/navigation/navigation_bloc.dart';
 import '../../presentation/blocs/favorites/favorites_bloc.dart';
 import '../../presentation/blocs/settings/settings_bloc.dart';
+import '../../presentation/blocs/xtream_onboarding/xtream_onboarding_bloc.dart';
 
 final getIt = GetIt.instance;
 
@@ -109,6 +110,13 @@ Future<void> initDependencies() async {
   getIt.registerFactory(
     () => SettingsBloc(
       localStorage: getIt(),
+    ),
+  );
+
+  getIt.registerFactory(
+    () => XtreamOnboardingBloc(
+      apiClient: getIt(),
+      xtreamService: getIt(),
     ),
   );
 }

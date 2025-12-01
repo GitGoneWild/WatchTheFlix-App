@@ -53,6 +53,7 @@ class AppRoutes {
   static const String splash = '/';
   static const String onboarding = '/onboarding';
   static const String addPlaylist = '/add-playlist';
+  static const String xtreamOnboarding = '/xtream-onboarding';
   static const String home = '/home';
   static const String liveTV = '/live-tv';
   static const String movies = '/movies';

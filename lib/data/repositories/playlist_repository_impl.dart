@@ -36,10 +36,21 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
 
   @override
   Future<PlaylistSource> addPlaylist(PlaylistSource playlist) async {
-    final model = PlaylistSourceModel.fromEntity(playlist);
-    await _localStorage.addPlaylist(model);
-    AppLogger.info('Playlist added: ${playlist.name}');
-    return playlist;
+    try {
+      final model = PlaylistSourceModel.fromEntity(playlist);
+      await _localStorage.addPlaylist(model);
+      AppLogger.info(
+        'Playlist added successfully: "${playlist.name}" (type: ${playlist.type.name})',
+      );
+      return playlist;
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        'Failed to add playlist: "${playlist.name}"',
+        e,
+        stackTrace,
+      );
+      rethrow;
+    }
   }
 
   @override
@@ -55,10 +66,15 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
 
   @override
   Future<void> deletePlaylist(String id) async {
-    await _localStorage.deletePlaylist(id);
-    _channelCache.remove(id);
-    _categoryCache.remove(id);
-    AppLogger.info('Playlist deleted: $id');
+    try {
+      await _localStorage.deletePlaylist(id);
+      _channelCache.remove(id);
+      _categoryCache.remove(id);
+      AppLogger.info('Playlist deleted successfully: $id');
+    } catch (e, stackTrace) {
+      AppLogger.error('Failed to delete playlist: $id', e, stackTrace);
+      rethrow;
+    }
   }
 
   @override
