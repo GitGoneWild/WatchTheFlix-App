@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../core/constants/app_constants.dart';
 import '../../../core/errors/exceptions.dart';
 import '../../../core/utils/logger.dart';
 import '../../../domain/entities/playlist_source.dart';
@@ -307,8 +306,9 @@ class XtreamOnboardingBloc
 
       AppLogger.info('Authentication successful');
 
-      // Step 2: Fetch all categories in parallel (smart batching)
-      // This reduces 3 sequential API calls to 3 parallel calls
+      // Step 2: Fetch all categories in parallel
+      // Fetches live, movie, and series categories simultaneously via XtreamService.
+      // All results are cached by the service for later use.
       emit(XtreamOnboardingInProgress(
         currentStep: OnboardingStep.fetchingLiveCategories,
         statusMessage: 'Loading all categories...',
@@ -318,7 +318,6 @@ class XtreamOnboardingBloc
       await _rateLimitDelay();
       
       // Fetch all three category types in parallel using XtreamService
-      // The service caches the results for later use
       final categoriesResults = await Future.wait([
         _xtreamService.getLiveCategories(credentials, forceRefresh: true),
         _xtreamService.getMovieCategories(credentials, forceRefresh: true),
@@ -463,9 +462,8 @@ class XtreamOnboardingBloc
         ));
       }
 
-      // Note: We no longer call fullRefresh() here because all data
-      // has already been fetched and cached via XtreamService methods above.
-      // This eliminates 5 duplicate API calls that were previously made.
+      // Data is now cached by XtreamService - no need to call fullRefresh()
+      // which would duplicate all the API calls we just made.
 
       // Complete
       final result = OnboardingResult(
