@@ -17,13 +17,15 @@ WatchTheFlix is a modern, feature-rich IPTV streaming application built with Flu
 - 📺 **Live TV Streaming** - Watch your favorite channels in real-time
 - 🎬 **Movies & Series** - Browse and stream VOD content
 - 📋 **M3U Playlist Support** - Import playlists via URL or file
-- 🔗 **Xtream Codes API** - Connect to your IPTV provider
+- 🔗 **Xtream Codes API** - Connect to your IPTV provider with full account overview
 - 🔍 **Smart Search** - Find content across all categories
 - 📱 **Cross-Platform** - Android, iOS, Web, Windows, macOS, Linux
 - 🌙 **Dark Theme** - Cinematic Netflix-style dark interface
 - ⭐ **Favorites** - Save your favorite channels
 - 📺 **EPG Support** - Electronic Program Guide integration
 - 🖼️ **Picture-in-Picture** - Watch while multitasking
+- 🛡️ **VPN Awareness** - VPN detection and status display
+- 📊 **Optional Firebase** - Analytics and push notifications (free tier)
 
 ---
 
@@ -125,7 +127,7 @@ flutter build linux --release
 
 ```
 lib/
-├── core/                    # Core functionality
+├── core/                    # Legacy core functionality
 │   ├── config/             # Dependency injection
 │   ├── constants/          # App constants
 │   ├── errors/             # Exception/failure handling
@@ -140,9 +142,40 @@ lib/
 │   ├── entities/           # Business entities
 │   ├── repositories/       # Repository interfaces
 │   └── usecases/           # Use cases
-├── features/               # Feature modules
+├── features/               # Legacy feature modules
 │   ├── m3u/                # M3U parser
 │   └── xtream/             # Xtream API client
+├── modules/                # 🆕 Refactored modular architecture
+│   ├── core/               # Shared infrastructure
+│   │   ├── config/         # App configuration & environment
+│   │   ├── logging/        # Centralized logging
+│   │   ├── models/         # Shared domain models & interfaces
+│   │   ├── network/        # HTTP client abstractions
+│   │   └── storage/        # Storage abstractions
+│   ├── xtreamcodes/        # Xtream Codes integration
+│   │   ├── auth/           # Authentication service
+│   │   ├── account/        # Account overview & models
+│   │   ├── livetv/         # Live TV service
+│   │   ├── movies/         # Movies/VOD service
+│   │   ├── series/         # Series service
+│   │   ├── epg/            # EPG service
+│   │   ├── mappers/        # API to domain mappers
+│   │   └── repositories/   # Base repository utilities
+│   ├── m3u/                # M3U playlist handling
+│   │   ├── import/         # File/URL import service
+│   │   ├── parsing/        # M3U parser
+│   │   └── mapping/        # M3U to domain mappers
+│   ├── vpn/                # VPN detection
+│   │   ├── detection/      # VPN detector
+│   │   └── providers/      # VPN provider interfaces
+│   ├── firebase/           # Optional Firebase integration
+│   │   ├── analytics/      # Analytics service
+│   │   ├── messaging/      # Push notifications
+│   │   └── remote_config/  # Remote configuration
+│   └── ui/                 # Shared UI components
+│       ├── components/     # Reusable widgets
+│       ├── shared/         # Shared utilities
+│       └── icons/          # App icons
 ├── presentation/           # Presentation layer
 │   ├── blocs/              # BLoC state management
 │   ├── routes/             # App routing
@@ -161,6 +194,33 @@ WatchTheFlix follows **Clean Architecture** principles with a clear separation o
 - **Presentation Layer**: Flutter widgets, BLoC state management
 - **Domain Layer**: Business logic, entities, use cases
 - **Data Layer**: Repositories, data sources, models
+- **Modules Layer**: Feature-based modular architecture (see below)
+
+### Modular Architecture
+
+The `lib/modules/` directory contains a refactored, modular architecture:
+
+| Module | Description |
+|--------|-------------|
+| `core` | Shared infrastructure (config, logging, models, network, storage) |
+| `xtreamcodes` | Complete Xtream Codes API integration |
+| `m3u` | M3U playlist import, parsing, and mapping |
+| `vpn` | VPN detection and provider integration |
+| `firebase` | Optional Firebase services (analytics, messaging, remote config) |
+| `ui` | Shared UI components and icons |
+
+#### Content Source Strategy
+
+The app supports two strategies for fetching channel data:
+
+```dart
+enum ContentSourceStrategy {
+  xtreamApiDirect,    // Fetch live via Xtream API endpoints
+  xtreamM3uImport,    // Download M3U once and parse locally
+}
+```
+
+Configure in `lib/modules/core/config/app_config.dart`.
 
 ### State Management
 
@@ -174,6 +234,57 @@ The app uses **BLoC (Business Logic Component)** pattern with:
 Dependencies are managed using **GetIt** service locator:
 - Lazy singleton registration
 - Easy testing with mock replacements
+
+---
+
+## ⚙️ Configuration
+
+### Firebase (Optional)
+
+Firebase is optional and the app will build/run without it. To enable:
+
+1. Set `firebaseEnabled = true` in `lib/modules/core/config/app_config.dart`
+2. Add your Firebase configuration files
+3. Provide project ID, API key, and app ID
+
+```dart
+await AppConfig().initialize(
+  firebaseEnabled: true,
+  firebaseProjectId: 'your-project-id',
+  firebaseApiKey: 'your-api-key',
+  firebaseAppId: 'your-app-id',
+);
+```
+
+### VPN Detection
+
+VPN awareness is enabled by default. Configure in `AppConfig`:
+
+```dart
+AppConfig().vpnDetectionEnabled = true;  // or false to disable
+```
+
+### Content Source Strategy
+
+Choose between direct API calls or M3U preloading:
+
+```dart
+AppConfig().contentSourceStrategy = ContentSourceStrategy.xtreamApiDirect;
+// or
+AppConfig().contentSourceStrategy = ContentSourceStrategy.xtreamM3uImport;
+```
+
+---
+
+## 📚 Documentation
+
+Detailed documentation is available in the `docs/` folder:
+
+- [Architecture Overview](docs/architecture.md) - Module structure and data flow
+- [Xtream Codes Integration](docs/xtream.md) - API usage and mapping
+- [M3U Parsing](docs/m3u.md) - Parser capabilities and limitations
+- [Firebase Setup](docs/firebase.md) - Configuration guide
+- [VPN Detection](docs/vpn.md) - How detection works
 
 ---
 
