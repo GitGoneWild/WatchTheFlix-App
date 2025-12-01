@@ -269,13 +269,7 @@ class XtreamApiClientImpl implements XtreamApiClient {
           final url =
               '${credentials.baseUrl}/player_api.php?username=$encodedUsername&password=$encodedPassword';
           
-          final response = await _apiClient.get<Map<String, dynamic>>(
-            url,
-            options: Options(
-              receiveTimeout: kXtreamShortTimeout,
-              sendTimeout: kXtreamShortTimeout,
-            ),
-          );
+          final response = await _apiClient.get<Map<String, dynamic>>(url);
 
           if (response.data == null) {
             throw const AuthException(message: 'Invalid response from server');
