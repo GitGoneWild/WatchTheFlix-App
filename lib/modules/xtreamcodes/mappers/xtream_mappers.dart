@@ -17,7 +17,7 @@ class XtreamMappers {
       name: stream.name,
       streamUrl: apiClient.getLiveStreamUrl(stream.streamId),
       logoUrl: stream.streamIcon.isNotEmpty ? stream.streamIcon : null,
-      groupTitle: stream.categoryId.isNotEmpty ? stream.categoryId : null,
+      groupTitle: null, // Will be enriched with category name from repository
       categoryId: stream.categoryId,
       type: ContentType.live,
       metadata: {
