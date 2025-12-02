@@ -169,7 +169,8 @@ class XtreamChannelRepository implements ChannelRepository {
       }
 
       // Convert VOD items to Movie entities
-      final movies = result.data.map((vodItem) => _vodItemToMovie(vodItem)).toList();
+      final List<Movie> movies =
+          result.data.map((vodItem) => _vodItemToMovie(vodItem)).toList();
 
       moduleLogger.info(
         'Retrieved ${movies.length} movies',
