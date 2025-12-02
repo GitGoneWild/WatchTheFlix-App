@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../core/config/dependency_injection.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../blocs/xtream_auth/xtream_auth_bloc.dart';
@@ -70,39 +69,37 @@ class _XtreamLoginScreenState extends State<XtreamLoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => getIt<XtreamAuthBloc>(),
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Xtream Codes Login'),
-        ),
-        body: BlocConsumer<XtreamAuthBloc, XtreamAuthState>(
-          listener: (context, state) {
-            if (state is XtreamAuthAuthenticated) {
-              // Navigate to progress screen with credentials
-              Navigator.pushReplacementNamed(
-                context,
-                AppRoutes.xtreamProgress,
-                arguments: state.credentials,
-              );
-            } else if (state is XtreamAuthError) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(state.message),
-                  backgroundColor: AppColors.primary,
-                ),
-              );
-            } else if (state is XtreamAuthValidationError) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(state.message),
-                  backgroundColor: Colors.orange,
-                ),
-              );
-            }
-          },
-          builder: (context, state) {
-            final isLoading = state is XtreamAuthLoading;
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Xtream Codes Login'),
+      ),
+      body: BlocConsumer<XtreamAuthBloc, XtreamAuthState>(
+        listener: (context, state) {
+          if (state is XtreamAuthAuthenticated) {
+            // Navigate to progress screen with credentials
+            Navigator.pushReplacementNamed(
+              context,
+              AppRoutes.xtreamProgress,
+              arguments: state.credentials,
+            );
+          } else if (state is XtreamAuthError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: AppColors.primary,
+              ),
+            );
+          } else if (state is XtreamAuthValidationError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          }
+        },
+        builder: (context, state) {
+          final isLoading = state is XtreamAuthLoading;
 
             return SingleChildScrollView(
               padding: const EdgeInsets.all(24),
@@ -232,7 +229,6 @@ class _XtreamLoginScreenState extends State<XtreamLoginScreen> {
             );
           },
         ),
-      ),
-    );
+      );
   }
 }

@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/config/dependency_injection.dart';
 import '../../core/constants/app_constants.dart';
 import '../../domain/entities/channel.dart';
+import '../blocs/xtream_auth/xtream_auth_bloc.dart';
 import '../screens/onboarding/onboarding_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/home/search_screen.dart';
@@ -25,7 +26,13 @@ class AppRouter {
         return _buildRoute(const AddPlaylistScreen(), settings);
 
       case AppRoutes.xtreamLogin:
-        return _buildRoute(const XtreamLoginScreen(), settings);
+        return _buildRoute(
+          BlocProvider(
+            create: (_) => getIt<XtreamAuthBloc>(),
+            child: const XtreamLoginScreen(),
+          ),
+          settings,
+        );
 
       case AppRoutes.xtreamProgress:
         final credentials = settings.arguments as XtreamCredentials?;
