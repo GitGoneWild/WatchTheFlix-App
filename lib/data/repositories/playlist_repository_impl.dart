@@ -103,7 +103,6 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
       final content = await _apiClient.download(playlist.url);
       channels = _m3uParser.parse(content);
     } else {
-      // For Xtream, channels are fetched via XtreamApiClient separately
       channels = [];
     }
 

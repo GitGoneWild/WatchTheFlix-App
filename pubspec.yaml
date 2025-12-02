@@ -1,5 +1,5 @@
 name: watchtheflix
-description: A cross-platform IPTV Flutter application with M3U playlist and Xtream Codes API support.
+description: A cross-platform IPTV Flutter application with M3U playlist support.
 publish_to: 'none'
 version: 1.0.0+1
 

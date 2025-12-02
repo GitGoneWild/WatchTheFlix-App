@@ -154,15 +154,3 @@ abstract class IEpgRepository {
   /// Refresh EPG data
   Future<ApiResult<void>> refreshEpg(String profileId);
 }
-
-/// Auth provider interface
-abstract class IAuthProvider {
-  /// Authenticate with credentials
-  Future<ApiResult<bool>> authenticate(XtreamCredentialsModel credentials);
-
-  /// Check if authenticated
-  Future<ApiResult<bool>> isAuthenticated(String profileId);
-
-  /// Logout
-  Future<ApiResult<void>> logout(String profileId);
-}

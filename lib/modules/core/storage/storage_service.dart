@@ -102,7 +102,4 @@ class StorageKeys {
   // Cache keys
   static const String lastRefreshTime = 'last_refresh_time';
   static const String epgCache = 'epg_cache';
-
-  // Auth keys
-  static const String xtreamCredentials = 'xtream_credentials';
 }

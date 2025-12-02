@@ -17,7 +17,6 @@ WatchTheFlix is a modern, feature-rich IPTV streaming application built with Flu
 - 📺 **Live TV Streaming** - Watch your favorite channels in real-time
 - 🎬 **Movies & Series** - Browse and stream VOD content
 - 📋 **M3U Playlist Support** - Import playlists via URL or file
-- 🔗 **Xtream Codes API** - Connect to your IPTV provider with full account overview
 - 🔍 **Smart Search** - Find content across all categories
 - 📱 **Cross-Platform** - Android, iOS, Web, Windows, macOS, Linux
 - 🌙 **Dark Theme** - Cinematic Netflix-style dark interface
@@ -105,21 +104,9 @@ flutter build linux --release
 ### M3U Playlist
 
 1. Open the app and navigate to **Settings** → **Manage Playlists**
-2. Select the **M3U Playlist** tab
-3. Enter a name for your playlist
-4. Paste the M3U URL (e.g., `http://example.com/playlist.m3u`)
-5. Tap **Add Playlist**
-
-### Xtream Codes API
-
-1. Open the app and navigate to **Settings** → **Manage Playlists**
-2. Select the **Xtream Codes** tab
-3. Enter your connection details:
-   - **Connection Name**: A friendly name
-   - **Server URL**: Your provider's server (e.g., `http://server.com:8080`)
-   - **Username**: Your Xtream username
-   - **Password**: Your Xtream password
-4. Tap **Connect**
+2. Enter a name for your playlist
+3. Paste the M3U URL (e.g., `http://example.com/playlist.m3u`)
+4. Tap **Add Playlist**
 
 ---
 
@@ -143,8 +130,7 @@ lib/
 │   ├── repositories/       # Repository interfaces
 │   └── usecases/           # Use cases
 ├── features/               # Legacy feature modules
-│   ├── m3u/                # M3U parser
-│   └── xtream/             # Xtream API client
+│   └── m3u/                # M3U parser
 ├── modules/                # 🆕 Refactored modular architecture
 │   ├── core/               # Shared infrastructure
 │   │   ├── config/         # App configuration & environment
@@ -152,15 +138,6 @@ lib/
 │   │   ├── models/         # Shared domain models & interfaces
 │   │   ├── network/        # HTTP client abstractions
 │   │   └── storage/        # Storage abstractions
-│   ├── xtreamcodes/        # Xtream Codes integration
-│   │   ├── auth/           # Authentication service
-│   │   ├── account/        # Account overview & models
-│   │   ├── livetv/         # Live TV service
-│   │   ├── movies/         # Movies/VOD service
-│   │   ├── series/         # Series service
-│   │   ├── epg/            # EPG service
-│   │   ├── mappers/        # API to domain mappers
-│   │   └── repositories/   # Base repository utilities
 │   ├── m3u/                # M3U playlist handling
 │   │   ├── import/         # File/URL import service
 │   │   ├── parsing/        # M3U parser
@@ -203,24 +180,10 @@ The `lib/modules/` directory contains a refactored, modular architecture:
 | Module | Description |
 |--------|-------------|
 | `core` | Shared infrastructure (config, logging, models, network, storage) |
-| `xtreamcodes` | Complete Xtream Codes API integration |
 | `m3u` | M3U playlist import, parsing, and mapping |
 | `vpn` | VPN detection and provider integration |
 | `firebase` | Optional Firebase services (analytics, messaging, remote config) |
 | `ui` | Shared UI components and icons |
-
-#### Content Source Strategy
-
-The app supports two strategies for fetching channel data:
-
-```dart
-enum ContentSourceStrategy {
-  xtreamApiDirect,    // Fetch live via Xtream API endpoints
-  xtreamM3uImport,    // Download M3U once and parse locally
-}
-```
-
-Configure in `lib/modules/core/config/app_config.dart`.
 
 ### State Management
 
@@ -264,16 +227,6 @@ VPN awareness is enabled by default. Configure in `AppConfig`:
 AppConfig().vpnDetectionEnabled = true;  // or false to disable
 ```
 
-### Content Source Strategy
-
-Choose between direct API calls or M3U preloading:
-
-```dart
-AppConfig().contentSourceStrategy = ContentSourceStrategy.xtreamApiDirect;
-// or
-AppConfig().contentSourceStrategy = ContentSourceStrategy.xtreamM3uImport;
-```
-
 ---
 
 ## 📚 Documentation
@@ -281,7 +234,6 @@ AppConfig().contentSourceStrategy = ContentSourceStrategy.xtreamM3uImport;
 Detailed documentation is available in the `docs/` folder:
 
 - [Architecture Overview](docs/architecture.md) - Module structure and data flow
-- [Xtream Codes Integration](docs/xtream.md) - API usage and mapping
 - [M3U Parsing](docs/m3u.md) - Parser capabilities and limitations
 - [Firebase Setup](docs/firebase.md) - Configuration guide
 - [VPN Detection](docs/vpn.md) - How detection works
@@ -392,13 +344,13 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 ## ❓ FAQ
 
 **Q: What playlist formats are supported?**
-A: M3U, M3U8, and Xtream Codes API are fully supported.
+A: M3U and M3U8 formats are fully supported.
 
 **Q: Is there a limit on the number of playlists?**
 A: No, you can add as many playlists as you need.
 
 **Q: Does the app support EPG?**
-A: Yes, EPG data is displayed when provided by your playlist or Xtream provider.
+A: Yes, EPG data is displayed when provided by your playlist.
 
 **Q: Can I use the app on Smart TVs?**
 A: The app works on Android TV. For other smart TVs, use the web version.
