@@ -21,6 +21,7 @@ import '../../modules/xtreamcodes/epg/xmltv_parser.dart';
 import '../../modules/xtreamcodes/epg/xtream_epg_repository.dart';
 import '../../modules/xtreamcodes/repositories/xtream_live_repository.dart';
 import '../../modules/xtreamcodes/repositories/xtream_vod_repository.dart';
+import '../../modules/xtreamcodes/xtream_service_manager.dart';
 import '../../presentation/blocs/channel/channel_bloc.dart';
 import '../../presentation/blocs/favorites/favorites_bloc.dart';
 import '../../presentation/blocs/navigation/navigation_bloc.dart';
@@ -67,6 +68,14 @@ Future<void> initDependencies() async {
 
   getIt.registerLazySingleton<IXmltvParser>(
     () => XmltvParser(),
+  );
+
+  getIt.registerLazySingleton<XtreamServiceManager>(
+    () => XtreamServiceManager(
+      authService: getIt<IXtreamAuthService>(),
+      storage: getIt<IStorageService>(),
+      xmltvParser: getIt<IXmltvParser>(),
+    ),
   );
 
   // Repositories
@@ -130,6 +139,7 @@ Future<void> initDependencies() async {
   getIt.registerLazySingleton(
     () => XtreamAuthBloc(
       authService: getIt<IXtreamAuthService>(),
+      serviceManager: getIt<XtreamServiceManager>(),
     ),
   );
 
@@ -137,6 +147,7 @@ Future<void> initDependencies() async {
   getIt.registerFactory(
     () => XtreamConnectionBloc(
       authService: getIt<IXtreamAuthService>(),
+      serviceManager: getIt<XtreamServiceManager>(),
     ),
   );
 }
