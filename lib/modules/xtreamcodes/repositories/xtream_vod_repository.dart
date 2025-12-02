@@ -213,7 +213,9 @@ class XtreamVodRepository implements IXtreamVodRepository {
 
   Future<bool> _isCacheStale() async {
     final timestampResult = await _storage.getInt(_vodTimestampKey);
-    if (timestampResult.isFailure) return true;
+    if (timestampResult.isFailure || timestampResult.data == null) {
+      return true;
+    }
     
     final lastUpdate = DateTime.fromMillisecondsSinceEpoch(
       timestampResult.data!,

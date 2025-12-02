@@ -210,8 +210,8 @@ class XtreamLiveRepository implements IXtreamLiveRepository {
   Future<bool> _isCacheStale() async {
     final timestampResult = await _storage.getInt(_liveChannelsTimestampKey);
 
-    if (timestampResult.isFailure) {
-      return true; // No timestamp, consider stale
+    if (timestampResult.isFailure || timestampResult.data == null) {
+      return true; // No timestamp or null, consider stale
     }
 
     final lastUpdate = DateTime.fromMillisecondsSinceEpoch(
