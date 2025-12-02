@@ -17,13 +17,15 @@ WatchTheFlix is a modern, feature-rich IPTV streaming application built with Flu
 - 📺 **Live TV Streaming** - Watch your favorite channels in real-time
 - 🎬 **Movies & Series** - Browse and stream VOD content
 - 📋 **M3U Playlist Support** - Import playlists via URL or file
+- 🔑 **Xtream Codes Integration** - Connect to Xtream Codes IPTV panels
 - 🔍 **Smart Search** - Find content across all categories
 - 📱 **Cross-Platform** - Android, iOS, Web, Windows, macOS, Linux
 - 🌙 **Dark Theme** - Cinematic Netflix-style dark interface
 - ⭐ **Favorites** - Save your favorite channels
-- 📺 **EPG Support** - Electronic Program Guide integration
+- 📺 **Smart EPG** - Electronic Program Guide with single XMLTV download strategy
 - 🖼️ **Picture-in-Picture** - Watch while multitasking
 - 🛡️ **VPN Awareness** - VPN detection and status display
+- 💾 **Intelligent Caching** - Minimize API calls with smart cache strategy
 - 📊 **Optional Firebase** - Analytics and push notifications (free tier)
 
 ---
