@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -353,6 +355,200 @@ void main() {
         ),
         act: (bloc) => bloc.add(const CancelOnboardingEvent()),
         expect: () => [const XtreamOnboardingInitial()],
+      );
+    });
+
+    group('EPG Handling', () {
+      blocTest<XtreamOnboardingBloc, XtreamOnboardingState>(
+        'completes successfully when EPG returns empty data (epg_listings: [])',
+        setUp: () {
+          when(() => mockApiClient.login(credentials)).thenAnswer(
+            (_) async => XtreamLoginResponse(
+              username: 'testuser',
+              password: 'testpass',
+              message: 'OK',
+              auth: 1,
+              status: 'Active',
+              serverUrl: 'http://test.server.com:8080',
+            ),
+          );
+          when(() => mockXtreamService.getLiveCategories(credentials,
+              forceRefresh: true)).thenAnswer((_) async => []);
+          when(() => mockXtreamService.getMovieCategories(credentials,
+              forceRefresh: true)).thenAnswer((_) async => []);
+          when(() => mockXtreamService.getSeriesCategories(credentials,
+              forceRefresh: true)).thenAnswer((_) async => []);
+          when(() => mockXtreamService.getLiveChannels(credentials,
+              forceRefresh: true)).thenAnswer(
+            (_) async => [
+              const ChannelModel(id: '1', name: 'Channel 1', streamUrl: 'url1'),
+            ],
+          );
+          when(() =>
+                  mockXtreamService.getMovies(credentials, forceRefresh: true))
+              .thenAnswer((_) async => []);
+          when(() =>
+                  mockXtreamService.getSeries(credentials, forceRefresh: true))
+              .thenAnswer((_) async => []);
+          // EPG returns empty data - this should be handled gracefully
+          when(() => mockXtreamService.getEpg(credentials, forceRefresh: true))
+              .thenAnswer((_) async => {});
+        },
+        build: () => XtreamOnboardingBloc(
+          apiClient: mockApiClient,
+          xtreamService: mockXtreamService,
+        ),
+        act: (bloc) => bloc.add(
+          StartOnboardingEvent(
+            credentials: credentials,
+            playlistName: 'Test Playlist',
+          ),
+        ),
+        expect: () => [
+          isA<XtreamOnboardingInProgress>().having(
+              (s) => s.currentStep, 'step', OnboardingStep.authenticating),
+          isA<XtreamOnboardingInProgress>().having((s) => s.currentStep, 'step',
+              OnboardingStep.fetchingLiveCategories),
+          isA<XtreamOnboardingInProgress>().having((s) => s.currentStep, 'step',
+              OnboardingStep.fetchingLiveChannels),
+          isA<XtreamOnboardingInProgress>().having(
+              (s) => s.currentStep, 'step', OnboardingStep.fetchingMovies),
+          isA<XtreamOnboardingInProgress>().having(
+              (s) => s.currentStep, 'step', OnboardingStep.fetchingSeries),
+          isA<XtreamOnboardingInProgress>()
+              .having((s) => s.currentStep, 'step', OnboardingStep.fetchingEpg),
+          isA<XtreamOnboardingCompleted>()
+              .having((s) => s.result.epgChannels, 'epgChannels', 0),
+        ],
+        verify: (_) {
+          verify(() =>
+                  mockXtreamService.getEpg(credentials, forceRefresh: true))
+              .called(1);
+        },
+      );
+
+      blocTest<XtreamOnboardingBloc, XtreamOnboardingState>(
+        'completes successfully when EPG fetch throws exception (bypassed)',
+        setUp: () {
+          when(() => mockApiClient.login(credentials)).thenAnswer(
+            (_) async => XtreamLoginResponse(
+              username: 'testuser',
+              password: 'testpass',
+              message: 'OK',
+              auth: 1,
+              status: 'Active',
+              serverUrl: 'http://test.server.com:8080',
+            ),
+          );
+          when(() => mockXtreamService.getLiveCategories(credentials,
+              forceRefresh: true)).thenAnswer((_) async => []);
+          when(() => mockXtreamService.getMovieCategories(credentials,
+              forceRefresh: true)).thenAnswer((_) async => []);
+          when(() => mockXtreamService.getSeriesCategories(credentials,
+              forceRefresh: true)).thenAnswer((_) async => []);
+          when(() => mockXtreamService.getLiveChannels(credentials,
+              forceRefresh: true)).thenAnswer(
+            (_) async => [
+              const ChannelModel(id: '1', name: 'Channel 1', streamUrl: 'url1'),
+            ],
+          );
+          when(() =>
+                  mockXtreamService.getMovies(credentials, forceRefresh: true))
+              .thenAnswer((_) async => []);
+          when(() =>
+                  mockXtreamService.getSeries(credentials, forceRefresh: true))
+              .thenAnswer((_) async => []);
+          // EPG throws exception - should be caught and onboarding should complete
+          when(() => mockXtreamService.getEpg(credentials, forceRefresh: true))
+              .thenThrow(Exception('EPG server unavailable'));
+        },
+        build: () => XtreamOnboardingBloc(
+          apiClient: mockApiClient,
+          xtreamService: mockXtreamService,
+        ),
+        act: (bloc) => bloc.add(
+          StartOnboardingEvent(
+            credentials: credentials,
+            playlistName: 'Test Playlist',
+          ),
+        ),
+        expect: () => [
+          isA<XtreamOnboardingInProgress>().having(
+              (s) => s.currentStep, 'step', OnboardingStep.authenticating),
+          isA<XtreamOnboardingInProgress>().having((s) => s.currentStep, 'step',
+              OnboardingStep.fetchingLiveCategories),
+          isA<XtreamOnboardingInProgress>().having((s) => s.currentStep, 'step',
+              OnboardingStep.fetchingLiveChannels),
+          isA<XtreamOnboardingInProgress>().having(
+              (s) => s.currentStep, 'step', OnboardingStep.fetchingMovies),
+          isA<XtreamOnboardingInProgress>().having(
+              (s) => s.currentStep, 'step', OnboardingStep.fetchingSeries),
+          isA<XtreamOnboardingInProgress>()
+              .having((s) => s.currentStep, 'step', OnboardingStep.fetchingEpg),
+          isA<XtreamOnboardingCompleted>(),
+        ],
+      );
+
+      blocTest<XtreamOnboardingBloc, XtreamOnboardingState>(
+        'completes successfully when EPG fetch times out (bypassed)',
+        setUp: () {
+          when(() => mockApiClient.login(credentials)).thenAnswer(
+            (_) async => XtreamLoginResponse(
+              username: 'testuser',
+              password: 'testpass',
+              message: 'OK',
+              auth: 1,
+              status: 'Active',
+              serverUrl: 'http://test.server.com:8080',
+            ),
+          );
+          when(() => mockXtreamService.getLiveCategories(credentials,
+              forceRefresh: true)).thenAnswer((_) async => []);
+          when(() => mockXtreamService.getMovieCategories(credentials,
+              forceRefresh: true)).thenAnswer((_) async => []);
+          when(() => mockXtreamService.getSeriesCategories(credentials,
+              forceRefresh: true)).thenAnswer((_) async => []);
+          when(() => mockXtreamService.getLiveChannels(credentials,
+              forceRefresh: true)).thenAnswer(
+            (_) async => [
+              const ChannelModel(id: '1', name: 'Channel 1', streamUrl: 'url1'),
+            ],
+          );
+          when(() =>
+                  mockXtreamService.getMovies(credentials, forceRefresh: true))
+              .thenAnswer((_) async => []);
+          when(() =>
+                  mockXtreamService.getSeries(credentials, forceRefresh: true))
+              .thenAnswer((_) async => []);
+          // EPG times out - should be handled gracefully
+          when(() => mockXtreamService.getEpg(credentials, forceRefresh: true))
+              .thenThrow(TimeoutException('EPG request timed out'));
+        },
+        build: () => XtreamOnboardingBloc(
+          apiClient: mockApiClient,
+          xtreamService: mockXtreamService,
+        ),
+        act: (bloc) => bloc.add(
+          StartOnboardingEvent(
+            credentials: credentials,
+            playlistName: 'Test Playlist',
+          ),
+        ),
+        expect: () => [
+          isA<XtreamOnboardingInProgress>().having(
+              (s) => s.currentStep, 'step', OnboardingStep.authenticating),
+          isA<XtreamOnboardingInProgress>().having((s) => s.currentStep, 'step',
+              OnboardingStep.fetchingLiveCategories),
+          isA<XtreamOnboardingInProgress>().having((s) => s.currentStep, 'step',
+              OnboardingStep.fetchingLiveChannels),
+          isA<XtreamOnboardingInProgress>().having(
+              (s) => s.currentStep, 'step', OnboardingStep.fetchingMovies),
+          isA<XtreamOnboardingInProgress>().having(
+              (s) => s.currentStep, 'step', OnboardingStep.fetchingSeries),
+          isA<XtreamOnboardingInProgress>()
+              .having((s) => s.currentStep, 'step', OnboardingStep.fetchingEpg),
+          isA<XtreamOnboardingCompleted>(),
+        ],
       );
     });
 

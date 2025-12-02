@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/errors/exceptions.dart';
 import '../../../core/utils/logger.dart';
+import '../../../data/models/category_model.dart';
 import '../../../domain/entities/playlist_source.dart';
 import '../../../features/xtream/xtream_api_client.dart';
 import '../../../features/xtream/xtream_service.dart';
@@ -397,6 +398,7 @@ class XtreamOnboardingBloc
   }) async {
     // Step 1: Authenticate
     _checkCancelled();
+    AppLogger.info('Step: Starting authentication');
     emit(
       XtreamOnboardingInProgress(
         currentStep: OnboardingStep.authenticating,
@@ -405,7 +407,7 @@ class XtreamOnboardingBloc
       ),
     );
 
-    AppLogger.info('Starting Xtream onboarding for ${credentials.username}');
+    AppLogger.info('Xtream onboarding started for ${credentials.username}');
 
     final loginResponse = await _apiClient.login(credentials);
     _checkCancelled();
@@ -413,7 +415,7 @@ class XtreamOnboardingBloc
     if (!loginResponse.isAuthenticated) {
       // Use a user-friendly message, with server message only for logging
       AppLogger.warning(
-          'Login failed with server message: ${loginResponse.message}');
+          'Step: Authentication failed - server message: ${loginResponse.message}');
       throw const AuthException(
           message: 'Invalid credentials or account expired');
     }
@@ -426,10 +428,11 @@ class XtreamOnboardingBloc
       ),
     );
 
-    AppLogger.info('Authentication successful');
+    AppLogger.info('Step: Authentication completed successfully');
 
     // Step 2: Fetch all categories in parallel
     _checkCancelled();
+    AppLogger.info('Step: Starting category data fetch');
     emit(
       XtreamOnboardingInProgress(
         currentStep: OnboardingStep.fetchingLiveCategories,
@@ -447,11 +450,14 @@ class XtreamOnboardingBloc
       _xtreamService.getMovieCategories(credentials, forceRefresh: true),
       _xtreamService
           .getSeriesCategories(credentials, forceRefresh: true)
-          .catchError((Object e) {
-        AppLogger.warning('Series categories not available: $e');
-        return [];
+          .catchError((Object e, StackTrace stackTrace) {
+        AppLogger.warning('Step: Series categories not available - $e');
+        AppLogger.error('Series categories fetch exception', e, stackTrace);
+        return <CategoryModel>[];
       }),
     ]);
+    _checkCancelled();
+
     final liveCategoriesList = categoryFutures[0];
     final movieCategoriesList = categoryFutures[1];
     final seriesCategoriesList = categoryFutures[2];
@@ -474,7 +480,7 @@ class XtreamOnboardingBloc
       ),
     );
 
-    AppLogger.info('Loaded $liveCategories live categories');
+    AppLogger.info('Step: Live categories fetch completed - $liveCategories categories');
 
     // Mark movie and series categories as completed too
     completedSteps.add(
@@ -485,20 +491,25 @@ class XtreamOnboardingBloc
       ),
     );
 
-    AppLogger.info('Loaded $movieCategories movie categories');
+    AppLogger.info('Step: Movie categories fetch completed - $movieCategories categories');
 
     completedSteps.add(
       OnboardingStepResult(
         step: OnboardingStep.fetchingSeriesCategories,
+        // Series categories are always considered successful since errors are caught
+        // in the catchError block above. Empty list is a valid state for providers
+        // that don't offer series content.
         success: true,
         itemCount: seriesCategories,
+        errorMessage: seriesCategories == 0 ? 'Series categories not available' : null,
       ),
     );
 
-    AppLogger.info('Loaded $seriesCategories series categories');
+    AppLogger.info('Step: Series categories fetch completed - $seriesCategories categories');
 
     // Step 3: Fetch Live Channels
     _checkCancelled();
+    AppLogger.info('Step: Starting live channels data fetch');
     emit(
       XtreamOnboardingInProgress(
         currentStep: OnboardingStep.fetchingLiveChannels,
@@ -528,10 +539,11 @@ class XtreamOnboardingBloc
       ),
     );
 
-    AppLogger.info('Loaded $liveChannels live channels');
+    AppLogger.info('Step: Live channels fetch completed - $liveChannels channels');
 
     // Step 4: Fetch Movies
     _checkCancelled();
+    AppLogger.info('Step: Starting movies data fetch');
     emit(
       XtreamOnboardingInProgress(
         currentStep: OnboardingStep.fetchingMovies,
@@ -560,10 +572,11 @@ class XtreamOnboardingBloc
       ),
     );
 
-    AppLogger.info('Loaded $movies movies');
+    AppLogger.info('Step: Movies fetch completed - $movies movies');
 
     // Step 5: Fetch Series (optional, may fail on some providers)
     _checkCancelled();
+    AppLogger.info('Step: Starting series data fetch');
     emit(
       XtreamOnboardingInProgress(
         currentStep: OnboardingStep.fetchingSeries,
@@ -593,21 +606,23 @@ class XtreamOnboardingBloc
         ),
       );
 
-      AppLogger.info('Loaded $series series');
-    } catch (e) {
-      // Series is optional, log but don't fail
-      AppLogger.warning('Series data not available: $e');
+      AppLogger.info('Step: Series data fetch completed - $series series loaded');
+    } catch (e, stackTrace) {
+      // Series is optional, log but don't fail the entire onboarding
+      AppLogger.warning('Step: Series data fetch failed - $e');
+      AppLogger.error('Series fetch exception during onboarding', e, stackTrace);
       completedSteps.add(
-        const OnboardingStepResult(
+        OnboardingStepResult(
           step: OnboardingStep.fetchingSeries,
           success: false,
-          errorMessage: 'Series data not available',
+          errorMessage: 'Series data not available: ${_formatErrorMessage(e)}',
         ),
       );
     }
 
     // Step 6: Fetch EPG (optional, may fail on some providers)
     _checkCancelled();
+    AppLogger.info('Step: Starting EPG data fetch');
     emit(
       XtreamOnboardingInProgress(
         currentStep: OnboardingStep.fetchingEpg,
@@ -620,29 +635,48 @@ class XtreamOnboardingBloc
 
     try {
       // Use XtreamService for EPG - it fetches and caches the results
+      // Note: XtreamService.getEpg() handles errors gracefully and returns
+      // an empty map if EPG data is unavailable or malformed
       final epgData = await _xtreamService.getEpg(
         credentials,
         forceRefresh: true,
       );
+      _checkCancelled();
+
       final epgChannels = epgData.length;
       onProgress(OnboardingStep.fetchingEpg, {'epgChannels': epgChannels});
 
+      // EPG may return empty data which is a valid state (some providers don't have EPG)
+      if (epgChannels > 0) {
+        completedSteps.add(
+          OnboardingStepResult(
+            step: OnboardingStep.fetchingEpg,
+            success: true,
+            itemCount: epgChannels,
+          ),
+        );
+        AppLogger.info('Step: EPG data fetch completed - $epgChannels channels with EPG');
+      } else {
+        // Empty EPG is treated as a successful completion but with no data
+        completedSteps.add(
+          const OnboardingStepResult(
+            step: OnboardingStep.fetchingEpg,
+            success: true,
+            itemCount: 0,
+            errorMessage: 'EPG data not provided by this server',
+          ),
+        );
+        AppLogger.info('Step: EPG data fetch completed - no EPG data available from provider');
+      }
+    } catch (e, stackTrace) {
+      // EPG is optional, log but don't fail the entire onboarding
+      AppLogger.warning('Step: EPG data fetch failed - $e');
+      AppLogger.error('EPG fetch exception during onboarding', e, stackTrace);
       completedSteps.add(
         OnboardingStepResult(
           step: OnboardingStep.fetchingEpg,
-          success: true,
-          itemCount: epgChannels,
-        ),
-      );
-      AppLogger.info('Loaded EPG for $epgChannels channels');
-    } catch (e) {
-      // EPG is optional, log but don't fail
-      AppLogger.warning('EPG data not available: $e');
-      completedSteps.add(
-        const OnboardingStepResult(
-          step: OnboardingStep.fetchingEpg,
           success: false,
-          errorMessage: 'EPG data not available',
+          errorMessage: 'EPG data not available: ${_formatErrorMessage(e)}',
         ),
       );
     }
