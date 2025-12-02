@@ -35,9 +35,7 @@ class _WatchTheFlixAppState extends State<WatchTheFlixApp> {
     final storage = getIt<IStorageService>();
     
     // Check if onboarding is completed
-    final onboardingResult = await storage.getBool(StorageKeys.onboardingCompleted);
-    final isOnboardingCompleted = onboardingResult.isSuccess && 
-                                   (onboardingResult.data ?? false);
+    final isOnboardingCompleted = await _isOnboardingCompleted(storage);
 
     setState(() {
       _initialRoute = isOnboardingCompleted ? AppRoutes.home : AppRoutes.onboarding;
@@ -48,6 +46,12 @@ class _WatchTheFlixAppState extends State<WatchTheFlixApp> {
       final authBloc = getIt<XtreamAuthBloc>();
       authBloc.add(const XtreamAuthLoadCredentials());
     }
+  }
+
+  /// Check if onboarding has been completed
+  Future<bool> _isOnboardingCompleted(IStorageService storage) async {
+    final onboardingResult = await storage.getBool(StorageKeys.onboardingCompleted);
+    return onboardingResult.isSuccess && (onboardingResult.data ?? false);
   }
 
   @override

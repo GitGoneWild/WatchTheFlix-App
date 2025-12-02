@@ -18,6 +18,9 @@ const String _liveChannelsCacheKey = 'xtream_live_channels';
 const String _liveCategoriesCacheKey = 'xtream_live_categories';
 const String _liveChannelsTimestampKey = 'xtream_live_channels_timestamp';
 
+/// Metadata key for EPG channel ID
+const String _metadataKeyEpgChannelId = 'epgChannelId';
+
 /// Xtream Live TV repository interface
 abstract class IXtreamLiveRepository {
   /// Get all live channels
@@ -404,7 +407,7 @@ class XtreamLiveRepository implements IXtreamLiveRepository {
     for (final channel in channels) {
       try {
         // Get EPG channel ID from metadata
-        final epgChannelId = channel.metadata?['epgChannelId'] as String?;
+        final epgChannelId = channel.metadata?[_metadataKeyEpgChannelId] as String?;
         
         if (epgChannelId == null || epgChannelId.isEmpty) {
           enrichedChannels.add(channel);

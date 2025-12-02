@@ -147,7 +147,14 @@ class XtreamConnectionBloc
               );
             }
           },
-        );
+        ).catchError((error, stackTrace) {
+          moduleLogger.error(
+            'Error during EPG refresh',
+            tag: 'XtreamConnection',
+            error: error,
+            stackTrace: stackTrace,
+          );
+        });
       }
 
       // Step 6: Completed
