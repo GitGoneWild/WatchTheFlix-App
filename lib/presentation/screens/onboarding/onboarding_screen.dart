@@ -138,7 +138,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.1),
+                            color: AppColors.primary.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Icon(
@@ -203,7 +203,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                       decoration: BoxDecoration(
                         color: _currentPage == index
                             ? AppColors.primary
-                            : AppColors.textTertiary.withValues(alpha: 0.5),
+                            : AppColors.textTertiary.withOpacity(0.5),
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
@@ -308,15 +308,15 @@ class _OnboardingPageWidget extends StatelessWidget {
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        data.gradient[0].withValues(alpha: 0.2),
-                        data.gradient[1].withValues(alpha: 0.1),
+                        data.gradient[0].withOpacity(0.2),
+                        data.gradient[1].withOpacity(0.1),
                       ],
                     ),
                     shape: BoxShape.circle,
                     boxShadow: isActive
                         ? [
                             BoxShadow(
-                              color: data.gradient[0].withValues(alpha: 0.3),
+                              color: data.gradient[0].withOpacity(0.3),
                               blurRadius: 24,
                               spreadRadius: 4,
                             ),
@@ -388,7 +388,7 @@ class OnboardingPage extends StatelessWidget {
             width: 120,
             height: 120,
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
+              color: AppColors.primary.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(

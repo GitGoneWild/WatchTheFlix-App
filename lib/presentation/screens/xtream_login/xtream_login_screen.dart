@@ -129,7 +129,7 @@ class _XtreamLoginScreenState extends State<XtreamLoginScreen> {
                     width: 80,
                     height: 80,
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.1),
+                      color: AppColors.primary.withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -345,7 +345,7 @@ class _XtreamLoginScreenState extends State<XtreamLoginScreen> {
                   const SizedBox(height: 24),
 
                   // Info card
-                  _InfoCard(),
+                  const _InfoCard(),
                 ],
               ),
             ),
@@ -371,10 +371,10 @@ class _ErrorCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.error.withValues(alpha: 0.1),
+        color: AppColors.error.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.error.withValues(alpha: 0.3),
+          color: AppColors.error.withOpacity(0.3),
         ),
       ),
       child: Row(
@@ -411,6 +411,8 @@ class _ErrorCard extends StatelessWidget {
 
 /// Info card widget
 class _InfoCard extends StatelessWidget {
+  const _InfoCard();
+  
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -427,7 +429,7 @@ class _InfoCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.info.withValues(alpha: 0.1),
+                  color: AppColors.info.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(

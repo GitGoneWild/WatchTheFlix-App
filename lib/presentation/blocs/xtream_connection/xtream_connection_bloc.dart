@@ -7,6 +7,7 @@ import '../../../modules/core/logging/app_logger.dart';
 import '../../../modules/core/models/api_result.dart';
 import '../../../modules/xtreamcodes/account/xtream_api_client.dart';
 import '../../../modules/xtreamcodes/auth/xtream_auth_service.dart';
+import '../../../modules/xtreamcodes/auth/xtream_credentials.dart';
 import '../../../modules/xtreamcodes/xtream_service_manager.dart';
 import 'xtream_connection_event.dart';
 import 'xtream_connection_state.dart';
@@ -55,7 +56,7 @@ class XtreamConnectionBloc
 
   /// Perform the connection process
   Future<void> _performConnection(
-    dynamic credentials,
+    XtreamCredentials credentials,
     Emitter<XtreamConnectionState> emit,
   ) async {
     try {

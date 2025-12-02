@@ -140,8 +140,8 @@ class _ProgressView extends StatelessWidget {
                     height: 120,
                     decoration: BoxDecoration(
                       color: isCompleted
-                          ? AppColors.success.withValues(alpha: 0.1)
-                          : AppColors.primary.withValues(alpha: 0.1),
+                          ? AppColors.success.withOpacity(0.1)
+                          : AppColors.primary.withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
                     child: isCompleted
@@ -395,7 +395,7 @@ class _StepsIndicator extends StatelessWidget {
                 boxShadow: isCurrent
                     ? [
                         BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.4),
+                          color: AppColors.primary.withOpacity(0.4),
                           blurRadius: 8,
                           spreadRadius: 2,
                         ),
@@ -453,7 +453,7 @@ class _SuccessView extends StatelessWidget {
                     width: 120,
                     height: 120,
                     decoration: BoxDecoration(
-                      color: AppColors.success.withValues(alpha: 0.1),
+                      color: AppColors.success.withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -575,7 +575,7 @@ class _ErrorView extends StatelessWidget {
                     width: 120,
                     height: 120,
                     decoration: BoxDecoration(
-                      color: AppColors.error.withValues(alpha: 0.1),
+                      color: AppColors.error.withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
