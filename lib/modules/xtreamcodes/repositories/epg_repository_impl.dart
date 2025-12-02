@@ -102,13 +102,15 @@ class EpgRepositoryImpl extends XtreamRepositoryBase implements EpgRepository {
     // Try to load from local storage if available
     final localEpgData = await _loadFromLocalStorage(profileId);
     if (localEpgData != null && localEpgData.isNotEmpty) {
-      // Check if local data is still fresh
-      final syncStatus = _localStorage?.getSyncStatus(profileId);
-      if (syncStatus != null && !syncStatus.needsEpgRefresh(_cacheDuration)) {
-        moduleLogger.debug('Returning EPG from local storage', tag: 'EPG');
-        _fullEpgCache[cacheKey] = localEpgData;
-        _fullEpgCacheTimestamps[cacheKey] = syncStatus.lastEpgSync ?? DateTime.now();
-        return ApiResult.success(localEpgData);
+      // Check if local data is still fresh (only if storage is available)
+      if (_localStorage != null && _localStorage.isInitialized) {
+        final syncStatus = _localStorage.getSyncStatus(profileId);
+        if (syncStatus != null && !syncStatus.needsEpgRefresh(_cacheDuration)) {
+          moduleLogger.debug('Returning EPG from local storage', tag: 'EPG');
+          _fullEpgCache[cacheKey] = localEpgData;
+          _fullEpgCacheTimestamps[cacheKey] = syncStatus.lastEpgSync ?? DateTime.now();
+          return ApiResult.success(localEpgData);
+        }
       }
     }
 
