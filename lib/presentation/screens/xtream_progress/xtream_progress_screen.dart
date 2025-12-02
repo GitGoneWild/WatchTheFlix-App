@@ -34,44 +34,6 @@ class XtreamProgressScreen extends StatelessWidget {
 class _XtreamProgressContent extends StatelessWidget {
   const _XtreamProgressContent();
 
-  String _getStepTitle(ConnectionStep step) {
-    switch (step) {
-      case ConnectionStep.idle:
-        return 'Preparing...';
-      case ConnectionStep.testingConnection:
-        return 'Testing Connection';
-      case ConnectionStep.fetchingChannels:
-        return 'Getting Live Channels';
-      case ConnectionStep.fetchingMovies:
-        return 'Loading Movies';
-      case ConnectionStep.fetchingSeries:
-        return 'Loading Series';
-      case ConnectionStep.updatingEpg:
-        return 'Updating EPG';
-      case ConnectionStep.completed:
-        return 'Setup Complete!';
-    }
-  }
-
-  IconData _getStepIcon(ConnectionStep step) {
-    switch (step) {
-      case ConnectionStep.idle:
-        return Icons.hourglass_empty;
-      case ConnectionStep.testingConnection:
-        return Icons.wifi_tethering;
-      case ConnectionStep.fetchingChannels:
-        return Icons.live_tv;
-      case ConnectionStep.fetchingMovies:
-        return Icons.movie;
-      case ConnectionStep.fetchingSeries:
-        return Icons.video_library;
-      case ConnectionStep.updatingEpg:
-        return Icons.schedule;
-      case ConnectionStep.completed:
-        return Icons.check_circle;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -130,44 +92,6 @@ class _ProgressView extends StatelessWidget {
   final double progress;
   final String? message;
 
-  String _getStepTitle(ConnectionStep step) {
-    switch (step) {
-      case ConnectionStep.idle:
-        return 'Preparing...';
-      case ConnectionStep.testingConnection:
-        return 'Testing Connection';
-      case ConnectionStep.fetchingChannels:
-        return 'Getting Live Channels';
-      case ConnectionStep.fetchingMovies:
-        return 'Loading Movies';
-      case ConnectionStep.fetchingSeries:
-        return 'Loading Series';
-      case ConnectionStep.updatingEpg:
-        return 'Updating EPG';
-      case ConnectionStep.completed:
-        return 'Setup Complete!';
-    }
-  }
-
-  IconData _getStepIcon(ConnectionStep step) {
-    switch (step) {
-      case ConnectionStep.idle:
-        return Icons.hourglass_empty;
-      case ConnectionStep.testingConnection:
-        return Icons.wifi_tethering;
-      case ConnectionStep.fetchingChannels:
-        return Icons.live_tv;
-      case ConnectionStep.fetchingMovies:
-        return Icons.movie;
-      case ConnectionStep.fetchingSeries:
-        return Icons.video_library;
-      case ConnectionStep.updatingEpg:
-        return Icons.schedule;
-      case ConnectionStep.completed:
-        return Icons.check_circle;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final isCompleted = currentStep == ConnectionStep.completed;
@@ -215,7 +139,7 @@ class _ProgressView extends StatelessWidget {
                                 ),
                               ),
                               Icon(
-                                _getStepIcon(currentStep),
+                                currentStep.icon,
                                 size: 40,
                                 color: AppColors.primary,
                               ),
@@ -230,7 +154,7 @@ class _ProgressView extends StatelessWidget {
 
             // Title
             Text(
-              _getStepTitle(currentStep),
+              currentStep.title,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -297,6 +221,7 @@ class _StepsIndicator extends StatelessWidget {
       ConnectionStep.testingConnection,
       ConnectionStep.fetchingChannels,
       ConnectionStep.fetchingMovies,
+      ConnectionStep.fetchingSeries,
       ConnectionStep.updatingEpg,
     ];
 
@@ -323,7 +248,7 @@ class _StepsIndicator extends StatelessWidget {
             ),
             if (index < steps.length - 1)
               Container(
-                width: 32,
+                width: 24,
                 height: 2,
                 margin: const EdgeInsets.symmetric(horizontal: 4),
                 color: isCompleted

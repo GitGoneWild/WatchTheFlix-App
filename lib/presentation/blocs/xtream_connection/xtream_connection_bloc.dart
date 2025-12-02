@@ -64,7 +64,18 @@ class XtreamConnectionBloc
       ));
 
       final categoriesResult = await apiClient.getLiveCategories();
-      // Continue even if this fails - it's not critical
+      if (categoriesResult.isFailure) {
+        moduleLogger.warning(
+          'Failed to fetch live categories, continuing anyway',
+          tag: 'XtreamConnection',
+          error: categoriesResult.error,
+        );
+      } else {
+        moduleLogger.info(
+          'Successfully fetched ${categoriesResult.data.length} live categories',
+          tag: 'XtreamConnection',
+        );
+      }
 
       // Step 3: Fetch movies
       emit(const XtreamConnectionInProgress(
@@ -74,7 +85,18 @@ class XtreamConnectionBloc
       ));
 
       final vodCategoriesResult = await apiClient.getVodCategories();
-      // Continue even if this fails - it's not critical
+      if (vodCategoriesResult.isFailure) {
+        moduleLogger.warning(
+          'Failed to fetch VOD categories, continuing anyway',
+          tag: 'XtreamConnection',
+          error: vodCategoriesResult.error,
+        );
+      } else {
+        moduleLogger.info(
+          'Successfully fetched ${vodCategoriesResult.data.length} VOD categories',
+          tag: 'XtreamConnection',
+        );
+      }
 
       // Step 4: Fetch series (optional)
       emit(const XtreamConnectionInProgress(
@@ -84,7 +106,18 @@ class XtreamConnectionBloc
       ));
 
       final seriesCategoriesResult = await apiClient.getSeriesCategories();
-      // Series fetching is optional, continue even if it fails
+      if (seriesCategoriesResult.isFailure) {
+        moduleLogger.warning(
+          'Failed to fetch series categories, continuing anyway',
+          tag: 'XtreamConnection',
+          error: seriesCategoriesResult.error,
+        );
+      } else {
+        moduleLogger.info(
+          'Successfully fetched ${seriesCategoriesResult.data.length} series categories',
+          tag: 'XtreamConnection',
+        );
+      }
 
       // Step 5: Update EPG
       emit(const XtreamConnectionInProgress(
