@@ -9,7 +9,6 @@ The application is organized into cohesive, testable modules under `lib/modules/
 ```
 lib/modules/
 ├── core/           # Shared infrastructure
-├── xtreamcodes/    # Xtream Codes API integration
 ├── m3u/            # M3U playlist handling
 ├── vpn/            # VPN detection
 ├── firebase/       # Optional Firebase integration
@@ -50,27 +49,6 @@ The `core` module provides shared infrastructure used by all feature modules:
 - **StorageKeys**: Centralized key definitions
 
 ## Feature Modules
-
-### Xtream Codes Module (`xtreamcodes/`)
-
-Complete integration with Xtream Codes API:
-
-```
-xtreamcodes/
-├── auth/           # Authentication service
-├── account/        # Account overview & models
-├── livetv/         # Live TV channels & categories
-├── movies/         # VOD movies
-├── series/         # TV series with seasons/episodes
-├── epg/            # Electronic Program Guide
-├── mappers/        # API to domain model mappers
-└── repositories/   # Base repository utilities
-```
-
-#### Key Components:
-- **XtreamAuthService**: Login, session validation
-- **XtreamAccountService**: Account info with typed models
-- **XtreamToDomainMappers**: Centralized mapping from raw API to domain models
 
 ### M3U Module (`m3u/`)
 
@@ -147,19 +125,6 @@ ui/
 
 ## Content Source Strategy
 
-The app supports two strategies for Xtream content:
-
-### Direct API (`xtreamApiDirect`)
-- Fetch channels/EPG/VOD live via Xtream endpoints
-- Best for: Real-time data, smaller playlists
-
-### M3U Import (`xtreamM3uImport`)
-- Download M3U once from Xtream
-- Parse & store channels locally
-- Best for: Large playlists, offline usage, faster startup
-
-Configure via `AppConfig().contentSourceStrategy`.
-
 ## Testing
 
 Each module should have corresponding tests in `test/modules/`:
@@ -168,7 +133,6 @@ Each module should have corresponding tests in `test/modules/`:
 test/
 └── modules/
     ├── core/
-    ├── xtreamcodes/
     ├── m3u/
     ├── vpn/
     └── firebase/

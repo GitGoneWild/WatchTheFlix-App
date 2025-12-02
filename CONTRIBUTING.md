@@ -149,7 +149,7 @@ lib/
 ├── core/          # Shared utilities, errors, theme
 ├── data/          # Repositories, data sources, models
 ├── domain/        # Entities, use cases, repository interfaces
-├── modules/       # Feature modules (xtreamcodes, m3u, etc.)
+├── modules/       # Feature modules (m3u, etc.)
 └── presentation/  # BLoCs, screens, widgets
 ```
 

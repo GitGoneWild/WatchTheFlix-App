@@ -329,7 +329,6 @@ class Profile extends Equatable {
     required this.name,
     required this.type,
     this.url,
-    this.xtreamCredentials,
     required this.createdAt,
     this.lastUpdated,
     this.isActive = true,
@@ -338,12 +337,10 @@ class Profile extends Equatable {
   final String name;
   final ProfileType type;
   final String? url;
-  final XtreamCredentialsModel? xtreamCredentials;
   final DateTime createdAt;
   final DateTime? lastUpdated;
   final bool isActive;
 
-  bool get isXtream => type == ProfileType.xtream;
   bool get isM3U => type == ProfileType.m3uFile || type == ProfileType.m3uUrl;
 
   @override
@@ -352,7 +349,6 @@ class Profile extends Equatable {
         name,
         type,
         url,
-        xtreamCredentials,
         createdAt,
         lastUpdated,
         isActive,
@@ -363,50 +359,4 @@ class Profile extends Equatable {
 enum ProfileType {
   m3uFile,
   m3uUrl,
-  xtream,
-}
-
-/// Xtream credentials model
-class XtreamCredentialsModel extends Equatable {
-  const XtreamCredentialsModel({
-    required this.host,
-    required this.username,
-    required this.password,
-    this.serverInfo,
-  });
-
-  factory XtreamCredentialsModel.fromJson(Map<String, dynamic> json) {
-    return XtreamCredentialsModel(
-      host: json['host'] as String,
-      username: json['username'] as String,
-      password: json['password'] as String,
-      serverInfo: json['serverInfo'] as String?,
-    );
-  }
-  final String host;
-  final String username;
-  final String password;
-  final String? serverInfo;
-
-  /// Get base URL for API calls
-  String get baseUrl {
-    final normalizedHost =
-        host.endsWith('/') ? host.substring(0, host.length - 1) : host;
-    return normalizedHost;
-  }
-
-  /// Get authentication query parameters
-  String get authParams => 'username=$username&password=$password';
-
-  Map<String, dynamic> toJson() {
-    return {
-      'host': host,
-      'username': username,
-      'password': password,
-      'serverInfo': serverInfo,
-    };
-  }
-
-  @override
-  List<Object?> get props => [host, username, password, serverInfo];
 }

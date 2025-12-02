@@ -18,15 +18,6 @@
   - Focus on BLoCs, services, and parsers.
   - Ensure high coverage for edge cases like network failures.
 
-## Xtream Codes Specialist
-- **Description**: Handles Xtream Codes API integration, authentication, and content fetching.
-- **Tools**: Full access, plus dio for API simulation.
-- **Instructions**:
-  - Use xtreamcodes module structure (auth, livetv, movies, etc.).
-  - Support ContentSourceStrategy configurations.
-  - Map API responses to domain entities.
-  - Handle EPG and account overviews.
-
 ## M3U Parser Agent
 - **Description**: Expert in M3U playlist handling, import, parsing, and mapping.
 - **Tools**: Read/write in m3u/ module.
