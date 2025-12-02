@@ -32,7 +32,7 @@ dependencies:
   cached_network_image: ^3.3.1
   shimmer: ^3.0.0
   flutter_svg: ^2.0.9
-  carousel_slider: ^4.2.1
+  carousel_slider: ^5.1.1
   google_fonts: ^6.1.0
 
   # XML Parsing
