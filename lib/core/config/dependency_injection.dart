@@ -4,27 +4,24 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../data/datasources/local/local_storage.dart';
 import '../../data/datasources/remote/api_client.dart';
-import '../../data/repositories/playlist_repository_impl.dart';
 import '../../data/repositories/channel_repository_impl.dart';
-import '../../domain/repositories/playlist_repository.dart';
+import '../../data/repositories/playlist_repository_impl.dart';
 import '../../domain/repositories/channel_repository.dart';
-import '../../domain/usecases/get_playlists.dart';
+import '../../domain/repositories/playlist_repository.dart';
 import '../../domain/usecases/add_playlist.dart';
-import '../../domain/usecases/get_channels.dart';
 import '../../domain/usecases/get_categories.dart';
+import '../../domain/usecases/get_channels.dart';
+import '../../domain/usecases/get_playlists.dart';
 import '../../features/m3u/m3u_parser.dart';
 import '../../features/xtream/xtream_api_client.dart';
 import '../../features/xtream/xtream_service.dart';
 import '../../modules/core/config/app_config.dart';
 import '../../modules/xtreamcodes/xtreamcodes.dart';
-import '../../modules/xtreamcodes/epg/xmltv_parser.dart';
-import '../../modules/xtreamcodes/repositories/repositories.dart';
-import '../../modules/xtreamcodes/storage/xtream_local_storage.dart';
-import '../../presentation/blocs/playlist/playlist_bloc.dart';
 import '../../presentation/blocs/channel/channel_bloc.dart';
-import '../../presentation/blocs/player/player_bloc.dart';
-import '../../presentation/blocs/navigation/navigation_bloc.dart';
 import '../../presentation/blocs/favorites/favorites_bloc.dart';
+import '../../presentation/blocs/navigation/navigation_bloc.dart';
+import '../../presentation/blocs/player/player_bloc.dart';
+import '../../presentation/blocs/playlist/playlist_bloc.dart';
 import '../../presentation/blocs/settings/settings_bloc.dart';
 import '../../presentation/blocs/xtream_onboarding/xtream_onboarding_bloc.dart';
 
@@ -171,39 +168,39 @@ Future<void> initDependencies() async {
   // Repositories
   getIt.registerLazySingleton<PlaylistRepository>(
     () => PlaylistRepositoryImpl(
-      localStorage: getIt(),
-      apiClient: getIt(),
-      m3uParser: getIt(),
+      localStorage: getIt<LocalStorage>(),
+      apiClient: getIt<ApiClient>(),
+      m3uParser: getIt<M3UParser>(),
     ),
   );
 
   getIt.registerLazySingleton<ChannelRepository>(
     () => ChannelRepositoryImpl(
-      playlistRepository: getIt(),
-      xtreamApiClient: getIt(),
-      xtreamService: getIt(),
-      localStorage: getIt(),
+      playlistRepository: getIt<PlaylistRepository>(),
+      xtreamApiClient: getIt<XtreamApiClient>(),
+      xtreamService: getIt<XtreamService>(),
+      localStorage: getIt<LocalStorage>(),
     ),
   );
 
   // Use cases
-  getIt.registerLazySingleton(() => GetPlaylists(getIt()));
-  getIt.registerLazySingleton(() => AddPlaylist(getIt()));
-  getIt.registerLazySingleton(() => GetChannels(getIt()));
-  getIt.registerLazySingleton(() => GetCategories(getIt()));
+  getIt.registerLazySingleton(() => GetPlaylists(getIt<PlaylistRepository>()));
+  getIt.registerLazySingleton(() => AddPlaylist(getIt<PlaylistRepository>()));
+  getIt.registerLazySingleton(() => GetChannels(getIt<ChannelRepository>()));
+  getIt.registerLazySingleton(() => GetCategories(getIt<ChannelRepository>()));
 
   // BLoCs
   getIt.registerFactory(
     () => PlaylistBloc(
-      getPlaylists: getIt(),
-      addPlaylist: getIt(),
+      getPlaylists: getIt<GetPlaylists>(),
+      addPlaylist: getIt<AddPlaylist>(),
     ),
   );
 
   getIt.registerFactory(
     () => ChannelBloc(
-      getChannels: getIt(),
-      getCategories: getIt(),
+      getChannels: getIt<GetChannels>(),
+      getCategories: getIt<GetCategories>(),
     ),
   );
 
@@ -217,20 +214,20 @@ Future<void> initDependencies() async {
 
   getIt.registerFactory(
     () => FavoritesBloc(
-      repository: getIt(),
+      repository: getIt<ChannelRepository>(),
     ),
   );
 
   getIt.registerFactory(
     () => SettingsBloc(
-      localStorage: getIt(),
+      localStorage: getIt<LocalStorage>(),
     ),
   );
 
   getIt.registerFactory(
     () => XtreamOnboardingBloc(
-      apiClient: getIt(),
-      xtreamService: getIt(),
+      apiClient: getIt<XtreamApiClient>(),
+      xtreamService: getIt<XtreamService>(),
     ),
   );
 }
