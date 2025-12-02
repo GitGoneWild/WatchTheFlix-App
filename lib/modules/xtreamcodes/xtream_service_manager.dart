@@ -1,8 +1,8 @@
 // Xtream Service Manager
 // Central service for managing Xtream repositories and state.
 
-import '../../core/logging/app_logger.dart';
-import '../../core/storage/storage_service.dart';
+import '../core/logging/app_logger.dart';
+import '../core/storage/storage_service.dart';
 import 'auth/xtream_auth_service.dart';
 import 'auth/xtream_credentials.dart';
 import 'epg/xmltv_parser.dart';

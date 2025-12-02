@@ -11,7 +11,7 @@ import '../screens/home/search_screen.dart';
 import '../screens/playback/player_screen.dart';
 import '../screens/xtream_login/xtream_login_screen.dart';
 import '../screens/xtream_progress/xtream_progress_screen.dart';
-import '../../../modules/xtreamcodes/auth/xtream_credentials.dart';
+import '../../modules/xtreamcodes/auth/xtream_credentials.dart';
 
 /// App router configuration
 class AppRouter {
