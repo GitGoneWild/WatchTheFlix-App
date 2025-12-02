@@ -4,8 +4,6 @@ import '../../domain/entities/movie.dart';
 import '../../domain/entities/series.dart';
 import '../../domain/repositories/channel_repository.dart';
 import '../../domain/repositories/playlist_repository.dart';
-import '../../features/xtream/xtream_api_client.dart';
-import '../../features/xtream/xtream_service.dart';
 import '../datasources/local/local_storage.dart';
 import '../models/channel_model.dart';
 
@@ -13,16 +11,10 @@ import '../models/channel_model.dart';
 class ChannelRepositoryImpl implements ChannelRepository {
   ChannelRepositoryImpl({
     required PlaylistRepository playlistRepository,
-    required XtreamApiClient xtreamApiClient,
-    required XtreamService xtreamService,
     required LocalStorage localStorage,
   })  : _playlistRepository = playlistRepository,
-        _xtreamApiClient = xtreamApiClient,
-        _xtreamService = xtreamService,
         _localStorage = localStorage;
   final PlaylistRepository _playlistRepository;
-  final XtreamApiClient _xtreamApiClient;
-  final XtreamService _xtreamService;
   final LocalStorage _localStorage;
 
   // In-memory cache
@@ -35,24 +27,6 @@ class ChannelRepositoryImpl implements ChannelRepository {
   Future<List<Channel>> getLiveChannels({String? categoryId}) async {
     final activePlaylist = await _playlistRepository.getActivePlaylist();
     if (activePlaylist == null) return [];
-
-    if (activePlaylist.isXtream && activePlaylist.xtreamCredentials != null) {
-      // Use XtreamService to get channels with EPG info attached
-      final channels = await _xtreamService.getLiveChannelsWithEpg(
-        activePlaylist.xtreamCredentials!,
-        categoryId: categoryId,
-      );
-      // Sort channels by category name and then by channel name
-      final sortedChannels = channels.toList()
-        ..sort((a, b) {
-          final categoryCompare =
-              (a.groupTitle ?? '').compareTo(b.groupTitle ?? '');
-          if (categoryCompare != 0) return categoryCompare;
-          return a.name.compareTo(b.name);
-        });
-      _channelCache = sortedChannels.map((c) => c.toEntity()).toList();
-      return _channelCache!;
-    }
 
     final channels = categoryId != null
         ? await _playlistRepository.getChannelsByCategory(
@@ -70,14 +44,6 @@ class ChannelRepositoryImpl implements ChannelRepository {
     final activePlaylist = await _playlistRepository.getActivePlaylist();
     if (activePlaylist == null) return [];
 
-    if (activePlaylist.isXtream && activePlaylist.xtreamCredentials != null) {
-      final categories = await _xtreamApiClient.fetchLiveCategories(
-        activePlaylist.xtreamCredentials!,
-      );
-      _categoryCache = categories.map((c) => c.toEntity()).toList();
-      return _categoryCache!;
-    }
-
     _categoryCache = await _playlistRepository.getCategories(activePlaylist.id);
     return _categoryCache!;
   }
@@ -86,15 +52,6 @@ class ChannelRepositoryImpl implements ChannelRepository {
   Future<List<Movie>> getMovies({String? categoryId}) async {
     final activePlaylist = await _playlistRepository.getActivePlaylist();
     if (activePlaylist == null) return [];
-
-    if (activePlaylist.isXtream && activePlaylist.xtreamCredentials != null) {
-      final movies = await _xtreamApiClient.fetchMovies(
-        activePlaylist.xtreamCredentials!,
-        categoryId: categoryId,
-      );
-      _movieCache = movies.map((m) => m.toEntity()).toList();
-      return _movieCache!;
-    }
 
     // For M3U, filter channels by movie type
     final channels =
@@ -118,13 +75,6 @@ class ChannelRepositoryImpl implements ChannelRepository {
     final activePlaylist = await _playlistRepository.getActivePlaylist();
     if (activePlaylist == null) return [];
 
-    if (activePlaylist.isXtream && activePlaylist.xtreamCredentials != null) {
-      final categories = await _xtreamApiClient.fetchMovieCategories(
-        activePlaylist.xtreamCredentials!,
-      );
-      return categories.map((c) => c.toEntity()).toList();
-    }
-
     return [];
   }
 
@@ -132,15 +82,6 @@ class ChannelRepositoryImpl implements ChannelRepository {
   Future<List<Series>> getAllSeries({String? categoryId}) async {
     final activePlaylist = await _playlistRepository.getActivePlaylist();
     if (activePlaylist == null) return [];
-
-    if (activePlaylist.isXtream && activePlaylist.xtreamCredentials != null) {
-      final series = await _xtreamApiClient.fetchSeries(
-        activePlaylist.xtreamCredentials!,
-        categoryId: categoryId,
-      );
-      _seriesCache = series.map((s) => s.toEntity()).toList();
-      return _seriesCache!;
-    }
 
     return [];
   }
@@ -150,28 +91,12 @@ class ChannelRepositoryImpl implements ChannelRepository {
     final activePlaylist = await _playlistRepository.getActivePlaylist();
     if (activePlaylist == null) return [];
 
-    if (activePlaylist.isXtream && activePlaylist.xtreamCredentials != null) {
-      final categories = await _xtreamApiClient.fetchSeriesCategories(
-        activePlaylist.xtreamCredentials!,
-      );
-      return categories.map((c) => c.toEntity()).toList();
-    }
-
     return [];
   }
 
   @override
   Future<Series> getSeriesDetails(String seriesId) async {
-    final activePlaylist = await _playlistRepository.getActivePlaylist();
-    if (activePlaylist == null || !activePlaylist.isXtream) {
-      throw Exception('Series details only available for Xtream sources');
-    }
-
-    final seriesModel = await _xtreamApiClient.fetchSeriesInfo(
-      activePlaylist.xtreamCredentials!,
-      seriesId,
-    );
-    return seriesModel.toEntity();
+    throw Exception('Series details not available for M3U sources');
   }
 
   @override

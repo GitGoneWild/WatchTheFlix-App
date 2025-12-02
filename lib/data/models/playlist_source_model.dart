@@ -9,7 +9,6 @@ class PlaylistSourceModel {
     required this.type,
     required this.addedAt,
     this.lastUpdated,
-    this.xtreamCredentials,
     this.isActive = true,
   });
 
@@ -25,10 +24,6 @@ class PlaylistSourceModel {
       lastUpdated: json['last_updated'] != null
           ? DateTime.tryParse(json['last_updated'] as String)
           : null,
-      xtreamCredentials: json['xtream_credentials'] != null
-          ? XtreamCredentialsModel.fromJson(
-              json['xtream_credentials'] as Map<String, dynamic>)
-          : null,
       isActive: json['is_active'] as bool? ?? true,
     );
   }
@@ -42,9 +37,6 @@ class PlaylistSourceModel {
       type: entity.type.name,
       addedAt: entity.addedAt,
       lastUpdated: entity.lastUpdated,
-      xtreamCredentials: entity.xtreamCredentials != null
-          ? XtreamCredentialsModel.fromEntity(entity.xtreamCredentials!)
-          : null,
       isActive: entity.isActive,
     );
   }
@@ -54,7 +46,6 @@ class PlaylistSourceModel {
   final String type;
   final DateTime addedAt;
   final DateTime? lastUpdated;
-  final XtreamCredentialsModel? xtreamCredentials;
   final bool isActive;
 
   /// Convert to JSON
@@ -66,7 +57,6 @@ class PlaylistSourceModel {
       'type': type,
       'added_at': addedAt.toIso8601String(),
       'last_updated': lastUpdated?.toIso8601String(),
-      'xtream_credentials': xtreamCredentials?.toJson(),
       'is_active': isActive,
     };
   }
@@ -80,7 +70,6 @@ class PlaylistSourceModel {
       type: _parseSourceType(type),
       addedAt: addedAt,
       lastUpdated: lastUpdated,
-      xtreamCredentials: xtreamCredentials?.toEntity(),
       isActive: isActive,
     );
   }
@@ -89,60 +78,8 @@ class PlaylistSourceModel {
     switch (type) {
       case 'm3uFile':
         return PlaylistSourceType.m3uFile;
-      case 'xtream':
-        return PlaylistSourceType.xtream;
       default:
         return PlaylistSourceType.m3uUrl;
     }
-  }
-}
-
-/// Xtream credentials model
-class XtreamCredentialsModel {
-  const XtreamCredentialsModel({
-    required this.host,
-    required this.username,
-    required this.password,
-    this.serverInfo,
-  });
-
-  factory XtreamCredentialsModel.fromJson(Map<String, dynamic> json) {
-    return XtreamCredentialsModel(
-      host: json['host'] as String? ?? '',
-      username: json['username'] as String? ?? '',
-      password: json['password'] as String? ?? '',
-      serverInfo: json['server_info'] as String?,
-    );
-  }
-
-  factory XtreamCredentialsModel.fromEntity(XtreamCredentials entity) {
-    return XtreamCredentialsModel(
-      host: entity.host,
-      username: entity.username,
-      password: entity.password,
-      serverInfo: entity.serverInfo,
-    );
-  }
-  final String host;
-  final String username;
-  final String password;
-  final String? serverInfo;
-
-  Map<String, dynamic> toJson() {
-    return {
-      'host': host,
-      'username': username,
-      'password': password,
-      'server_info': serverInfo,
-    };
-  }
-
-  XtreamCredentials toEntity() {
-    return XtreamCredentials(
-      host: host,
-      username: username,
-      password: password,
-      serverInfo: serverInfo,
-    );
   }
 }

@@ -14,7 +14,6 @@ class AppConstants {
   static const String keyFavorites = 'favorites';
   static const String keyRecentChannels = 'recent_channels';
   static const String keySettings = 'settings';
-  static const String keyXtreamCredentials = 'xtream_credentials';
 
   /// API timeouts
   static const Duration connectionTimeout = Duration(seconds: 30);
@@ -53,7 +52,6 @@ class AppRoutes {
   static const String splash = '/';
   static const String onboarding = '/onboarding';
   static const String addPlaylist = '/add-playlist';
-  static const String xtreamOnboarding = '/xtream-onboarding';
   static const String home = '/home';
   static const String liveTV = '/live-tv';
   static const String movies = '/movies';

@@ -4,7 +4,6 @@ import 'package:equatable/equatable.dart';
 enum PlaylistSourceType {
   m3uFile,
   m3uUrl,
-  xtream,
 }
 
 /// Playlist source entity
@@ -16,7 +15,6 @@ class PlaylistSource extends Equatable {
     required this.type,
     required this.addedAt,
     this.lastUpdated,
-    this.xtreamCredentials,
     this.isActive = true,
   });
   final String id;
@@ -25,11 +23,7 @@ class PlaylistSource extends Equatable {
   final PlaylistSourceType type;
   final DateTime addedAt;
   final DateTime? lastUpdated;
-  final XtreamCredentials? xtreamCredentials;
   final bool isActive;
-
-  /// Check if this is an Xtream source
-  bool get isXtream => type == PlaylistSourceType.xtream;
 
   /// Check if this is an M3U source
   bool get isM3U =>
@@ -42,7 +36,6 @@ class PlaylistSource extends Equatable {
     PlaylistSourceType? type,
     DateTime? addedAt,
     DateTime? lastUpdated,
-    XtreamCredentials? xtreamCredentials,
     bool? isActive,
   }) {
     return PlaylistSource(
@@ -52,7 +45,6 @@ class PlaylistSource extends Equatable {
       type: type ?? this.type,
       addedAt: addedAt ?? this.addedAt,
       lastUpdated: lastUpdated ?? this.lastUpdated,
-      xtreamCredentials: xtreamCredentials ?? this.xtreamCredentials,
       isActive: isActive ?? this.isActive,
     );
   }
@@ -65,48 +57,6 @@ class PlaylistSource extends Equatable {
         type,
         addedAt,
         lastUpdated,
-        xtreamCredentials,
         isActive,
       ];
-}
-
-/// Xtream Codes API credentials
-class XtreamCredentials extends Equatable {
-  const XtreamCredentials({
-    required this.host,
-    required this.username,
-    required this.password,
-    this.serverInfo,
-  });
-  final String host;
-  final String username;
-  final String password;
-  final String? serverInfo;
-
-  /// Get base URL for API calls
-  String get baseUrl {
-    final normalizedHost =
-        host.endsWith('/') ? host.substring(0, host.length - 1) : host;
-    return normalizedHost;
-  }
-
-  /// Get authentication query parameters
-  String get authParams => 'username=$username&password=$password';
-
-  XtreamCredentials copyWith({
-    String? host,
-    String? username,
-    String? password,
-    String? serverInfo,
-  }) {
-    return XtreamCredentials(
-      host: host ?? this.host,
-      username: username ?? this.username,
-      password: password ?? this.password,
-      serverInfo: serverInfo ?? this.serverInfo,
-    );
-  }
-
-  @override
-  List<Object?> get props => [host, username, password, serverInfo];
 }

@@ -29,7 +29,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     const OnboardingPage(
       title: 'Add Your Playlists',
       description:
-          'Import your M3U playlists or connect with Xtream Codes API for seamless streaming.',
+          'Import your M3U playlists for seamless streaming.',
       icon: Icons.playlist_add,
     ),
     const OnboardingPage(
@@ -188,37 +188,17 @@ class AddPlaylistScreen extends StatefulWidget {
   State<AddPlaylistScreen> createState() => _AddPlaylistScreenState();
 }
 
-class _AddPlaylistScreenState extends State<AddPlaylistScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-
+class _AddPlaylistScreenState extends State<AddPlaylistScreen> {
   // M3U form
   final _m3uNameController = TextEditingController();
   final _m3uUrlController = TextEditingController();
 
-  // Xtream form
-  final _xtreamNameController = TextEditingController();
-  final _xtreamHostController = TextEditingController();
-  final _xtreamUsernameController = TextEditingController();
-  final _xtreamPasswordController = TextEditingController();
-
   bool _isLoading = false;
 
   @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-  }
-
-  @override
   void dispose() {
-    _tabController.dispose();
     _m3uNameController.dispose();
     _m3uUrlController.dispose();
-    _xtreamNameController.dispose();
-    _xtreamHostController.dispose();
-    _xtreamUsernameController.dispose();
-    _xtreamPasswordController.dispose();
     super.dispose();
   }
 
@@ -246,189 +226,63 @@ class _AddPlaylistScreenState extends State<AddPlaylistScreen>
     Navigator.pushReplacementNamed(context, '/home');
   }
 
-  Future<void> _addXtreamPlaylist() async {
-    if (_xtreamNameController.text.isEmpty ||
-        _xtreamHostController.text.isEmpty ||
-        _xtreamUsernameController.text.isEmpty ||
-        _xtreamPasswordController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in all fields')),
-      );
-      return;
-    }
-
-    setState(() => _isLoading = true);
-
-    final credentials = XtreamCredentials(
-      host: _xtreamHostController.text,
-      username: _xtreamUsernameController.text,
-      password: _xtreamPasswordController.text,
-    );
-
-    final playlist = PlaylistSource(
-      id: IdGenerator.generate(),
-      name: _xtreamNameController.text,
-      url: _xtreamHostController.text,
-      type: PlaylistSourceType.xtream,
-      addedAt: DateTime.now(),
-      xtreamCredentials: credentials,
-    );
-
-    // Add the playlist first
-    context.read<PlaylistBloc>().add(AddPlaylistEvent(playlist));
-
-    setState(() => _isLoading = false);
-
-    // Navigate to Xtream onboarding screen for content fetching
-    Navigator.pushReplacementNamed(
-      context,
-      '/xtream-onboarding',
-      arguments: XtreamOnboardingArguments(
-        credentials: credentials,
-        playlistName: _xtreamNameController.text,
-        playlist: playlist,
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Add Playlist'),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(text: 'M3U Playlist'),
-            Tab(text: 'Xtream Codes'),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Add M3U Playlist',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Enter the URL of your M3U playlist file',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: 32),
+            TextField(
+              controller: _m3uNameController,
+              decoration: const InputDecoration(
+                labelText: 'Playlist Name',
+                hintText: 'My Playlist',
+                prefixIcon: Icon(Icons.label),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _m3uUrlController,
+              decoration: const InputDecoration(
+                labelText: 'Playlist URL',
+                hintText: 'http://example.com/playlist.m3u',
+                prefixIcon: Icon(Icons.link),
+              ),
+              keyboardType: TextInputType.url,
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton(
+              onPressed: _isLoading ? null : _addM3UPlaylist,
+              child: _isLoading
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Add Playlist'),
+            ),
           ],
         ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          // M3U Tab
-          SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text(
-                  'Add M3U Playlist',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Enter the URL of your M3U playlist file',
-                  style: TextStyle(color: AppColors.textSecondary),
-                ),
-                const SizedBox(height: 32),
-                TextField(
-                  controller: _m3uNameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Playlist Name',
-                    hintText: 'My Playlist',
-                    prefixIcon: Icon(Icons.label),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _m3uUrlController,
-                  decoration: const InputDecoration(
-                    labelText: 'Playlist URL',
-                    hintText: 'http://example.com/playlist.m3u',
-                    prefixIcon: Icon(Icons.link),
-                  ),
-                  keyboardType: TextInputType.url,
-                ),
-                const SizedBox(height: 32),
-                ElevatedButton(
-                  onPressed: _isLoading ? null : _addM3UPlaylist,
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text('Add Playlist'),
-                ),
-              ],
-            ),
-          ),
-
-          // Xtream Tab
-          SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text(
-                  'Connect to Xtream Codes',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Enter your Xtream Codes API credentials',
-                  style: TextStyle(color: AppColors.textSecondary),
-                ),
-                const SizedBox(height: 32),
-                TextField(
-                  controller: _xtreamNameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Connection Name',
-                    hintText: 'My IPTV Provider',
-                    prefixIcon: Icon(Icons.label),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _xtreamHostController,
-                  decoration: const InputDecoration(
-                    labelText: 'Server URL',
-                    hintText: 'http://server.com:port',
-                    prefixIcon: Icon(Icons.dns),
-                  ),
-                  keyboardType: TextInputType.url,
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _xtreamUsernameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Username',
-                    prefixIcon: Icon(Icons.person),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _xtreamPasswordController,
-                  decoration: const InputDecoration(
-                    labelText: 'Password',
-                    prefixIcon: Icon(Icons.lock),
-                  ),
-                  obscureText: true,
-                ),
-                const SizedBox(height: 32),
-                ElevatedButton(
-                  onPressed: _isLoading ? null : _addXtreamPlaylist,
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text('Connect'),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
 }
+
