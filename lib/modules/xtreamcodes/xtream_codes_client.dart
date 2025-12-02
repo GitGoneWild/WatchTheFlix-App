@@ -4,6 +4,7 @@
 
 import 'package:dio/dio.dart';
 
+import '../core/config/app_config.dart';
 import '../core/models/api_result.dart';
 import '../core/models/base_models.dart';
 import '../core/logging/app_logger.dart';
@@ -27,10 +28,11 @@ class XtreamCodesClient {
 
   /// Factory constructor that creates all services with default implementations
   factory XtreamCodesClient({Dio? dio}) {
+    final config = AppConfig();
     final httpClient = dio ??
         Dio(BaseOptions(
-          connectTimeout: const Duration(seconds: 30),
-          receiveTimeout: const Duration(seconds: 60),
+          connectTimeout: config.defaultTimeout,
+          receiveTimeout: config.extendedTimeout,
           headers: {
             'Accept': '*/*',
             'User-Agent': 'WatchTheFlix/1.0',

@@ -193,7 +193,10 @@ class LiveTvRepositoryImpl extends XtreamRepositoryBase
 
       if (epgResult.isFailure) {
         // Return channels without EPG if EPG fetch fails
-        moduleLogger.warning('EPG fetch failed, returning channels without EPG', tag: 'LiveTV');
+        moduleLogger.warning(
+          'EPG fetch failed: ${epgResult.error.message}, returning channels without EPG',
+          tag: 'LiveTV',
+        );
         return ApiResult.success(channels);
       }
 
