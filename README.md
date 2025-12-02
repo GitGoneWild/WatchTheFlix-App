@@ -322,6 +322,45 @@ flutter test test/features/m3u/m3u_parser_test.dart
 
 ---
 
+## 🚀 CI/CD
+
+The project uses GitHub Actions for continuous integration and deployment. Workflows are configured to run on self-hosted runners (except for Dependabot PRs).
+
+### Workflows
+
+| Workflow | Purpose | Runner |
+|----------|---------|--------|
+| `flutter_ci.yml` | Build, test, and analyze code | Self-hosted |
+| `dependabot_ci.yml` | Validate dependency updates | GitHub-hosted |
+
+### Build Targets
+
+The CI pipeline builds artifacts for all supported platforms:
+- **Android** - APK release build
+- **iOS** - Release build (no code signing)
+- **Web** - Release web build
+- **Windows** - Windows release
+- **macOS** - macOS release
+- **Linux** - Linux release
+
+### Self-Hosted Runner Setup
+
+To set up self-hosted runners for this repository:
+
+1. Navigate to **Settings** → **Actions** → **Runners**
+2. Click **New self-hosted runner**
+3. Follow the instructions for your platform
+4. Ensure runners have labels:
+   - Linux runners: default `self-hosted`
+   - macOS runners: `self-hosted, macOS`
+   - Windows runners: `self-hosted, Windows`
+
+### Coverage
+
+Test coverage reports are uploaded to [Codecov](https://codecov.io) for tracking.
+
+---
+
 ## 📦 Dependencies
 
 | Package | Purpose |

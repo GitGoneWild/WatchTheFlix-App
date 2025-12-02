@@ -15,10 +15,16 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  FLUTTER_VERSION: '3.24.3'
+  FLUTTER_CHANNEL: 'stable'
+
 jobs:
   analyze:
     name: Analyze
-    runs-on: ubuntu-latest
+    # Skip for Dependabot PRs - handled by dependabot_ci.yml using GitHub-hosted runners
+    if: github.actor != 'dependabot[bot]'
+    runs-on: self-hosted
     permissions:
       contents: read
     steps:
@@ -28,8 +34,8 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@44ac965b96f18d999802d4b807e3256d5a3f9fa1 # v2.16.0
         with:
-          flutter-version: '3.24.3'
-          channel: 'stable'
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: ${{ env.FLUTTER_CHANNEL }}
           cache: true
 
       - name: Get dependencies
@@ -43,7 +49,9 @@ jobs:
 
   test:
     name: Test
-    runs-on: ubuntu-latest
+    # Skip for Dependabot PRs - handled by dependabot_ci.yml using GitHub-hosted runners
+    if: github.actor != 'dependabot[bot]'
+    runs-on: self-hosted
     needs: analyze
     permissions:
       contents: read
@@ -54,8 +62,8 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@44ac965b96f18d999802d4b807e3256d5a3f9fa1 # v2.16.0
         with:
-          flutter-version: '3.24.3'
-          channel: 'stable'
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: ${{ env.FLUTTER_CHANNEL }}
           cache: true
 
       - name: Get dependencies
@@ -72,7 +80,9 @@ jobs:
 
   build-android:
     name: Build Android
-    runs-on: ubuntu-latest
+    # Skip for Dependabot PRs - handled by dependabot_ci.yml using GitHub-hosted runners
+    if: github.actor != 'dependabot[bot]'
+    runs-on: self-hosted
     needs: test
     permissions:
       contents: read
@@ -89,8 +99,8 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@44ac965b96f18d999802d4b807e3256d5a3f9fa1 # v2.16.0
         with:
-          flutter-version: '3.24.3'
-          channel: 'stable'
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: ${{ env.FLUTTER_CHANNEL }}
           cache: true
 
       - name: Get dependencies
@@ -108,7 +118,10 @@ jobs:
 
   build-ios:
     name: Build iOS
-    runs-on: macos-latest
+    # Skip for Dependabot PRs - handled by dependabot_ci.yml using GitHub-hosted runners
+    # iOS builds require macOS - use self-hosted macOS runner
+    if: github.actor != 'dependabot[bot]'
+    runs-on: [self-hosted, macOS]
     needs: test
     permissions:
       contents: read
@@ -119,8 +132,8 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@44ac965b96f18d999802d4b807e3256d5a3f9fa1 # v2.16.0
         with:
-          flutter-version: '3.24.3'
-          channel: 'stable'
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: ${{ env.FLUTTER_CHANNEL }}
           cache: true
 
       - name: Get dependencies
@@ -131,7 +144,9 @@ jobs:
 
   build-web:
     name: Build Web
-    runs-on: ubuntu-latest
+    # Skip for Dependabot PRs - handled by dependabot_ci.yml using GitHub-hosted runners
+    if: github.actor != 'dependabot[bot]'
+    runs-on: self-hosted
     needs: test
     permissions:
       contents: read
@@ -142,8 +157,8 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@44ac965b96f18d999802d4b807e3256d5a3f9fa1 # v2.16.0
         with:
-          flutter-version: '3.24.3'
-          channel: 'stable'
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: ${{ env.FLUTTER_CHANNEL }}
           cache: true
 
       - name: Get dependencies
@@ -161,7 +176,10 @@ jobs:
 
   build-windows:
     name: Build Windows
-    runs-on: windows-latest
+    # Skip for Dependabot PRs - handled by dependabot_ci.yml using GitHub-hosted runners
+    # Windows builds require Windows OS - use self-hosted Windows runner
+    if: github.actor != 'dependabot[bot]'
+    runs-on: [self-hosted, Windows]
     needs: test
     permissions:
       contents: read
@@ -172,8 +190,8 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@44ac965b96f18d999802d4b807e3256d5a3f9fa1 # v2.16.0
         with:
-          flutter-version: '3.24.3'
-          channel: 'stable'
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: ${{ env.FLUTTER_CHANNEL }}
           cache: true
 
       - name: Get dependencies
@@ -191,7 +209,10 @@ jobs:
 
   build-macos:
     name: Build macOS
-    runs-on: macos-latest
+    # Skip for Dependabot PRs - handled by dependabot_ci.yml using GitHub-hosted runners
+    # macOS builds require macOS - use self-hosted macOS runner
+    if: github.actor != 'dependabot[bot]'
+    runs-on: [self-hosted, macOS]
     needs: test
     permissions:
       contents: read
@@ -202,8 +223,8 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@44ac965b96f18d999802d4b807e3256d5a3f9fa1 # v2.16.0
         with:
-          flutter-version: '3.24.3'
-          channel: 'stable'
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: ${{ env.FLUTTER_CHANNEL }}
           cache: true
 
       - name: Get dependencies
@@ -221,7 +242,9 @@ jobs:
 
   build-linux:
     name: Build Linux
-    runs-on: ubuntu-latest
+    # Skip for Dependabot PRs - handled by dependabot_ci.yml using GitHub-hosted runners
+    if: github.actor != 'dependabot[bot]'
+    runs-on: self-hosted
     needs: test
     permissions:
       contents: read
@@ -237,8 +260,8 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@44ac965b96f18d999802d4b807e3256d5a3f9fa1 # v2.16.0
         with:
-          flutter-version: '3.24.3'
-          channel: 'stable'
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: ${{ env.FLUTTER_CHANNEL }}
           cache: true
 
       - name: Get dependencies

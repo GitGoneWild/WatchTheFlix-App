@@ -1,0 +1,48 @@
+name: Dependabot CI
+
+# Workflow specifically for Dependabot PRs using GitHub-hosted runners
+on:
+  pull_request:
+    branches: [main]
+
+# Restrict permissions to minimum required
+permissions:
+  contents: read
+  pull-requests: read
+
+# Centralized Flutter version (keep in sync with flutter_ci.yml)
+env:
+  FLUTTER_VERSION: '3.24.3'
+  FLUTTER_CHANNEL: 'stable'
+
+# Only run for Dependabot PRs
+# This workflow runs on GitHub-hosted runners (as per requirement)
+jobs:
+  dependabot-check:
+    name: Validate Dependabot PR
+    if: github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@44ac965b96f18d999802d4b807e3256d5a3f9fa1 # v2.16.0
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: ${{ env.FLUTTER_CHANNEL }}
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Check formatting
+        run: dart format --set-exit-if-changed .
+
+      - name: Analyze code
+        run: flutter analyze --fatal-infos
+
+      - name: Run tests
+        run: flutter test
