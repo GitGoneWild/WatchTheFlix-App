@@ -34,19 +34,21 @@ class _WatchTheFlixAppState extends State<WatchTheFlixApp> {
 
   Future<void> _determineInitialRoute() async {
     final storage = getIt<IStorageService>();
-    
+
     // Check if onboarding is completed
-    final isOnboardingCompleted = await _isOnboardingCompleted(storage);
+    final isOnboardingCompleted = await _checkOnboardingCompleted(storage);
 
     setState(() {
-      _initialRoute = isOnboardingCompleted ? AppRoutes.home : AppRoutes.onboarding;
+      _initialRoute =
+          isOnboardingCompleted ? AppRoutes.home : AppRoutes.onboarding;
       _isOnboardingCompleted = isOnboardingCompleted;
     });
   }
 
   /// Check if onboarding has been completed
-  Future<bool> _isOnboardingCompleted(IStorageService storage) async {
-    final onboardingResult = await storage.getBool(StorageKeys.onboardingCompleted);
+  Future<bool> _checkOnboardingCompleted(IStorageService storage) async {
+    final onboardingResult =
+        await storage.getBool(StorageKeys.onboardingCompleted);
     return onboardingResult.isSuccess && (onboardingResult.data ?? false);
   }
 
