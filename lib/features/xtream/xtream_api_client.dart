@@ -24,10 +24,19 @@ const Duration kXtreamShortTimeout = Duration(seconds: 15);
 const Duration kXtreamEpgFetchTimeout = Duration(minutes: 3);
 
 /// Number of channels to process in each EPG batch request
-const int kEpgBatchSize = 50;
+const int kEpgBatchSize = 10;
 
-/// Delay between EPG batch requests to avoid rate limiting (in milliseconds)
-const Duration kEpgBatchDelay = Duration(milliseconds: 100);
+/// Delay between EPG batch requests to avoid rate limiting
+const Duration kEpgBatchDelay = Duration(milliseconds: 500);
+
+/// Maximum number of retries for EPG requests
+const int kEpgMaxRetries = 2;
+
+/// Initial delay for exponential backoff when retrying EPG requests
+const Duration kEpgRetryBaseDelay = Duration(seconds: 1);
+
+/// Maximum number of consecutive failures before stopping EPG fetch
+const int kEpgMaxConsecutiveFailures = 5;
 
 /// EPG (Electronic Program Guide) entry model
 class EpgEntry {
@@ -645,6 +654,82 @@ class XtreamApiClientImpl implements XtreamApiClient {
     return '${credentials.baseUrl}/series/${credentials.username}/${credentials.password}/$streamId.$extension';
   }
 
+  /// Internal retry logic with exponential backoff for EPG requests
+  Future<List<EpgEntry>> _fetchShortEpgWithRetry(
+    XtreamCredentials credentials,
+    String streamId, {
+    int limit = 2,
+    int retryCount = 0,
+  }) async {
+    try {
+      final url =
+          '${_buildUrl(credentials, 'get_short_epg')}&stream_id=$streamId&limit=$limit';
+      final response = await _apiClient.get<Map<String, dynamic>>(url);
+
+      if (response.data == null) {
+        return [];
+      }
+
+      final data = response.data!;
+      final epgListings = data['epg_listings'] as List? ?? [];
+
+      return epgListings
+          .map((json) => EpgEntry.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      // Check if we should retry
+      if (retryCount < kEpgMaxRetries && _isRetryableError(e)) {
+        // Exponential backoff: 1s, 2s
+        final delay = kEpgRetryBaseDelay * (1 << retryCount);
+        await Future<void>.delayed(delay);
+        return _fetchShortEpgWithRetry(
+          credentials,
+          streamId,
+          limit: limit,
+          retryCount: retryCount + 1,
+        );
+      }
+      // Don't log every single EPG failure to avoid spam
+      // Only log if it's not a common error like 503 Service Unavailable
+      if (!_isCommonEpgError(e)) {
+        AppLogger.warning('EPG fetch failed for stream $streamId: $e');
+      }
+      return [];
+    }
+  }
+
+  /// Check if an error is retryable (e.g., 503 Service Unavailable)
+  bool _isRetryableError(dynamic error) {
+    if (error is ServerException) {
+      final code = error.statusCode;
+      // Retry on 5xx server errors (except 501 Not Implemented)
+      return code != null && code >= 500 && code != 501;
+    }
+    if (error is DioException) {
+      if (error.type == DioExceptionType.connectionTimeout ||
+          error.type == DioExceptionType.receiveTimeout) {
+        return true;
+      }
+      final statusCode = error.response?.statusCode;
+      return statusCode != null && statusCode >= 500 && statusCode != 501;
+    }
+    return false;
+  }
+
+  /// Check if this is a common EPG error that shouldn't be logged
+  bool _isCommonEpgError(dynamic error) {
+    if (error is ServerException) {
+      final code = error.statusCode;
+      // 503 Service Unavailable is very common for EPG endpoints
+      return code == 503 || code == 502 || code == 504;
+    }
+    if (error is DioException) {
+      final statusCode = error.response?.statusCode;
+      return statusCode == 503 || statusCode == 502 || statusCode == 504;
+    }
+    return false;
+  }
+
   @override
   Future<List<EpgEntry>> fetchShortEpg(
     XtreamCredentials credentials,
@@ -653,28 +738,7 @@ class XtreamApiClientImpl implements XtreamApiClient {
   }) async {
     // Use a shorter timeout for EPG as it's not critical
     return _withTimeout(
-      () async {
-        try {
-          final url =
-              '${_buildUrl(credentials, 'get_short_epg')}&stream_id=$streamId&limit=$limit';
-          final response = await _apiClient.get<Map<String, dynamic>>(url);
-
-          if (response.data == null) {
-            return [];
-          }
-
-          final data = response.data!;
-          final epgListings = data['epg_listings'] as List? ?? [];
-
-          return epgListings
-              .map((json) => EpgEntry.fromJson(json as Map<String, dynamic>))
-              .toList();
-        } catch (e) {
-          AppLogger.error('Failed to fetch short EPG', e);
-          // Return empty list on failure - EPG is not critical
-          return [];
-        }
-      },
+      () => _fetchShortEpgWithRetry(credentials, streamId, limit: limit),
       timeout: kXtreamShortTimeout,
       operationName: 'Fetch short EPG',
     );
@@ -708,12 +772,26 @@ class XtreamApiClientImpl implements XtreamApiClient {
           AppLogger.info('Fetching EPG for ${idsToFetch.length} channels');
           int successCount = 0;
           int failCount = 0;
+          int consecutiveFailures = 0;
           
           // Fetch EPG for each channel using short EPG endpoint
           // Process in batches to avoid overwhelming the server
           for (var i = 0; i < idsToFetch.length; i += kEpgBatchSize) {
+            // Check if we should stop due to too many consecutive failures
+            if (consecutiveFailures >= kEpgMaxConsecutiveFailures) {
+              AppLogger.warning(
+                'Stopping EPG fetch: $consecutiveFailures consecutive failures. '
+                'Server may be rate limiting or unavailable.',
+              );
+              break;
+            }
+            
             final batch = idsToFetch.skip(i).take(kEpgBatchSize).toList();
-            final futures = batch.map((channelId) async {
+            int batchSuccesses = 0;
+            
+            // Process batch sequentially instead of in parallel
+            // to reduce server load and improve reliability
+            for (final channelId in batch) {
               try {
                 final epgEntries = await fetchShortEpg(
                   credentials,
@@ -723,18 +801,21 @@ class XtreamApiClientImpl implements XtreamApiClient {
                 if (epgEntries.isNotEmpty) {
                   result[channelId] = epgEntries;
                   successCount++;
+                  batchSuccesses++;
+                  consecutiveFailures = 0; // Reset on success
                 }
               } catch (e) {
-                // Log but continue - individual EPG failures are not critical
                 failCount++;
+                consecutiveFailures++;
               }
-            });
+            }
             
-            // Wait for batch to complete
-            await Future.wait(futures);
-            
-            // Small delay between batches to avoid rate limiting
-            if (i + kEpgBatchSize < idsToFetch.length) {
+            // If entire batch failed, increase delay to reduce server load
+            if (batchSuccesses == 0 && batch.isNotEmpty) {
+              // Double the delay when server seems overloaded
+              await Future<void>.delayed(kEpgBatchDelay * 2);
+            } else if (i + kEpgBatchSize < idsToFetch.length) {
+              // Normal delay between batches
               await Future<void>.delayed(kEpgBatchDelay);
             }
           }

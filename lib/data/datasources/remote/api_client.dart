@@ -41,13 +41,22 @@ class ApiClientImpl implements ApiClient {
       ),
     );
 
-    _dio.interceptors.add(
-      LogInterceptor(
-        requestBody: false,
-        responseBody: false,
-        logPrint: (object) => AppLogger.debug(object.toString()),
-      ),
-    );
+    // Only add log interceptor in debug mode with minimal output
+    // to avoid console spam from excessive logging
+    assert(() {
+      _dio.interceptors.add(
+        LogInterceptor(
+          request: false,
+          requestHeader: false,
+          requestBody: false,
+          responseHeader: false,
+          responseBody: false,
+          error: true,
+          logPrint: (object) => AppLogger.debug(object.toString()),
+        ),
+      );
+      return true;
+    }());
   }
 
   @override
