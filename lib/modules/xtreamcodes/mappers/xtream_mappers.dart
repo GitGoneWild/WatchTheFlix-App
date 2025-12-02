@@ -34,7 +34,7 @@ class XtreamMappers {
   /// Convert Xtream live category to DomainCategory
   static DomainCategory liveCategoryToCategory(XtreamLiveCategory category) {
     return DomainCategory(
-      id: 'xtream_live_cat_${category.categoryId}',
+      id: category.categoryId,
       name: category.categoryName,
       channelCount: 0, // Will be updated when channels are loaded
     );
@@ -126,7 +126,7 @@ class XtreamMappers {
   /// Convert Xtream VOD category to DomainCategory
   static DomainCategory vodCategoryToCategory(XtreamVodCategory category) {
     return DomainCategory(
-      id: 'xtream_vod_cat_${category.categoryId}',
+      id: category.categoryId,
       name: category.categoryName,
       channelCount: 0,
     );
@@ -246,7 +246,7 @@ class XtreamMappers {
     XtreamSeriesCategory category,
   ) {
     return DomainCategory(
-      id: 'xtream_series_cat_${category.categoryId}',
+      id: category.categoryId,
       name: category.categoryName,
       channelCount: 0,
     );

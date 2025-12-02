@@ -16,7 +16,8 @@ class ApiResult<T> {
   final ApiError? _error;
 
   /// Check if this is a success result
-  bool get isSuccess => _error == null && _data != null;
+  /// Note: For ApiResult<void>, data will be null on success, so we only check error
+  bool get isSuccess => _error == null;
 
   /// Check if this is a failure result
   bool get isFailure => _error != null;
@@ -44,28 +45,53 @@ class ApiResult<T> {
   ApiError? get errorOrNull => _error;
 
   /// Map the result to a different type
+  /// Note: For void results where data is null, this preserves the success state
   ApiResult<R> map<R>(R Function(T data) mapper) {
-    if (isSuccess) {
-      return ApiResult.success(mapper(data));
+    if (isFailure) {
+      return ApiResult.failure(error);
     }
-    return ApiResult.failure(error);
+    // For success results, map the data if available
+    if (_data != null) {
+      return ApiResult.success(mapper(_data));
+    }
+    // For void success results, we can't meaningfully map, but we shouldn't throw
+    // Instead, this is a type error in the calling code - they shouldn't call map on void results
+    throw StateError(
+      'Cannot map a void success result. Use isSuccess check instead.',
+    );
   }
 
   /// Execute a callback based on success or failure
+  /// For void results, use onSuccess/onFailure callbacks instead
   R fold<R>({
     required R Function(T data) onSuccess,
     required R Function(ApiError error) onFailure,
   }) {
-    if (isSuccess) {
-      return onSuccess(data);
+    if (isFailure) {
+      return onFailure(error);
     }
-    return onFailure(error);
+    // For success results, call with data if available
+    if (_data != null) {
+      return onSuccess(_data);
+    }
+    // For void success results, this shouldn't be called
+    throw StateError(
+      'Cannot fold a void success result. Use isSuccess check instead.',
+    );
   }
 
   /// Execute callback on success
+  /// For void results, the callback won't be invoked - check isSuccess instead
   void onSuccess(void Function(T data) callback) {
+    if (isSuccess && _data != null) {
+      callback(_data);
+    }
+  }
+
+  /// Execute callback on success for void results (no data passed)
+  void onVoidSuccess(void Function() callback) {
     if (isSuccess) {
-      callback(data);
+      callback();
     }
   }
 
