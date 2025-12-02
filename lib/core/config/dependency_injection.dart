@@ -14,12 +14,20 @@ import '../../domain/usecases/get_channels.dart';
 import '../../domain/usecases/get_playlists.dart';
 import '../../features/m3u/m3u_parser.dart';
 import '../../modules/core/config/app_config.dart';
+import '../../modules/core/storage/shared_preferences_storage.dart';
+import '../../modules/core/storage/storage_service.dart';
+import '../../modules/xtreamcodes/auth/xtream_auth_service.dart';
+import '../../modules/xtreamcodes/epg/xmltv_parser.dart';
+import '../../modules/xtreamcodes/epg/xtream_epg_repository.dart';
+import '../../modules/xtreamcodes/repositories/xtream_live_repository.dart';
+import '../../modules/xtreamcodes/repositories/xtream_vod_repository.dart';
 import '../../presentation/blocs/channel/channel_bloc.dart';
 import '../../presentation/blocs/favorites/favorites_bloc.dart';
 import '../../presentation/blocs/navigation/navigation_bloc.dart';
 import '../../presentation/blocs/player/player_bloc.dart';
 import '../../presentation/blocs/playlist/playlist_bloc.dart';
 import '../../presentation/blocs/settings/settings_bloc.dart';
+import '../../presentation/blocs/xtream_auth/xtream_auth_bloc.dart';
 
 final getIt = GetIt.instance;
 
@@ -41,9 +49,23 @@ Future<void> initDependencies() async {
   // Register AppConfig singleton
   getIt.registerSingleton<AppConfig>(AppConfig());
 
+  // Register IStorageService for Xtream modules
+  getIt.registerLazySingleton<IStorageService>(
+    () => SharedPreferencesStorage(sharedPreferences: getIt()),
+  );
+
   // Features
   getIt.registerLazySingleton<M3UParser>(
     () => M3UParserImpl(),
+  );
+
+  // Xtream Codes Module
+  getIt.registerLazySingleton<IXtreamAuthService>(
+    () => XtreamAuthService(storage: getIt<IStorageService>()),
+  );
+
+  getIt.registerLazySingleton<IXmltvParser>(
+    () => XmltvParser(),
   );
 
   // Repositories
@@ -100,6 +122,13 @@ Future<void> initDependencies() async {
   getIt.registerFactory(
     () => SettingsBloc(
       localStorage: getIt<LocalStorage>(),
+    ),
+  );
+
+  // Xtream Auth BLoC
+  getIt.registerFactory(
+    () => XtreamAuthBloc(
+      authService: getIt<IXtreamAuthService>(),
     ),
   );
 }
