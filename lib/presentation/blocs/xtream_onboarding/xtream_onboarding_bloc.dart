@@ -496,7 +496,10 @@ class XtreamOnboardingBloc
     completedSteps.add(
       OnboardingStepResult(
         step: OnboardingStep.fetchingSeriesCategories,
-        success: seriesCategories > 0 || seriesCategoriesList.isEmpty,
+        // Series categories are always considered successful since errors are caught
+        // in the catchError block above. Empty list is a valid state for providers
+        // that don't offer series content.
+        success: true,
         itemCount: seriesCategories,
         errorMessage: seriesCategories == 0 ? 'Series categories not available' : null,
       ),
