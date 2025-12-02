@@ -124,8 +124,19 @@ class XtreamConnectionBloc
         return;
       }
 
-      // Check if account is active
+      // Null check for authResult.data
       final authResponse = authResult.data;
+      // ignore: unnecessary_null_comparison
+      if (authResponse == null) {
+        emit(const XtreamConnectionError(
+          message: 'Invalid authentication response from server.',
+          failedStep: ConnectionStep.authenticating,
+          errorType: ConnectionErrorType.serverError,
+        ));
+        return;
+      }
+
+      // Check if account is active
       if (!authResponse.userInfo.isActive) {
         moduleLogger.warning(
           'Account is not active',
@@ -148,7 +159,15 @@ class XtreamConnectionBloc
         message: 'Saving your credentials...',
       ));
 
-      await _authService.saveCredentials(credentials);
+      final saveResult = await _authService.saveCredentials(credentials);
+      if (saveResult.isFailure) {
+        emit(XtreamConnectionError(
+          message: 'Failed to save credentials: ${saveResult.error.message}',
+          failedStep: ConnectionStep.savingCredentials,
+          errorType: _mapApiErrorToConnectionError(saveResult.error),
+        ));
+        return;
+      }
 
       // Initialize service manager
       await _serviceManager.initialize(credentials);

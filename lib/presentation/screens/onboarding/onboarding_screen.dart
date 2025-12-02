@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -61,7 +62,10 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       parent: _animationController,
       curve: Curves.easeOut,
     );
-    _animationController.forward();
+    // Start animation after first frame to ensure proper fade-in
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _animationController.forward();
+    });
   }
 
   @override
@@ -261,6 +265,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 }
 
 /// Data class for onboarding page
+@immutable
 class _OnboardingPageData {
   const _OnboardingPageData({
     required this.title,

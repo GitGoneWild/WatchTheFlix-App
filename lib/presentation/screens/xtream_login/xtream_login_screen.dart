@@ -72,9 +72,6 @@ class _XtreamLoginScreenState extends State<XtreamLoginScreen> {
     if (value == null || value.isEmpty) {
       return 'Username is required';
     }
-    if (value.length < 2) {
-      return 'Username is too short';
-    }
     return null;
   }
 
