@@ -8,6 +8,7 @@ import '../core/models/api_result.dart';
 import '../core/models/base_models.dart';
 import '../xtreamcodes/epg/epg_models.dart';
 import '../xtreamcodes/repositories/epg_repository_impl.dart';
+import 'epg_local_storage.dart';
 import 'epg_source.dart';
 import 'url_epg_provider.dart';
 
@@ -15,12 +16,13 @@ import 'url_epg_provider.dart';
 ///
 /// This repository provides a consistent interface for:
 /// - Fetching EPG data from either source type
-/// - Caching EPG data locally
+/// - Caching EPG data locally (in-memory and optionally persistent)
 /// - Providing fallback to cached data on fetch failure
 /// - Managing refresh policies
 class UnifiedEpgRepository {
   final UrlEpgProvider _urlProvider;
   final EpgRepositoryImpl? _xtreamRepository;
+  final EpgLocalStorage? _localStorage;
 
   /// In-memory cache for EPG data.
   final Map<String, EpgData> _cache = {};
@@ -32,8 +34,10 @@ class UnifiedEpgRepository {
   UnifiedEpgRepository({
     UrlEpgProvider? urlProvider,
     EpgRepositoryImpl? xtreamRepository,
+    EpgLocalStorage? localStorage,
   })  : _urlProvider = urlProvider ?? UrlEpgProvider(),
-        _xtreamRepository = xtreamRepository;
+        _xtreamRepository = xtreamRepository,
+        _localStorage = localStorage;
 
   /// Get the current source configuration.
   EpgSourceConfig? get currentConfig => _currentConfig;
@@ -81,6 +85,19 @@ class UnifiedEpgRepository {
       }
     }
 
+    // Try to load from local storage if cache miss
+    if (!forceRefresh && _localStorage != null) {
+      final storedData = _loadFromStorage(cacheKey);
+      if (storedData != null) {
+        _updateCache(cacheKey, storedData);
+        moduleLogger.debug(
+          'Loaded EPG from local storage',
+          tag: 'UnifiedEpg',
+        );
+        return ApiResult.success(storedData);
+      }
+    }
+
     // Fetch based on source type
     return _fetchFromSource(config, credentials: credentials, cacheKey: cacheKey);
   }
@@ -106,6 +123,7 @@ class UnifiedEpgRepository {
     return _xtreamRepository!.fetchFullXmltvEpg(credentials).then((result) {
       if (result.isSuccess) {
         _updateCache(cacheKey, result.data);
+        _saveToStorage(cacheKey, result.data);
       }
       return result;
     });
@@ -196,6 +214,7 @@ class UnifiedEpgRepository {
     final key = _getCacheKey(config);
     _cache.remove(key);
     _cacheTimestamps.remove(key);
+    _localStorage?.clearEpgData(key);
     moduleLogger.debug('EPG cache cleared for: $key', tag: 'UnifiedEpg');
   }
 
@@ -260,6 +279,16 @@ class UnifiedEpgRepository {
         return ApiResult.success(cached);
       }
 
+      // Try local storage as last resort
+      final stored = _loadFromStorage(cacheKey);
+      if (stored != null) {
+        moduleLogger.info(
+          'Returning stored EPG data after fetch failure',
+          tag: 'UnifiedEpg',
+        );
+        return ApiResult.success(stored);
+      }
+
       return ApiResult.failure(ApiError.fromException(e));
     }
   }
@@ -275,6 +304,7 @@ class UnifiedEpgRepository {
 
     if (result.isSuccess) {
       _updateCache(cacheKey, result.data);
+      _saveToStorage(cacheKey, result.data);
     } else {
       // Try to return cached data on failure
       final cached = _cache[cacheKey];
@@ -284,6 +314,16 @@ class UnifiedEpgRepository {
           tag: 'UnifiedEpg',
         );
         return ApiResult.success(cached);
+      }
+
+      // Try local storage as fallback
+      final stored = _loadFromStorage(cacheKey);
+      if (stored != null) {
+        moduleLogger.info(
+          'URL fetch failed, returning stored data',
+          tag: 'UnifiedEpg',
+        );
+        return ApiResult.success(stored);
       }
     }
 
@@ -308,6 +348,7 @@ class UnifiedEpgRepository {
 
     if (result.isSuccess) {
       _updateCache(cacheKey, result.data);
+      _saveToStorage(cacheKey, result.data);
     } else {
       // Try to return cached data on failure
       final cached = _cache[cacheKey];
@@ -318,6 +359,16 @@ class UnifiedEpgRepository {
         );
         return ApiResult.success(cached);
       }
+
+      // Try local storage as fallback
+      final stored = _loadFromStorage(cacheKey);
+      if (stored != null) {
+        moduleLogger.info(
+          'Xtream fetch failed, returning stored data',
+          tag: 'UnifiedEpg',
+        );
+        return ApiResult.success(stored);
+      }
     }
 
     return result;
@@ -327,9 +378,9 @@ class UnifiedEpgRepository {
   String _getCacheKey(EpgSourceConfig config) {
     switch (config.type) {
       case EpgSourceType.url:
-        return 'url_${config.epgUrl}';
+        return EpgLocalStorage.generateSourceId(config.epgUrl!);
       case EpgSourceType.xtreamCodes:
-        return 'xtream_${config.profileId}';
+        return EpgLocalStorage.generateXtreamSourceId(config.profileId!);
       case EpgSourceType.none:
         return 'none';
     }
@@ -350,5 +401,34 @@ class UnifiedEpgRepository {
       'EPG cache updated: $cacheKey (${data.channels.length} channels, ${data.totalPrograms} programs)',
       tag: 'UnifiedEpg',
     );
+  }
+
+  /// Save EPG data to local storage.
+  void _saveToStorage(String cacheKey, EpgData data) {
+    if (_localStorage == null || !_localStorage!.isInitialized) return;
+
+    try {
+      _localStorage!.saveEpgData(cacheKey, data);
+    } catch (e) {
+      moduleLogger.warning(
+        'Failed to save EPG to storage: $e',
+        tag: 'UnifiedEpg',
+      );
+    }
+  }
+
+  /// Load EPG data from local storage.
+  EpgData? _loadFromStorage(String cacheKey) {
+    if (_localStorage == null || !_localStorage!.isInitialized) return null;
+
+    try {
+      return _localStorage!.loadEpgData(cacheKey);
+    } catch (e) {
+      moduleLogger.warning(
+        'Failed to load EPG from storage: $e',
+        tag: 'UnifiedEpg',
+      );
+      return null;
+    }
   }
 }

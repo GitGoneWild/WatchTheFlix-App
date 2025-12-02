@@ -7,6 +7,7 @@
 // - [UrlEpgProvider] - Provider for fetching EPG from URLs
 // - [UnifiedEpgRepository] - Source-agnostic EPG repository
 // - [UnifiedEpgService] - High-level service for EPG operations
+// - [EpgLocalStorage] - Local persistence for EPG data
 //
 // The module integrates with:
 // - Xtream Codes EPG via [EpgRepositoryImpl]
@@ -28,6 +29,7 @@
 // ```
 
 export 'epg_source.dart';
+export 'epg_local_storage.dart';
 export 'url_epg_provider.dart';
 export 'unified_epg_repository.dart';
 export 'unified_epg_service.dart';
