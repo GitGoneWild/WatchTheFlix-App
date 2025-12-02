@@ -135,7 +135,9 @@ class XtreamServerInfo extends Equatable {
   String get fullUrl {
     final protocol = serverProtocol.isNotEmpty ? serverProtocol : 'http';
     final effectivePort = protocol == 'https' ? httpsPort : port;
-    if (effectivePort.isEmpty || effectivePort == '80' || effectivePort == '443') {
+    if (effectivePort.isEmpty ||
+        effectivePort == '80' ||
+        effectivePort == '443') {
       return '$protocol://$url';
     }
     return '$protocol://$url:$effectivePort';
@@ -207,8 +209,10 @@ class XtreamAccountOverview extends Equatable {
 
   factory XtreamAccountOverview.fromJson(Map<String, dynamic> json) {
     return XtreamAccountOverview(
-      userInfo: XtreamUserInfo.fromJson(json['user_info'] ?? {}),
-      serverInfo: XtreamServerInfo.fromJson(json['server_info'] ?? {}),
+      userInfo: XtreamUserInfo.fromJson(
+          json['user_info'] as Map<String, dynamic>? ?? {}),
+      serverInfo: XtreamServerInfo.fromJson(
+          json['server_info'] as Map<String, dynamic>? ?? {}),
     );
   }
 
@@ -248,7 +252,8 @@ extension AccountStatusExtension on AccountStatus {
 
   bool get isGood => this == AccountStatus.active;
   bool get isWarning => this == AccountStatus.trial;
-  bool get isBad => this == AccountStatus.expired || this == AccountStatus.disabled;
+  bool get isBad =>
+      this == AccountStatus.expired || this == AccountStatus.disabled;
 }
 
 // Helper functions for parsing

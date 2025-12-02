@@ -26,7 +26,7 @@ class NetworkResult<T> {
   /// Map the result to a different type
   NetworkResult<R> map<R>(R Function(T data) mapper) {
     if (data != null) {
-      return NetworkResult(data: mapper(data), statusCode: statusCode);
+      return NetworkResult(data: mapper(data!), statusCode: statusCode);
     }
     return NetworkResult(error: error, statusCode: statusCode);
   }
@@ -150,11 +150,11 @@ Future<T> executeWithRetry<T>({
         error: e,
       );
 
-      await Future.delayed(delay);
+      await Future<void>.delayed(delay);
     }
   }
 
-  throw lastError;
+  throw lastError as Object;
 }
 
 /// Helper to execute with timeout
@@ -170,7 +170,8 @@ Future<T> executeWithTimeout<T>({
   } on TimeoutException {
     throw NetworkError(
       type: NetworkErrorType.timeout,
-      message: '${operationName ?? 'Request'} timed out after ${effectiveTimeout.inSeconds}s',
+      message:
+          '${operationName ?? 'Request'} timed out after ${effectiveTimeout.inSeconds}s',
     );
   }
 }
