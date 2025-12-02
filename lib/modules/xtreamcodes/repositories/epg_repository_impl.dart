@@ -1,71 +1,73 @@
 // EpgRepositoryImpl
-// Implements EPG repository using Dio HTTP client.
-// Supports both full XMLTV EPG download and per-channel short EPG API.
+// Implements EPG repository using XMLTV file download only.
+// All EPG data is obtained from the XMLTV file provided by Xtream Codes API.
+// NO per-channel EPG API calls are made - this is by design per issue requirements.
 
 import 'dart:async';
 
 import 'package:dio/dio.dart';
 
+import '../../core/config/app_config.dart';
 import '../../core/models/api_result.dart';
 import '../../core/models/base_models.dart';
 import '../../core/logging/app_logger.dart';
 import '../epg/epg_models.dart';
 import '../epg/epg_service.dart';
 import '../epg/xmltv_parser.dart';
+import '../storage/xtream_local_storage.dart';
 import 'xtream_repository_base.dart';
-
-/// Default timeout for short EPG requests (15 seconds)
-const Duration _epgTimeout = Duration(seconds: 15);
 
 /// Extended timeout for full XML EPG download (5 minutes)
 const Duration _xmlEpgTimeout = Duration(minutes: 5);
 
-/// Number of channels to process in each EPG batch request
-const int _epgBatchSize = 50;
-
-/// Delay between EPG batch requests to avoid rate limiting
-const Duration _epgBatchDelay = Duration(milliseconds: 100);
-
-/// EPG repository implementation with full XMLTV support.
+/// EPG repository implementation using XMLTV only.
 ///
-/// This repository provides two methods for EPG retrieval:
-/// 1. Full XML EPG - Downloads the complete XMLTV file from `/xmltv.php`
-/// 2. Short EPG - Uses the per-channel API for quick lookups
+/// This repository downloads and parses the complete XMLTV EPG file from
+/// the Xtream Codes server. NO per-channel EPG API calls are made.
+/// EPG data is cached in memory and persisted to local storage for offline access.
+///
+/// Key design decisions:
+/// - All EPG data comes from XMLTV file only (no `get_short_epg` API calls)
+/// - Data is cached in memory with configurable TTL from AppConfig
+/// - Data is persisted to Hive storage for offline access
+/// - Respects `xtreamEpgTtl` configuration for cache expiration
 class EpgRepositoryImpl extends XtreamRepositoryBase implements EpgRepository {
   final Dio _dio;
   final XmltvParser _xmltvParser;
+  final XtreamLocalStorage? _localStorage;
+  final AppConfig _config;
 
-  // Cache for parsed EpgEntry data (legacy format)
-  final Map<String, Map<String, List<EpgEntry>>> _epgCache = {};
-  final Map<String, DateTime> _cacheTimestamps = {};
-
-  // Cache for full XMLTV EpgData
+  // Cache for full XMLTV EpgData (in-memory)
   final Map<String, EpgData> _fullEpgCache = {};
   final Map<String, DateTime> _fullEpgCacheTimestamps = {};
 
-  /// Default cache duration for EPG (6 hours - EPG data changes frequently)
-  static const Duration _cacheDuration = Duration(hours: 6);
-
-  EpgRepositoryImpl({Dio? dio, XmltvParser? xmltvParser})
-      : _dio = dio ??
+  EpgRepositoryImpl({
+    Dio? dio,
+    XmltvParser? xmltvParser,
+    XtreamLocalStorage? localStorage,
+    AppConfig? config,
+  })  : _dio = dio ??
             Dio(BaseOptions(
-              connectTimeout: _epgTimeout,
+              connectTimeout: const Duration(seconds: 30),
               receiveTimeout: _xmlEpgTimeout,
               headers: {
                 'Accept': '*/*',
                 'User-Agent': 'WatchTheFlix/1.0',
               },
             )),
-        _xmltvParser = xmltvParser ?? XmltvParser();
+        _xmltvParser = xmltvParser ?? XmltvParser(),
+        _localStorage = localStorage,
+        _config = config ?? AppConfig();
+
+  /// Get cache TTL from config
+  Duration get _cacheDuration => _config.xtreamEpgTtl;
 
   String _getCacheKey(XtreamCredentialsModel credentials) =>
       '${credentials.baseUrl}_${credentials.username}';
 
-  bool _isCacheValid(String cacheKey) {
-    final timestamp = _cacheTimestamps[cacheKey];
-    if (timestamp == null) return false;
-    return DateTime.now().difference(timestamp) < _cacheDuration;
-  }
+  /// Get profile ID for local storage operations
+  String _getProfileId(XtreamCredentialsModel credentials) =>
+      '${credentials.username}@${Uri.parse(credentials.baseUrl).host}';
 
   bool _isFullEpgCacheValid(String cacheKey) {
     final timestamp = _fullEpgCacheTimestamps[cacheKey];
@@ -83,22 +85,31 @@ class EpgRepositoryImpl extends XtreamRepositoryBase implements EpgRepository {
         'username=$encodedUsername&password=$encodedPassword';
   }
 
-  /// Download and parse the full XMLTV EPG file.
-  ///
-  /// This is the preferred method for getting complete EPG data as it:
-  /// - Downloads all EPG data in a single request
-  /// - Is more efficient than per-channel API calls
-  /// - Provides complete program information
+  @override
   Future<ApiResult<EpgData>> fetchFullXmltvEpg(
     XtreamCredentialsModel credentials,
   ) async {
     final cacheKey = _getCacheKey(credentials);
+    final profileId = _getProfileId(credentials);
 
-    // Check cache first
+    // Check in-memory cache first
     if (_fullEpgCache.containsKey(cacheKey) &&
         _isFullEpgCacheValid(cacheKey)) {
       moduleLogger.debug('Returning cached full EPG data', tag: 'EPG');
       return ApiResult.success(_fullEpgCache[cacheKey]!);
+    }
+
+    // Try to load from local storage if available
+    final localEpgData = await _loadFromLocalStorage(profileId);
+    if (localEpgData != null && localEpgData.isNotEmpty) {
+      // Check if local data is still fresh
+      final syncStatus = _localStorage?.getSyncStatus(profileId);
+      if (syncStatus != null && !syncStatus.needsEpgRefresh(_cacheDuration)) {
+        moduleLogger.debug('Returning EPG from local storage', tag: 'EPG');
+        _fullEpgCache[cacheKey] = localEpgData;
+        _fullEpgCacheTimestamps[cacheKey] = syncStatus.lastEpgSync ?? DateTime.now();
+        return ApiResult.success(localEpgData);
+      }
     }
 
     try {
@@ -118,7 +129,8 @@ class EpgRepositoryImpl extends XtreamRepositoryBase implements EpgRepository {
       final xmlContent = response.data;
       if (xmlContent == null || xmlContent.isEmpty) {
         moduleLogger.warning('Empty XMLTV response received', tag: 'EPG');
-        return ApiResult.success(EpgData.empty());
+        // Return local data if available, otherwise empty
+        return ApiResult.success(localEpgData ?? EpgData.empty());
       }
 
       // Validate response looks like XML
@@ -127,7 +139,7 @@ class EpgRepositoryImpl extends XtreamRepositoryBase implements EpgRepository {
           'Response does not appear to be valid XMLTV format',
           tag: 'EPG',
         );
-        return ApiResult.success(EpgData.empty());
+        return ApiResult.success(localEpgData ?? EpgData.empty());
       }
 
       moduleLogger.debug(
@@ -146,9 +158,12 @@ class EpgRepositoryImpl extends XtreamRepositoryBase implements EpgRepository {
           '${epgData.totalPrograms} programs',
           tag: 'EPG',
         );
+
+        // Save to local storage for offline access
+        await _saveToLocalStorage(profileId, epgData);
       }
 
-      // Update cache
+      // Update in-memory cache
       _fullEpgCache[cacheKey] = epgData;
       _fullEpgCacheTimestamps[cacheKey] = DateTime.now();
 
@@ -159,6 +174,12 @@ class EpgRepositoryImpl extends XtreamRepositoryBase implements EpgRepository {
         tag: 'EPG',
         error: e,
       );
+
+      // Return cached/local data if available
+      if (localEpgData != null && localEpgData.isNotEmpty) {
+        moduleLogger.info('Returning cached EPG due to download failure', tag: 'EPG');
+        return ApiResult.success(localEpgData);
+      }
 
       // Check for specific errors
       if (e.type == DioExceptionType.connectionTimeout ||
@@ -177,6 +198,10 @@ class EpgRepositoryImpl extends XtreamRepositoryBase implements EpgRepository {
       return ApiResult.success(EpgData.empty());
     } on TimeoutException catch (_) {
       moduleLogger.warning('XMLTV EPG download timed out', tag: 'EPG');
+      // Return cached/local data if available
+      if (localEpgData != null && localEpgData.isNotEmpty) {
+        return ApiResult.success(localEpgData);
+      }
       return ApiResult.failure(ApiError.timeout('EPG download timed out'));
     } catch (e, stackTrace) {
       moduleLogger.error(
@@ -185,7 +210,211 @@ class EpgRepositoryImpl extends XtreamRepositoryBase implements EpgRepository {
         error: e,
         stackTrace: stackTrace,
       );
+      // Return cached/local data if available
+      if (localEpgData != null && localEpgData.isNotEmpty) {
+        return ApiResult.success(localEpgData);
+      }
       return ApiResult.success(EpgData.empty());
+    }
+  }
+
+  /// Load EPG data from local storage.
+  Future<EpgData?> _loadFromLocalStorage(String profileId) async {
+    if (_localStorage == null || !_localStorage.isInitialized) {
+      return null;
+    }
+
+    try {
+      final programsMap = _localStorage.getAllEpg(profileId);
+      if (programsMap.isEmpty) {
+        return null;
+      }
+
+      // Convert stored programs to EpgData format
+      // Note: We don't have channels stored separately, so create from programs
+      final channels = <String, EpgChannel>{};
+      for (final channelId in programsMap.keys) {
+        channels[channelId] = EpgChannel(id: channelId, name: channelId);
+      }
+
+      return EpgData(
+        channels: channels,
+        programs: programsMap,
+        fetchedAt: DateTime.now(),
+      );
+    } catch (e, stackTrace) {
+      moduleLogger.error(
+        'Failed to load EPG from local storage',
+        tag: 'EPG',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      return null;
+    }
+  }
+
+  /// Save EPG data to local storage.
+  Future<void> _saveToLocalStorage(String profileId, EpgData epgData) async {
+    if (_localStorage == null || !_localStorage.isInitialized) {
+      return;
+    }
+
+    try {
+      // Flatten all programs into a single list
+      final allPrograms = <EpgProgram>[];
+      for (final programs in epgData.programs.values) {
+        allPrograms.addAll(programs);
+      }
+
+      await _localStorage.saveEpgPrograms(profileId, allPrograms);
+
+      // Update sync status
+      final syncStatus = _localStorage.getOrCreateSyncStatus(profileId);
+      syncStatus.updateEpgSync(allPrograms.length);
+      await _localStorage.saveSyncStatus(syncStatus);
+
+      moduleLogger.debug(
+        'Saved ${allPrograms.length} EPG programs to local storage',
+        tag: 'EPG',
+      );
+    } catch (e, stackTrace) {
+      moduleLogger.error(
+        'Failed to save EPG to local storage',
+        tag: 'EPG',
+        error: e,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
+  @override
+  Future<ApiResult<List<EpgEntry>>> fetchChannelEpg(
+    XtreamCredentialsModel credentials,
+    String channelId, {
+    int limit = 10,
+  }) async {
+    // XMLTV-only implementation: Get EPG from full XMLTV data
+    // NO per-channel API calls are made
+    try {
+      moduleLogger.debug(
+        'Fetching EPG for channel $channelId from XMLTV data',
+        tag: 'EPG',
+      );
+
+      final result = await fetchFullXmltvEpg(credentials);
+      if (result.isFailure) {
+        return ApiResult.success([]);
+      }
+
+      final epgData = result.data;
+      final programs = epgData.getChannelPrograms(channelId);
+
+      // Filter to get current and upcoming programs, limited by limit
+      final now = DateTime.now().toUtc();
+      final relevantPrograms = programs
+          .where((p) => p.endTime.isAfter(now))
+          .take(limit)
+          .map((p) => EpgEntry.fromEpgProgram(p))
+          .toList();
+
+      moduleLogger.debug(
+        'Found ${relevantPrograms.length} EPG entries for channel $channelId',
+        tag: 'EPG',
+      );
+
+      return ApiResult.success(relevantPrograms);
+    } catch (e, stackTrace) {
+      moduleLogger.error(
+        'Exception fetching channel EPG',
+        tag: 'EPG',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      return ApiResult.success([]);
+    }
+  }
+
+  @override
+  Future<ApiResult<Map<String, List<EpgEntry>>>> fetchAllEpg(
+    XtreamCredentialsModel credentials,
+  ) async {
+    // XMLTV-only implementation: Convert full EPG to legacy format
+    // NO per-channel API calls are made
+    try {
+      moduleLogger.info('Fetching all EPG from XMLTV data', tag: 'EPG');
+
+      final result = await fetchFullXmltvEpg(credentials);
+      if (result.isFailure) {
+        return ApiResult.success({});
+      }
+
+      final epgData = result.data;
+      final now = DateTime.now().toUtc();
+      final entries = <String, List<EpgEntry>>{};
+
+      for (final entry in epgData.programs.entries) {
+        final channelId = entry.key;
+        final programs = entry.value;
+
+        // Convert programs to EpgEntry format, filtering to current/upcoming
+        final channelEntries = programs
+            .where((p) => p.endTime.isAfter(now))
+            .take(10) // Limit per channel
+            .map((p) => EpgEntry.fromEpgProgram(p))
+            .toList();
+
+        if (channelEntries.isNotEmpty) {
+          entries[channelId] = channelEntries;
+        }
+      }
+
+      moduleLogger.info(
+        'Converted EPG for ${entries.length} channels from XMLTV data',
+        tag: 'EPG',
+      );
+
+      return ApiResult.success(entries);
+    } catch (e, stackTrace) {
+      moduleLogger.error(
+        'Exception fetching all EPG',
+        tag: 'EPG',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      return ApiResult.success({});
+    }
+  }
+
+  @override
+  Future<ApiResult<void>> refresh(XtreamCredentialsModel credentials) async {
+    try {
+      final cacheKey = _getCacheKey(credentials);
+      final profileId = _getProfileId(credentials);
+
+      // Clear in-memory cache
+      _fullEpgCache.remove(cacheKey);
+      _fullEpgCacheTimestamps.remove(cacheKey);
+
+      // Clear local storage EPG
+      if (_localStorage != null && _localStorage.isInitialized) {
+        try {
+          // Clear EPG from local storage by re-initializing with empty data
+          await _localStorage.saveEpgPrograms(profileId, []);
+        } catch (e) {
+          moduleLogger.warning('Failed to clear local EPG storage: $e', tag: 'EPG');
+        }
+      }
+
+      // Fetch fresh full XMLTV EPG data
+      final result = await fetchFullXmltvEpg(credentials);
+      if (result.isFailure) {
+        return ApiResult.failure(result.error);
+      }
+
+      moduleLogger.info('EPG data refreshed via XMLTV', tag: 'EPG');
+      return ApiResult.success(null);
+    } catch (e) {
+      return ApiResult.failure(ApiError.fromException(e));
     }
   }
 
@@ -235,190 +464,9 @@ class EpgRepositoryImpl extends XtreamRepositoryBase implements EpgRepository {
     return ApiResult.success(schedule);
   }
 
-  @override
-  Future<ApiResult<List<EpgEntry>>> fetchChannelEpg(
-    XtreamCredentialsModel credentials,
-    String channelId, {
-    int limit = 10,
-  }) async {
-    try {
-      moduleLogger.info('Fetching EPG for channel $channelId', tag: 'EPG');
-
-      final url =
-          '${buildUrl(credentials, 'get_short_epg')}&stream_id=$channelId&limit=$limit';
-      final response =
-          await _dio.get<Map<String, dynamic>>(url).timeout(_epgTimeout);
-
-      if (response.data == null) {
-        return ApiResult.success([]);
-      }
-
-      final data = response.data!;
-      final epgListings = data['epg_listings'] as List<dynamic>? ?? [];
-
-      final entries = epgListings.map((json) {
-        return EpgEntry.fromJson(json as Map<String, dynamic>);
-      }).toList();
-
-      moduleLogger.info(
-        'Fetched ${entries.length} EPG entries for channel $channelId',
-        tag: 'EPG',
-      );
-
-      return ApiResult.success(entries);
-    } on DioException catch (e) {
-      moduleLogger.error(
-        'Failed to fetch channel EPG',
-        tag: 'EPG',
-        error: e,
-      );
-      // Return empty list on failure - EPG is not critical
-      return ApiResult.success([]);
-    } on TimeoutException catch (_) {
-      moduleLogger.warning('EPG request timed out for channel $channelId', tag: 'EPG');
-      return ApiResult.success([]);
-    } catch (e, stackTrace) {
-      moduleLogger.error(
-        'Exception fetching channel EPG',
-        tag: 'EPG',
-        error: e,
-        stackTrace: stackTrace,
-      );
-      return ApiResult.success([]);
-    }
-  }
-
-  @override
-  Future<ApiResult<Map<String, List<EpgEntry>>>> fetchAllEpg(
-    XtreamCredentialsModel credentials,
-  ) async {
-    try {
-      final cacheKey = _getCacheKey(credentials);
-
-      // Check cache
-      if (_epgCache.containsKey(cacheKey) && _isCacheValid(cacheKey)) {
-        return ApiResult.success(_epgCache[cacheKey]!);
-      }
-
-      moduleLogger.info('Fetching all EPG data', tag: 'EPG');
-
-      // First, get all live channels to determine which EPG to fetch
-      final channelsUrl = buildUrl(credentials, 'get_live_streams');
-      final channelsResponse =
-          await _dio.get<dynamic>(channelsUrl).timeout(_epgTimeout);
-
-      final channelsList = safeParseList(channelsResponse.data);
-      if (channelsList.isEmpty) {
-        moduleLogger.warning('No channels found for EPG loading', tag: 'EPG');
-        return ApiResult.success({});
-      }
-
-      final channelIds = channelsList
-          .map((c) => c['stream_id']?.toString() ?? '')
-          .where((id) => id.isNotEmpty)
-          .toList();
-
-      moduleLogger.info(
-        'Fetching EPG for ${channelIds.length} channels',
-        tag: 'EPG',
-      );
-
-      final result = <String, List<EpgEntry>>{};
-      var successCount = 0;
-      var failCount = 0;
-
-      // Process in batches to avoid overwhelming the server
-      for (var i = 0; i < channelIds.length; i += _epgBatchSize) {
-        final batch = channelIds.skip(i).take(_epgBatchSize).toList();
-
-        final futures = batch.map((channelId) async {
-          try {
-            final epgResult = await fetchChannelEpg(
-              credentials,
-              channelId,
-              limit: 10,
-            );
-
-            if (epgResult.isSuccess && epgResult.data.isNotEmpty) {
-              result[channelId] = epgResult.data;
-              successCount++;
-            }
-          } catch (_) {
-            failCount++;
-          }
-        });
-
-        await Future.wait(futures);
-
-        // Small delay between batches
-        if (i + _epgBatchSize < channelIds.length) {
-          await Future.delayed(_epgBatchDelay);
-        }
-      }
-
-      // Update cache
-      _epgCache[cacheKey] = result;
-      _cacheTimestamps[cacheKey] = DateTime.now();
-
-      moduleLogger.info(
-        'EPG fetch completed: $successCount channels with EPG, '
-        '$failCount failures out of ${channelIds.length} channels',
-        tag: 'EPG',
-      );
-
-      return ApiResult.success(result);
-    } on TimeoutException catch (_) {
-      moduleLogger.warning('EPG batch fetch timed out', tag: 'EPG');
-      return ApiResult.success({});
-    } catch (e, stackTrace) {
-      moduleLogger.error(
-        'Exception fetching all EPG',
-        tag: 'EPG',
-        error: e,
-        stackTrace: stackTrace,
-      );
-      // Return empty map on failure - EPG is optional
-      return ApiResult.success({});
-    }
-  }
-
-  @override
-  Future<ApiResult<void>> refresh(XtreamCredentialsModel credentials) async {
-    try {
-      final cacheKey = _getCacheKey(credentials);
-
-      // Clear all caches
-      _epgCache.remove(cacheKey);
-      _cacheTimestamps.remove(cacheKey);
-      _fullEpgCache.remove(cacheKey);
-      _fullEpgCacheTimestamps.remove(cacheKey);
-
-      // Fetch fresh full XMLTV EPG data (preferred method)
-      final result = await fetchFullXmltvEpg(credentials);
-      if (result.isFailure) {
-        // Fall back to per-channel API if XML fails
-        moduleLogger.warning(
-          'Full EPG refresh failed, falling back to per-channel API',
-          tag: 'EPG',
-        );
-        final fallbackResult = await fetchAllEpg(credentials);
-        if (fallbackResult.isFailure) {
-          return ApiResult.failure(fallbackResult.error);
-        }
-      }
-
-      moduleLogger.info('EPG data refreshed', tag: 'EPG');
-      return ApiResult.success(null);
-    } catch (e) {
-      return ApiResult.failure(ApiError.fromException(e));
-    }
-  }
-
-  /// Clear all EPG caches for a specific credential.
+  /// Clear EPG cache for a specific credential.
   void clearCache(XtreamCredentialsModel credentials) {
     final cacheKey = _getCacheKey(credentials);
-    _epgCache.remove(cacheKey);
-    _cacheTimestamps.remove(cacheKey);
     _fullEpgCache.remove(cacheKey);
     _fullEpgCacheTimestamps.remove(cacheKey);
     moduleLogger.debug('EPG cache cleared for $cacheKey', tag: 'EPG');
@@ -426,8 +474,6 @@ class EpgRepositoryImpl extends XtreamRepositoryBase implements EpgRepository {
 
   /// Clear all EPG caches.
   void clearAllCaches() {
-    _epgCache.clear();
-    _cacheTimestamps.clear();
     _fullEpgCache.clear();
     _fullEpgCacheTimestamps.clear();
     moduleLogger.debug('All EPG caches cleared', tag: 'EPG');
@@ -436,8 +482,14 @@ class EpgRepositoryImpl extends XtreamRepositoryBase implements EpgRepository {
   /// Check if EPG data is cached for credentials.
   bool hasCachedEpg(XtreamCredentialsModel credentials) {
     final cacheKey = _getCacheKey(credentials);
-    return (_fullEpgCache.containsKey(cacheKey) &&
-            _isFullEpgCacheValid(cacheKey)) ||
-        (_epgCache.containsKey(cacheKey) && _isCacheValid(cacheKey));
+    return _fullEpgCache.containsKey(cacheKey) &&
+        _isFullEpgCacheValid(cacheKey);
+  }
+
+  /// Check if EPG needs refresh based on TTL.
+  bool needsRefresh(XtreamCredentialsModel credentials) {
+    final cacheKey = _getCacheKey(credentials);
+    if (!_fullEpgCache.containsKey(cacheKey)) return true;
+    return !_isFullEpgCacheValid(cacheKey);
   }
 }

@@ -17,8 +17,15 @@ import 'livetv/livetv_service.dart';
 import 'movies/movies_service.dart';
 import 'repositories/repositories.dart';
 import 'series/series_service.dart';
+import 'storage/xtream_local_storage.dart';
 
-/// Xtream Codes API client providing unified access to all services
+/// Xtream Codes API client providing unified access to all services.
+///
+/// This client follows Clean Architecture patterns:
+/// - All HTTP calls go through repositories in the data layer
+/// - EPG is obtained only via XMLTV (no per-channel API calls)
+/// - Data is persisted via local storage for offline access
+/// - All components are injectable for testing
 class XtreamCodesClient {
   final XtreamAuthService _authService;
   final XtreamAccountService _accountService;
@@ -26,9 +33,16 @@ class XtreamCodesClient {
   final MoviesService _moviesService;
   final SeriesService _seriesService;
   final EpgService _epgService;
+  final XtreamLocalStorage? _localStorage;
 
-  /// Factory constructor that creates all services with default implementations
-  factory XtreamCodesClient({Dio? dio}) {
+  /// Factory constructor that creates all services with default implementations.
+  ///
+  /// [dio] Optional Dio instance for HTTP operations.
+  /// [localStorage] Optional local storage for persistence.
+  factory XtreamCodesClient({
+    Dio? dio,
+    XtreamLocalStorage? localStorage,
+  }) {
     final config = AppConfig();
     final httpClient = dio ??
         Dio(BaseOptions(
@@ -40,11 +54,21 @@ class XtreamCodesClient {
           },
         ));
 
-    // Create repositories
+    // Create repositories with dependencies
     final authRepo = XtreamAuthRepositoryImpl(dio: httpClient);
     final accountRepo = XtreamAccountRepositoryImpl(dio: httpClient);
-    final epgRepo = EpgRepositoryImpl(dio: httpClient);
-    final liveTvRepo = LiveTvRepositoryImpl(dio: httpClient, epgRepository: epgRepo);
+    
+    // EPG repository uses XMLTV only (no per-channel API calls)
+    final epgRepo = EpgRepositoryImpl(
+      dio: httpClient,
+      localStorage: localStorage,
+      config: config,
+    );
+    
+    final liveTvRepo = LiveTvRepositoryImpl(
+      dio: httpClient,
+      epgRepository: epgRepo,
+    );
     final moviesRepo = MoviesRepositoryImpl(dio: httpClient);
     final seriesRepo = SeriesRepositoryImpl(dio: httpClient);
 
@@ -63,6 +87,7 @@ class XtreamCodesClient {
       moviesService: moviesService,
       seriesService: seriesService,
       epgService: epgService,
+      localStorage: localStorage,
     );
   }
 
@@ -73,12 +98,14 @@ class XtreamCodesClient {
     required MoviesService moviesService,
     required SeriesService seriesService,
     required EpgService epgService,
+    XtreamLocalStorage? localStorage,
   })  : _authService = authService,
         _accountService = accountService,
         _liveTvService = liveTvService,
         _moviesService = moviesService,
         _seriesService = seriesService,
-        _epgService = epgService;
+        _epgService = epgService,
+        _localStorage = localStorage;
 
   // ============ Authentication ============
 
