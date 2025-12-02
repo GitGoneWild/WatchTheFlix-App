@@ -49,6 +49,8 @@ jobs:
 
   test:
     name: Test
+    # Skip for Dependabot PRs - handled by dependabot_ci.yml using GitHub-hosted runners
+    if: github.actor != 'dependabot[bot]'
     runs-on: self-hosted
     needs: analyze
     permissions:
@@ -78,6 +80,8 @@ jobs:
 
   build-android:
     name: Build Android
+    # Skip for Dependabot PRs - handled by dependabot_ci.yml using GitHub-hosted runners
+    if: github.actor != 'dependabot[bot]'
     runs-on: self-hosted
     needs: test
     permissions:
@@ -114,7 +118,9 @@ jobs:
 
   build-ios:
     name: Build iOS
+    # Skip for Dependabot PRs - handled by dependabot_ci.yml using GitHub-hosted runners
     # iOS builds require macOS - use self-hosted macOS runner
+    if: github.actor != 'dependabot[bot]'
     runs-on: [self-hosted, macOS]
     needs: test
     permissions:
@@ -138,6 +144,8 @@ jobs:
 
   build-web:
     name: Build Web
+    # Skip for Dependabot PRs - handled by dependabot_ci.yml using GitHub-hosted runners
+    if: github.actor != 'dependabot[bot]'
     runs-on: self-hosted
     needs: test
     permissions:
@@ -168,7 +176,9 @@ jobs:
 
   build-windows:
     name: Build Windows
+    # Skip for Dependabot PRs - handled by dependabot_ci.yml using GitHub-hosted runners
     # Windows builds require Windows OS - use self-hosted Windows runner
+    if: github.actor != 'dependabot[bot]'
     runs-on: [self-hosted, Windows]
     needs: test
     permissions:
@@ -199,7 +209,9 @@ jobs:
 
   build-macos:
     name: Build macOS
+    # Skip for Dependabot PRs - handled by dependabot_ci.yml using GitHub-hosted runners
     # macOS builds require macOS - use self-hosted macOS runner
+    if: github.actor != 'dependabot[bot]'
     runs-on: [self-hosted, macOS]
     needs: test
     permissions:
@@ -230,6 +242,8 @@ jobs:
 
   build-linux:
     name: Build Linux
+    # Skip for Dependabot PRs - handled by dependabot_ci.yml using GitHub-hosted runners
+    if: github.actor != 'dependabot[bot]'
     runs-on: self-hosted
     needs: test
     permissions:

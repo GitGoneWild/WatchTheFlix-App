@@ -10,6 +10,11 @@ permissions:
   contents: read
   pull-requests: read
 
+# Centralized Flutter version (keep in sync with flutter_ci.yml)
+env:
+  FLUTTER_VERSION: '3.24.3'
+  FLUTTER_CHANNEL: 'stable'
+
 # Only run for Dependabot PRs
 # This workflow runs on GitHub-hosted runners (as per requirement)
 jobs:
@@ -26,8 +31,8 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@44ac965b96f18d999802d4b807e3256d5a3f9fa1 # v2.16.0
         with:
-          flutter-version: '3.24.3'
-          channel: 'stable'
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: ${{ env.FLUTTER_CHANNEL }}
           cache: true
 
       - name: Get dependencies
