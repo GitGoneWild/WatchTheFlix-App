@@ -59,7 +59,9 @@ xtreamcodes/
 │   └── series_service.dart            # TV series
 ├── epg/
 │   ├── epg.dart                       # Module exports
-│   └── epg_service.dart               # Electronic Program Guide
+│   ├── epg_models.dart                # EPG data models
+│   ├── epg_service.dart               # Electronic Program Guide
+│   └── xmltv_parser.dart              # XMLTV format parser
 ├── mappers/
 │   ├── mappers.dart                   # Module exports
 │   └── xtream_to_domain_mappers.dart  # API to domain conversion
@@ -72,6 +74,15 @@ xtreamcodes/
 │   ├── movies_repository_impl.dart
 │   ├── series_repository_impl.dart
 │   └── epg_repository_impl.dart
+├── storage/
+│   ├── storage.dart                   # Module exports
+│   ├── xtream_hive_models.dart        # Hive storage models
+│   ├── xtream_hive_models.g.dart      # Generated adapters
+│   └── xtream_local_storage.dart      # Local storage service
+├── sync/
+│   ├── sync.dart                      # Module exports
+│   ├── xtream_sync_service.dart       # Sync coordination service
+│   └── xtream_data_repository.dart    # Unified data repository
 ├── xtream_codes_client.dart           # Unified client interface
 └── xtreamcodes.dart                   # Main module export
 ```
@@ -414,6 +425,182 @@ getIt.registerLazySingleton<XtreamCodesClient>(
 
 // Usage
 final client = getIt<XtreamCodesClient>();
+```
+
+## Local Storage & Sync
+
+The Xtream module includes a comprehensive local storage system using Hive for offline-tolerant access and efficient data management.
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                   XtreamDataRepository                       │
+│  (Unified access to local + remote data)                    │
+├─────────────────────────────────────────────────────────────┤
+│     XtreamSyncService          XtreamLocalStorage            │
+│  (Sync coordination)       (Hive-based persistence)         │
+├─────────────────────────────────────────────────────────────┤
+│                    XtreamCodesClient                         │
+│  (API access)                                               │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Using XtreamDataRepository (Recommended for Apps)
+
+The `XtreamDataRepository` provides a "local first" approach:
+
+```dart
+final storage = XtreamLocalStorage();
+await storage.initialize();
+
+final client = XtreamCodesClient();
+final syncService = XtreamSyncService(
+  client: client,
+  storage: storage,
+);
+
+final repository = XtreamDataRepository(
+  client: client,
+  storage: storage,
+  syncService: syncService,
+);
+
+// Initialize
+await repository.initialize();
+
+// Check if initial sync is needed
+if (repository.needsInitialSync(profileId)) {
+  final stats = await repository.syncService.performInitialSync(
+    profileId,
+    credentials,
+  );
+  print('Synced ${stats.totalItems} items');
+}
+
+// Fetch data (local first, auto-refresh in background)
+final channels = await repository.getLiveChannels(profileId, credentials);
+final movies = await repository.getMovies(profileId, credentials);
+final series = await repository.getSeries(profileId, credentials);
+```
+
+### Initial Sync
+
+On first connection to an Xtream server, perform a full sync:
+
+```dart
+final syncService = XtreamSyncService(
+  client: client,
+  storage: storage,
+);
+
+// Listen to progress
+syncService.progressStream.listen((progress) {
+  print('${progress.currentOperation}: ${(progress.progress * 100).toInt()}%');
+});
+
+// Perform initial sync
+final stats = await syncService.performInitialSync(profileId, credentials);
+
+print('Channels: ${stats.channelsImported}');
+print('Categories: ${stats.categoriesImported}');
+print('Movies: ${stats.moviesImported}');
+print('Series: ${stats.seriesImported}');
+print('EPG Programs: ${stats.epgProgramsImported}');
+print('Duration: ${stats.duration.inSeconds}s');
+```
+
+### Incremental Sync
+
+For subsequent syncs, use TTL-based incremental updates:
+
+```dart
+// Check if refresh is needed
+if (syncService.needsRefresh(profileId)) {
+  await syncService.performIncrementalSync(profileId, credentials);
+}
+
+// Force refresh specific content
+await syncService.performIncrementalSync(
+  profileId,
+  credentials,
+  forceChannels: true,
+  forceMovies: false,
+  forceSeries: false,
+  forceEpg: true,
+);
+
+// Quick refresh for live content
+await syncService.refreshLiveContent(profileId, credentials);
+
+// Refresh VOD content
+await syncService.refreshVodContent(profileId, credentials);
+```
+
+### Sync Configuration
+
+Customize TTL values for different content types:
+
+```dart
+const config = SyncConfig(
+  channelTtl: Duration(hours: 1),      // Channels refresh every hour
+  movieTtl: Duration(hours: 4),        // Movies refresh every 4 hours
+  seriesTtl: Duration(hours: 4),       // Series refresh every 4 hours
+  epgTtl: Duration(hours: 6),          // EPG refresh every 6 hours
+  syncEpgOnInitial: true,              // Include EPG in initial sync
+  syncMoviesOnInitial: true,           // Include movies in initial sync
+  syncSeriesOnInitial: true,           // Include series in initial sync
+);
+
+final syncService = XtreamSyncService(
+  client: client,
+  storage: storage,
+  config: config,
+);
+```
+
+### Direct Local Storage Access
+
+For advanced use cases, access local storage directly:
+
+```dart
+final storage = XtreamLocalStorage();
+await storage.initialize();
+
+// Get cached channels
+final channels = storage.getChannelsByProfile(profileId);
+
+// Get cached movies by category
+final movies = storage.getMovies(profileId, categoryId: 'action');
+
+// Get EPG for a channel
+final epg = storage.getEpgForChannel(profileId, channelId);
+
+// Get storage statistics
+final stats = storage.getStorageStats(profileId);
+print('Channels: ${stats['channels']}');
+print('Movies: ${stats['movies']}');
+print('EPG Programs: ${stats['epgPrograms']}');
+
+// Clear profile data
+await storage.clearProfileData(profileId);
+```
+
+### Sync Status Tracking
+
+Monitor sync status for each profile:
+
+```dart
+final status = storage.getSyncStatus(profileId);
+
+print('Initial sync complete: ${status?.isInitialSyncComplete}');
+print('Last channel sync: ${status?.lastChannelSync}');
+print('Last EPG sync: ${status?.lastEpgSync}');
+print('Channel count: ${status?.channelCount}');
+
+// Check if specific data needs refresh
+final needsChannelRefresh = status?.needsChannelRefresh(Duration(hours: 1)) ?? true;
+final needsEpgRefresh = status?.needsEpgRefresh(Duration(hours: 6)) ?? true;
 ```
 
 ## Caching
