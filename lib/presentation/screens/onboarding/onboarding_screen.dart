@@ -27,10 +27,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       icon: Icons.tv,
     ),
     const OnboardingPage(
-      title: 'Add Your Playlists',
+      title: 'Connect Your IPTV Provider',
       description:
-          'Import your M3U playlists for seamless streaming.',
-      icon: Icons.playlist_add,
+          'Sign in with your Xtream Codes credentials or import M3U playlists for seamless streaming.',
+      icon: Icons.live_tv,
     ),
     const OnboardingPage(
       title: 'Enjoy Anywhere',
@@ -53,8 +53,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         curve: Curves.easeInOut,
       );
     } else {
-      Navigator.pushReplacementNamed(context, '/add-playlist');
+      _showConnectionOptions();
     }
+  }
+
+  void _showConnectionOptions() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.backgroundCard,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => const ConnectionOptionsSheet(),
+    );
   }
 
   @override
@@ -68,7 +79,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               alignment: Alignment.topRight,
               child: TextButton(
                 onPressed: () {
-                  Navigator.pushReplacementNamed(context, '/add-playlist');
+                  _showConnectionOptions();
                 },
                 child: const Text('Skip'),
               ),
@@ -280,6 +291,185 @@ class _AddPlaylistScreenState extends State<AddPlaylistScreen> {
                   : const Text('Add Playlist'),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Connection options bottom sheet
+class ConnectionOptionsSheet extends StatelessWidget {
+  const ConnectionOptionsSheet({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Header
+            Row(
+              children: [
+                const Icon(Icons.connect_without_contact, 
+                  color: AppColors.primary, 
+                  size: 28,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Choose Connection Method',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // Xtream Codes Option (Primary)
+            _ConnectionOptionCard(
+              icon: Icons.live_tv,
+              iconColor: AppColors.primary,
+              title: 'Xtream Codes',
+              subtitle: 'Connect to your IPTV panel with credentials',
+              badge: 'RECOMMENDED',
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushReplacementNamed(context, AppRoutes.xtreamLogin);
+              },
+            ),
+            
+            const SizedBox(height: 12),
+
+            // M3U Option (Secondary)
+            _ConnectionOptionCard(
+              icon: Icons.playlist_play,
+              iconColor: AppColors.secondary,
+              title: 'M3U Playlist',
+              subtitle: 'Import a playlist URL or file',
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushReplacementNamed(context, AppRoutes.addPlaylist);
+              },
+            ),
+
+            const SizedBox(height: 16),
+
+            // Skip option
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.pushReplacementNamed(context, AppRoutes.home);
+              },
+              child: const Text(
+                'Skip for now',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Connection option card widget
+class _ConnectionOptionCard extends StatelessWidget {
+  const _ConnectionOptionCard({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+    this.badge,
+  });
+
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String subtitle;
+  final String? badge;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: badge != null ? AppColors.primary : AppColors.border,
+              width: badge != null ? 2 : 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: iconColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: iconColor, size: 28),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          title,
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        if (badge != null) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              badge!,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.textSecondary),
+            ],
+          ),
         ),
       ),
     );

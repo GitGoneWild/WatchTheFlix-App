@@ -1392,6 +1392,53 @@ class SettingsTab extends StatelessWidget {
                 ],
               ),
 
+              // Xtream Codes Section
+              _SettingsSection(
+                title: 'Xtream Codes',
+                children: [
+                  _SettingsTile(
+                    icon: Icons.live_tv,
+                    iconColor: AppColors.primary,
+                    title: 'Manage Account',
+                    subtitle: 'View or change Xtream Codes credentials',
+                    onTap: () =>
+                        Navigator.pushNamed(context, AppRoutes.xtreamLogin),
+                  ),
+                  _SettingsTile(
+                    icon: Icons.refresh,
+                    iconColor: AppColors.accent,
+                    title: 'Refresh Channels',
+                    subtitle: 'Update live channels and VOD content',
+                    onTap: () {
+                      // Trigger refresh for Xtream channels
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Refreshing channels...'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                      // TODO: Implement refresh logic
+                    },
+                  ),
+                  _SettingsTile(
+                    icon: Icons.schedule,
+                    iconColor: AppColors.secondary,
+                    title: 'Refresh EPG',
+                    subtitle: 'Update program guide information',
+                    onTap: () {
+                      // Trigger EPG refresh
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Refreshing EPG...'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                      // TODO: Implement EPG refresh logic
+                    },
+                  ),
+                ],
+              ),
+
               // Appearance Section
               _SettingsSection(
                 title: 'Appearance',
