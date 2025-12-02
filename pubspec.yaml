@@ -35,6 +35,9 @@ dependencies:
   carousel_slider: ^4.2.1
   google_fonts: ^6.1.0
 
+  # XML Parsing
+  xml: ^6.5.0
+
   # Utils
   get_it: ^7.6.7
   injectable: ^2.3.2

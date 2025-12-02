@@ -1,11 +1,13 @@
 // EpgService
 // Service for managing Electronic Program Guide (EPG) data.
+// Supports both full XMLTV EPG and per-channel short EPG.
 
+import '../../core/logging/app_logger.dart';
 import '../../core/models/api_result.dart';
 import '../../core/models/base_models.dart';
-import '../../core/logging/app_logger.dart';
+import 'epg_models.dart';
 
-/// EPG entry model for program listings
+/// EPG entry model for program listings (legacy format from short EPG API).
 class EpgEntry {
   final String channelId;
   final String title;
@@ -23,13 +25,13 @@ class EpgEntry {
     this.language,
   });
 
-  /// Check if this program is currently airing
+  /// Check if this program is currently airing.
   bool get isCurrentlyAiring {
     final now = DateTime.now();
     return now.isAfter(startTime) && now.isBefore(endTime);
   }
 
-  /// Calculate progress percentage (0.0 to 1.0)
+  /// Calculate progress percentage (0.0 to 1.0).
   double get progress {
     if (!isCurrentlyAiring) return 0.0;
     final now = DateTime.now();
@@ -38,7 +40,7 @@ class EpgEntry {
     return totalDuration > 0 ? elapsed / totalDuration : 0.0;
   }
 
-  /// Duration of the program
+  /// Duration of the program.
   Duration get duration => endTime.difference(startTime);
 
   factory EpgEntry.fromJson(Map<String, dynamic> json) {
@@ -55,6 +57,18 @@ class EpgEntry {
     );
   }
 
+  /// Create from EpgProgram (from XMLTV data).
+  factory EpgEntry.fromEpgProgram(EpgProgram program) {
+    return EpgEntry(
+      channelId: program.channelId,
+      title: program.title,
+      description: program.description,
+      startTime: program.startTime,
+      endTime: program.endTime,
+      language: program.language,
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'channel_id': channelId,
@@ -66,7 +80,7 @@ class EpgEntry {
     };
   }
 
-  /// Convert to EpgInfo domain model
+  /// Convert to EpgInfo domain model.
   EpgInfo toEpgInfo() {
     return EpgInfo(
       currentProgram: title,
@@ -92,31 +106,41 @@ class EpgEntry {
   }
 }
 
-/// EPG service interface
+/// EPG service interface.
 abstract class IEpgService {
-  /// Get EPG for a specific channel
+  /// Get EPG for a specific channel using short EPG API.
   Future<ApiResult<List<EpgEntry>>> getChannelEpg(
     XtreamCredentialsModel credentials,
     String channelId, {
     int limit,
   });
 
-  /// Get EPG for all channels
+  /// Get EPG for all channels using short EPG API.
   Future<ApiResult<Map<String, List<EpgEntry>>>> getAllEpg(
     XtreamCredentialsModel credentials,
   );
 
-  /// Get current and next program for a channel
+  /// Get current and next program for a channel.
   Future<ApiResult<EpgEntry?>> getCurrentProgram(
     XtreamCredentialsModel credentials,
     String channelId,
   );
 
-  /// Refresh EPG data
+  /// Refresh EPG data.
   Future<ApiResult<void>> refresh(XtreamCredentialsModel credentials);
+
+  /// Get full XMLTV EPG data (preferred method).
+  Future<ApiResult<EpgData>> getFullEpg(XtreamCredentialsModel credentials);
+
+  /// Get daily schedule for a channel.
+  Future<ApiResult<List<EpgProgram>>> getDailySchedule(
+    XtreamCredentialsModel credentials,
+    String channelId,
+    DateTime date,
+  );
 }
 
-/// EPG service implementation
+/// EPG service implementation.
 class EpgService implements IEpgService {
   final EpgRepository _repository;
 
@@ -170,6 +194,16 @@ class EpgService implements IEpgService {
     String channelId,
   ) async {
     try {
+      // Try to get from full EPG first (more efficient if cached)
+      final fullEpgResult = await _repository.fetchFullXmltvEpg(credentials);
+      if (fullEpgResult.isSuccess && fullEpgResult.data.isNotEmpty) {
+        final program = fullEpgResult.data.getCurrentProgram(channelId);
+        if (program != null) {
+          return ApiResult.success(EpgEntry.fromEpgProgram(program));
+        }
+      }
+
+      // Fall back to short EPG API
       final result = await getChannelEpg(credentials, channelId, limit: 2);
 
       if (result.isFailure) {
@@ -198,22 +232,121 @@ class EpgService implements IEpgService {
       return ApiResult.failure(ApiError.fromException(e));
     }
   }
+
+  @override
+  Future<ApiResult<EpgData>> getFullEpg(
+    XtreamCredentialsModel credentials,
+  ) async {
+    try {
+      moduleLogger.info('Fetching full XMLTV EPG', tag: 'EPG');
+      return await _repository.fetchFullXmltvEpg(credentials);
+    } catch (e, stackTrace) {
+      moduleLogger.error(
+        'Failed to fetch full EPG',
+        tag: 'EPG',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      return ApiResult.failure(ApiError.fromException(e));
+    }
+  }
+
+  @override
+  Future<ApiResult<List<EpgProgram>>> getDailySchedule(
+    XtreamCredentialsModel credentials,
+    String channelId,
+    DateTime date,
+  ) async {
+    try {
+      moduleLogger.info(
+        'Fetching daily schedule for channel $channelId on $date',
+        tag: 'EPG',
+      );
+      final result = await _repository.fetchFullXmltvEpg(credentials);
+      if (result.isFailure) {
+        return ApiResult.failure(result.error);
+      }
+
+      final schedule = result.data.getDailySchedule(channelId, date);
+      return ApiResult.success(schedule);
+    } catch (e, stackTrace) {
+      moduleLogger.error(
+        'Failed to fetch daily schedule',
+        tag: 'EPG',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      return ApiResult.failure(ApiError.fromException(e));
+    }
+  }
+
+  /// Get next program for a channel.
+  Future<ApiResult<EpgEntry?>> getNextProgram(
+    XtreamCredentialsModel credentials,
+    String channelId,
+  ) async {
+    try {
+      final result = await _repository.fetchFullXmltvEpg(credentials);
+      if (result.isFailure) {
+        return ApiResult.failure(result.error);
+      }
+
+      final program = result.data.getNextProgram(channelId);
+      if (program != null) {
+        return ApiResult.success(EpgEntry.fromEpgProgram(program));
+      }
+      return ApiResult.success(null);
+    } catch (e) {
+      return ApiResult.failure(ApiError.fromException(e));
+    }
+  }
+
+  /// Get current and next program info for display.
+  Future<ApiResult<EpgInfo>> getCurrentAndNextInfo(
+    XtreamCredentialsModel credentials,
+    String channelId,
+  ) async {
+    try {
+      final result = await _repository.fetchFullXmltvEpg(credentials);
+      if (result.isFailure) {
+        return ApiResult.failure(result.error);
+      }
+
+      final current = result.data.getCurrentProgram(channelId);
+      final next = result.data.getNextProgram(channelId);
+
+      return ApiResult.success(EpgInfo(
+        currentProgram: current?.title,
+        nextProgram: next?.title,
+        startTime: current?.startTime,
+        endTime: current?.endTime,
+        description: current?.description,
+      ));
+    } catch (e) {
+      return ApiResult.failure(ApiError.fromException(e));
+    }
+  }
 }
 
-/// EPG repository interface
+/// EPG repository interface.
 abstract class EpgRepository {
-  /// Fetch EPG for a specific channel
+  /// Fetch EPG for a specific channel using short EPG API.
   Future<ApiResult<List<EpgEntry>>> fetchChannelEpg(
     XtreamCredentialsModel credentials,
     String channelId, {
     int limit,
   });
 
-  /// Fetch EPG for all channels
+  /// Fetch EPG for all channels using short EPG API.
   Future<ApiResult<Map<String, List<EpgEntry>>>> fetchAllEpg(
     XtreamCredentialsModel credentials,
   );
 
-  /// Refresh cached EPG data
+  /// Fetch full XMLTV EPG data.
+  Future<ApiResult<EpgData>> fetchFullXmltvEpg(
+    XtreamCredentialsModel credentials,
+  );
+
+  /// Refresh cached EPG data.
   Future<ApiResult<void>> refresh(XtreamCredentialsModel credentials);
 }
