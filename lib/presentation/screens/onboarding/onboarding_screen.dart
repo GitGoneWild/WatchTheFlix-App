@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/config/dependency_injection.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/id_generator.dart';
 import '../../../domain/entities/playlist_source.dart';
+import '../../../modules/core/storage/storage_service.dart';
 import '../../blocs/playlist/playlist_bloc.dart';
 import '../../routes/app_router.dart';
 
@@ -65,8 +67,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => const ConnectionOptionsSheet(),
+      builder: (context) => ConnectionOptionsSheet(
+        onComplete: _markOnboardingComplete,
+      ),
     );
+  }
+
+  Future<void> _markOnboardingComplete() async {
+    final storage = getIt<IStorageService>();
+    await storage.setBool(StorageKeys.onboardingCompleted, true);
   }
 
   @override
@@ -300,7 +309,12 @@ class _AddPlaylistScreenState extends State<AddPlaylistScreen> {
 
 /// Connection options bottom sheet
 class ConnectionOptionsSheet extends StatelessWidget {
-  const ConnectionOptionsSheet({super.key});
+  const ConnectionOptionsSheet({
+    super.key,
+    required this.onComplete,
+  });
+
+  final VoidCallback onComplete;
 
   @override
   Widget build(BuildContext context) {
@@ -337,6 +351,7 @@ class ConnectionOptionsSheet extends StatelessWidget {
               subtitle: 'Connect to your IPTV panel with credentials',
               badge: 'RECOMMENDED',
               onTap: () {
+                onComplete();
                 Navigator.pop(context);
                 Navigator.pushReplacementNamed(context, AppRoutes.xtreamLogin);
               },
@@ -351,6 +366,7 @@ class ConnectionOptionsSheet extends StatelessWidget {
               title: 'M3U Playlist',
               subtitle: 'Import a playlist URL or file',
               onTap: () {
+                onComplete();
                 Navigator.pop(context);
                 Navigator.pushReplacementNamed(context, AppRoutes.addPlaylist);
               },
@@ -361,6 +377,7 @@ class ConnectionOptionsSheet extends StatelessWidget {
             // Skip option
             TextButton(
               onPressed: () {
+                onComplete();
                 Navigator.pop(context);
                 Navigator.pushReplacementNamed(context, AppRoutes.home);
               },

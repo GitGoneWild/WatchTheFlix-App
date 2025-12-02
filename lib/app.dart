@@ -4,19 +4,66 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'core/config/dependency_injection.dart';
 import 'core/constants/app_constants.dart';
 import 'core/theme/app_theme.dart';
+import 'modules/core/storage/storage_service.dart';
 import 'presentation/blocs/channel/channel_bloc.dart';
 import 'presentation/blocs/favorites/favorites_bloc.dart';
 import 'presentation/blocs/navigation/navigation_bloc.dart';
 import 'presentation/blocs/playlist/playlist_bloc.dart';
 import 'presentation/blocs/settings/settings_bloc.dart' as settings;
+import 'presentation/blocs/xtream_auth/xtream_auth_bloc.dart';
+import 'presentation/blocs/xtream_auth/xtream_auth_event.dart';
 import 'presentation/routes/app_router.dart';
 
 /// Main application widget
-class WatchTheFlixApp extends StatelessWidget {
+class WatchTheFlixApp extends StatefulWidget {
   const WatchTheFlixApp({super.key});
 
   @override
+  State<WatchTheFlixApp> createState() => _WatchTheFlixAppState();
+}
+
+class _WatchTheFlixAppState extends State<WatchTheFlixApp> {
+  String? _initialRoute;
+
+  @override
+  void initState() {
+    super.initState();
+    _determineInitialRoute();
+  }
+
+  Future<void> _determineInitialRoute() async {
+    final storage = getIt<IStorageService>();
+    
+    // Check if onboarding is completed
+    final onboardingResult = await storage.getBool(StorageKeys.onboardingCompleted);
+    final isOnboardingCompleted = onboardingResult.isSuccess && 
+                                   (onboardingResult.data ?? false);
+
+    setState(() {
+      _initialRoute = isOnboardingCompleted ? AppRoutes.home : AppRoutes.onboarding;
+    });
+
+    // If onboarding is completed, try to restore Xtream credentials
+    if (isOnboardingCompleted) {
+      final authBloc = getIt<XtreamAuthBloc>();
+      authBloc.add(const XtreamAuthLoadCredentials());
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // Show splash while determining initial route
+    if (_initialRoute == null) {
+      return const MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        ),
+      );
+    }
+
     return MultiBlocProvider(
       providers: [
         BlocProvider<PlaylistBloc>(
@@ -36,6 +83,9 @@ class WatchTheFlixApp extends StatelessWidget {
           create: (_) => getIt<settings.SettingsBloc>()
             ..add(const settings.LoadSettingsEvent()),
         ),
+        BlocProvider<XtreamAuthBloc>(
+          create: (_) => getIt<XtreamAuthBloc>(),
+        ),
       ],
       child: BlocBuilder<settings.SettingsBloc, settings.SettingsState>(
         builder: (context, settingsState) {
@@ -45,7 +95,7 @@ class WatchTheFlixApp extends StatelessWidget {
             theme: AppTheme.darkTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: _getThemeMode(settingsState),
-            initialRoute: AppRoutes.onboarding,
+            initialRoute: _initialRoute,
             onGenerateRoute: AppRouter.onGenerateRoute,
           );
         },

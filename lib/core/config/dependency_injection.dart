@@ -126,8 +126,8 @@ Future<void> initDependencies() async {
     ),
   );
 
-  // Xtream Auth BLoC
-  getIt.registerFactory(
+  // Xtream Auth BLoC - Register as singleton so we can reuse it
+  getIt.registerLazySingleton(
     () => XtreamAuthBloc(
       authService: getIt<IXtreamAuthService>(),
     ),
