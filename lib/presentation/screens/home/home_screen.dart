@@ -1392,6 +1392,63 @@ class SettingsTab extends StatelessWidget {
                 ],
               ),
 
+              // Xtream Codes Section
+              _SettingsSection(
+                title: 'Xtream Codes',
+                children: [
+                  _SettingsTile(
+                    icon: Icons.live_tv,
+                    iconColor: AppColors.primary,
+                    title: 'Manage Account',
+                    subtitle: 'View or change Xtream Codes credentials',
+                    onTap: () =>
+                        Navigator.pushNamed(context, AppRoutes.xtreamLogin),
+                  ),
+                  _SettingsTile(
+                    icon: Icons.refresh,
+                    iconColor: AppColors.accent,
+                    title: 'Refresh Channels',
+                    subtitle: 'Update live channels and VOD content',
+                    onTap: () {
+                      // Trigger data refresh for all blocs
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Refreshing Xtream channels and content...'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                      
+                      // Trigger refresh on channel and playlist blocs
+                      context.read<ChannelBloc>().add(const LoadChannelsEvent());
+                      context.read<PlaylistBloc>().add(const LoadPlaylistsEvent());
+                    },
+                  ),
+                  _SettingsTile(
+                    icon: Icons.schedule,
+                    iconColor: AppColors.secondary,
+                    title: 'Refresh EPG',
+                    subtitle: 'Update program guide information',
+                    onTap: () {
+                      // Trigger EPG refresh
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Refreshing EPG data...'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                      
+                      // Trigger data reload which will fetch fresh EPG
+                      context.read<settings.SettingsBloc>().add(
+                            const settings.RefreshPlaylistDataEvent(),
+                          );
+                      context.read<ChannelBloc>().add(
+                            const LoadChannelsEvent(),
+                          );
+                    },
+                  ),
+                ],
+              ),
+
               // Appearance Section
               _SettingsSection(
                 title: 'Appearance',

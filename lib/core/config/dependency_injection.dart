@@ -28,6 +28,7 @@ import '../../presentation/blocs/player/player_bloc.dart';
 import '../../presentation/blocs/playlist/playlist_bloc.dart';
 import '../../presentation/blocs/settings/settings_bloc.dart';
 import '../../presentation/blocs/xtream_auth/xtream_auth_bloc.dart';
+import '../../presentation/blocs/xtream_connection/xtream_connection_bloc.dart';
 
 final getIt = GetIt.instance;
 
@@ -128,6 +129,13 @@ Future<void> initDependencies() async {
   // Xtream Auth BLoC
   getIt.registerFactory(
     () => XtreamAuthBloc(
+      authService: getIt<IXtreamAuthService>(),
+    ),
+  );
+
+  // Xtream Connection BLoC
+  getIt.registerFactory(
+    () => XtreamConnectionBloc(
       authService: getIt<IXtreamAuthService>(),
     ),
   );

@@ -8,6 +8,9 @@ import '../screens/onboarding/onboarding_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/home/search_screen.dart';
 import '../screens/playback/player_screen.dart';
+import '../screens/xtream_login/xtream_login_screen.dart';
+import '../screens/xtream_progress/xtream_progress_screen.dart';
+import '../../../modules/xtreamcodes/auth/xtream_credentials.dart';
 
 /// App router configuration
 class AppRouter {
@@ -20,6 +23,19 @@ class AppRouter {
 
       case AppRoutes.addPlaylist:
         return _buildRoute(const AddPlaylistScreen(), settings);
+
+      case AppRoutes.xtreamLogin:
+        return _buildRoute(const XtreamLoginScreen(), settings);
+
+      case AppRoutes.xtreamProgress:
+        final credentials = settings.arguments as XtreamCredentials?;
+        if (credentials != null) {
+          return _buildRoute(
+            XtreamProgressScreen(credentials: credentials),
+            settings,
+          );
+        }
+        return _buildRoute(const OnboardingScreen(), settings);
 
       case AppRoutes.home:
         return _buildRoute(const HomeScreen(), settings);

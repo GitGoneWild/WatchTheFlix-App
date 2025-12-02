@@ -1,10 +1,8 @@
-// Xtream Login Screen
-// Screen for users to enter their Xtream Codes credentials.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/config/dependency_injection.dart';
+import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../blocs/xtream_auth/xtream_auth_bloc.dart';
 import '../../blocs/xtream_auth/xtream_auth_event.dart';
@@ -81,13 +79,12 @@ class _XtreamLoginScreenState extends State<XtreamLoginScreen> {
         body: BlocConsumer<XtreamAuthBloc, XtreamAuthState>(
           listener: (context, state) {
             if (state is XtreamAuthAuthenticated) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Login successful!'),
-                  backgroundColor: Colors.green,
-                ),
+              // Navigate to progress screen with credentials
+              Navigator.pushReplacementNamed(
+                context,
+                AppRoutes.xtreamProgress,
+                arguments: state.credentials,
               );
-              Navigator.pushReplacementNamed(context, '/home');
             } else if (state is XtreamAuthError) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
