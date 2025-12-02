@@ -16,7 +16,8 @@ class ApiResult<T> {
   final ApiError? _error;
 
   /// Check if this is a success result
-  bool get isSuccess => _error == null && _data != null;
+  /// Note: For ApiResult<void>, data will be null on success, so we only check error
+  bool get isSuccess => _error == null;
 
   /// Check if this is a failure result
   bool get isFailure => _error != null;
@@ -45,10 +46,13 @@ class ApiResult<T> {
 
   /// Map the result to a different type
   ApiResult<R> map<R>(R Function(T data) mapper) {
-    if (isSuccess) {
-      return ApiResult.success(mapper(data));
+    if (isSuccess && _data != null) {
+      return ApiResult.success(mapper(_data));
+    } else if (isFailure) {
+      return ApiResult.failure(error);
     }
-    return ApiResult.failure(error);
+    // For void success results where _data is null
+    throw StateError('Cannot map a void success result');
   }
 
   /// Execute a callback based on success or failure
@@ -56,16 +60,19 @@ class ApiResult<T> {
     required R Function(T data) onSuccess,
     required R Function(ApiError error) onFailure,
   }) {
-    if (isSuccess) {
-      return onSuccess(data);
+    if (isSuccess && _data != null) {
+      return onSuccess(_data);
+    } else if (isFailure) {
+      return onFailure(error);
     }
-    return onFailure(error);
+    // For void success results where _data is null, this shouldn't be called
+    throw StateError('Cannot fold a void success result');
   }
 
   /// Execute callback on success
   void onSuccess(void Function(T data) callback) {
-    if (isSuccess) {
-      callback(data);
+    if (isSuccess && _data != null) {
+      callback(_data);
     }
   }
 

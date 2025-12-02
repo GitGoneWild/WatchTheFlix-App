@@ -34,6 +34,24 @@ void main() {
       expect(() => result.error, throwsA(isA<StateError>()));
     });
 
+    test('should handle void success result correctly', () {
+      // This is the key fix - ApiResult<void> should work correctly
+      final result = ApiResult<void>.success(null);
+
+      expect(result.isSuccess, isTrue);
+      expect(result.isFailure, isFalse);
+      expect(result.errorOrNull, isNull);
+    });
+
+    test('should handle void failure result correctly', () {
+      final error = ApiError.network('Network error');
+      final result = ApiResult<void>.failure(error);
+
+      expect(result.isSuccess, isFalse);
+      expect(result.isFailure, isTrue);
+      expect(result.error, equals(error));
+    });
+
     test('should map success result', () {
       final result = ApiResult.success(10);
       final mapped = result.map((data) => data * 2);

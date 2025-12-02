@@ -130,18 +130,40 @@ class XtreamLiveRepository implements IXtreamLiveRepository {
               .map((c) => XtreamMappers.liveCategoryToCategory(c))
               .toList();
           await _saveCategoriesToCache(_cachedCategories!);
-        } else if (_cachedCategories == null) {
-          return ApiResult.failure(categoriesResult.error);
+        } else {
+          // API call failed - try to extract categories from channels
+          moduleLogger.warning(
+            'Categories API failed, extracting from channels',
+            tag: 'XtreamLive',
+          );
+          final extractedCategories = await _extractCategoriesFromChannels();
+          if (extractedCategories.isNotEmpty) {
+            _cachedCategories = extractedCategories;
+            await _saveCategoriesToCache(_cachedCategories!);
+            moduleLogger.info(
+              'Extracted ${extractedCategories.length} categories from channels',
+              tag: 'XtreamLive',
+            );
+          } else if (_cachedCategories == null) {
+            return ApiResult.failure(categoriesResult.error);
+          }
         }
       }
 
       if (_cachedCategories == null) {
-        return ApiResult.failure(
-          const ApiError(
-            type: ApiErrorType.notFound,
-            message: 'No live categories available',
-          ),
-        );
+        // Last resort: try to extract from channels
+        final extractedCategories = await _extractCategoriesFromChannels();
+        if (extractedCategories.isNotEmpty) {
+          _cachedCategories = extractedCategories;
+          await _saveCategoriesToCache(_cachedCategories!);
+        } else {
+          return ApiResult.failure(
+            const ApiError(
+              type: ApiErrorType.notFound,
+              message: 'No live categories available',
+            ),
+          );
+        }
       }
 
       return ApiResult.success(_cachedCategories!);
@@ -154,6 +176,52 @@ class XtreamLiveRepository implements IXtreamLiveRepository {
       );
       return ApiResult.failure(ApiError.fromException(e));
     }
+  }
+
+  /// Extract categories from cached channels when API fails
+  Future<List<DomainCategory>> _extractCategoriesFromChannels() async {
+    // Ensure channels are loaded
+    if (_cachedChannels == null) {
+      await _loadChannelsFromCache();
+    }
+
+    if (_cachedChannels == null || _cachedChannels!.isEmpty) {
+      // Try to refresh channels first
+      final refreshResult = await refreshLiveChannels();
+      if (refreshResult.isFailure || _cachedChannels == null) {
+        return [];
+      }
+    }
+
+    // Extract unique categories from channels
+    final categoryMap = <String, int>{};
+    for (final channel in _cachedChannels!) {
+      final categoryId = channel.categoryId;
+      if (categoryId != null && categoryId.isNotEmpty) {
+        categoryMap[categoryId] = (categoryMap[categoryId] ?? 0) + 1;
+      }
+    }
+
+    // Convert to DomainCategory list
+    final categories = categoryMap.entries.map((entry) {
+      // Use groupTitle from first channel in this category for a better name
+      final sampleChannel = _cachedChannels!.firstWhere(
+        (c) => c.categoryId == entry.key,
+        orElse: () => _cachedChannels!.first,
+      );
+      final categoryName = sampleChannel.groupTitle ?? 'Category ${entry.key}';
+
+      return DomainCategory(
+        id: entry.key,
+        name: categoryName,
+        channelCount: entry.value,
+      );
+    }).toList();
+
+    // Sort by name
+    categories.sort((a, b) => a.name.compareTo(b.name));
+
+    return categories;
   }
 
   @override
