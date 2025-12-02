@@ -498,10 +498,11 @@ class XtreamLiveRepository implements IXtreamLiveRepository {
 
     // Enrich channels with category names
     return channels.map((channel) {
-      if (channel.categoryId != null && categoryNameMap.containsKey(channel.categoryId)) {
-        return channel.copyWith(
-          groupTitle: categoryNameMap[channel.categoryId],
-        );
+      if (channel.categoryId != null) {
+        final categoryName = categoryNameMap[channel.categoryId];
+        if (categoryName != null) {
+          return channel.copyWith(groupTitle: categoryName);
+        }
       }
       return channel;
     }).toList();
