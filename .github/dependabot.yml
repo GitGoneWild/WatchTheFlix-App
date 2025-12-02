@@ -6,6 +6,8 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
+      time: "09:00"
+      timezone: "UTC"
     open-pull-requests-limit: 10
     labels:
       - "dependencies"
@@ -14,6 +16,14 @@ updates:
       prefix: "deps(pub)"
     reviewers:
       - "GitGoneWild"
+    # Group minor and patch updates together
+    groups:
+      minor-and-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
 
   # Maintain dependencies for GitHub Actions
   - package-ecosystem: "github-actions"
@@ -21,9 +31,16 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
+      time: "09:00"
+      timezone: "UTC"
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
       - "github-actions"
     commit-message:
       prefix: "deps(actions)"
+    # Group all action updates together
+    groups:
+      actions:
+        patterns:
+          - "*"
