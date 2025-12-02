@@ -1410,14 +1410,17 @@ class SettingsTab extends StatelessWidget {
                     title: 'Refresh Channels',
                     subtitle: 'Update live channels and VOD content',
                     onTap: () {
-                      // Trigger refresh for Xtream channels
+                      // Trigger data refresh for all blocs
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('Refreshing channels...'),
+                          content: Text('Refreshing Xtream channels and content...'),
                           duration: Duration(seconds: 2),
                         ),
                       );
-                      // TODO: Implement refresh logic
+                      
+                      // Trigger refresh on channel and playlist blocs
+                      context.read<ChannelBloc>().add(const LoadChannelsEvent());
+                      context.read<PlaylistBloc>().add(const LoadPlaylistsEvent());
                     },
                   ),
                   _SettingsTile(
@@ -1429,11 +1432,18 @@ class SettingsTab extends StatelessWidget {
                       // Trigger EPG refresh
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('Refreshing EPG...'),
+                          content: Text('Refreshing EPG data...'),
                           duration: Duration(seconds: 2),
                         ),
                       );
-                      // TODO: Implement EPG refresh logic
+                      
+                      // Trigger data reload which will fetch fresh EPG
+                      context.read<settings.SettingsBloc>().add(
+                            const settings.RefreshPlaylistDataEvent(),
+                          );
+                      context.read<ChannelBloc>().add(
+                            const LoadChannelsEvent(),
+                          );
                     },
                   ),
                 ],
