@@ -24,11 +24,9 @@ const Duration kXtreamShortTimeout = Duration(seconds: 15);
 const Duration kXtreamEpgFetchTimeout = Duration(minutes: 3);
 
 /// Number of channels to process in each EPG batch request
-/// Reduced from 50 to 10 to avoid overwhelming the server
 const int kEpgBatchSize = 10;
 
 /// Delay between EPG batch requests to avoid rate limiting
-/// Increased from 100ms to 500ms to reduce server load
 const Duration kEpgBatchDelay = Duration(milliseconds: 500);
 
 /// Maximum number of retries for EPG requests
@@ -681,7 +679,7 @@ class XtreamApiClientImpl implements XtreamApiClient {
     } catch (e) {
       // Check if we should retry
       if (retryCount < kEpgMaxRetries && _isRetryableError(e)) {
-        // Exponential backoff: 1s, 2s, 4s, etc.
+        // Exponential backoff: 1s, 2s
         final delay = kEpgRetryBaseDelay * (1 << retryCount);
         await Future<void>.delayed(delay);
         return _fetchShortEpgWithRetry(
