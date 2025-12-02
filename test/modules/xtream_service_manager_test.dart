@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/mockito.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:watchtheflix/modules/core/models/api_result.dart';
 import 'package:watchtheflix/modules/core/storage/storage_service.dart';
 import 'package:watchtheflix/modules/xtreamcodes/auth/xtream_auth_service.dart';
@@ -57,7 +57,7 @@ void main() {
         password: 'pass',
       );
       
-      when(mockAuthService.loadCredentials())
+      when(() => mockAuthService.loadCredentials())
           .thenAnswer((_) async => ApiResult.success(credentials));
 
       // Act
@@ -70,7 +70,7 @@ void main() {
 
     test('should return false when no saved credentials', () async {
       // Arrange
-      when(mockAuthService.loadCredentials()).thenAnswer(
+      when(() => mockAuthService.loadCredentials()).thenAnswer(
         (_) async => ApiResult.failure(
           const ApiError(
             type: ApiErrorType.notFound,
@@ -95,7 +95,7 @@ void main() {
         password: 'pass',
       );
       
-      when(mockAuthService.clearCredentials())
+      when(() => mockAuthService.clearCredentials())
           .thenAnswer((_) async => ApiResult.success(null));
 
       await serviceManager.initialize(credentials);
@@ -106,7 +106,7 @@ void main() {
 
       // Assert
       expect(serviceManager.isInitialized, false);
-      verify(mockAuthService.clearCredentials()).called(1);
+      verify(() => mockAuthService.clearCredentials()).called(1);
     });
   });
 }

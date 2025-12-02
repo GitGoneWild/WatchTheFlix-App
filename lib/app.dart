@@ -24,6 +24,7 @@ class WatchTheFlixApp extends StatefulWidget {
 
 class _WatchTheFlixAppState extends State<WatchTheFlixApp> {
   String? _initialRoute;
+  bool _isOnboardingCompleted = false;
 
   @override
   void initState() {
@@ -39,13 +40,8 @@ class _WatchTheFlixAppState extends State<WatchTheFlixApp> {
 
     setState(() {
       _initialRoute = isOnboardingCompleted ? AppRoutes.home : AppRoutes.onboarding;
+      _isOnboardingCompleted = isOnboardingCompleted;
     });
-
-    // If onboarding is completed, try to restore Xtream credentials
-    if (isOnboardingCompleted) {
-      final authBloc = getIt<XtreamAuthBloc>();
-      authBloc.add(const XtreamAuthLoadCredentials());
-    }
   }
 
   /// Check if onboarding has been completed
@@ -88,7 +84,14 @@ class _WatchTheFlixAppState extends State<WatchTheFlixApp> {
             ..add(const settings.LoadSettingsEvent()),
         ),
         BlocProvider<XtreamAuthBloc>(
-          create: (_) => getIt<XtreamAuthBloc>(),
+          create: (_) {
+            final bloc = getIt<XtreamAuthBloc>();
+            // Restore credentials after BLoC is in the widget tree
+            if (_isOnboardingCompleted) {
+              bloc.add(const XtreamAuthLoadCredentials());
+            }
+            return bloc;
+          },
         ),
       ],
       child: BlocBuilder<settings.SettingsBloc, settings.SettingsState>(

@@ -6,6 +6,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/id_generator.dart';
 import '../../../domain/entities/playlist_source.dart';
+import '../../../modules/core/logging/app_logger.dart';
 import '../../../modules/core/storage/storage_service.dart';
 import '../../blocs/playlist/playlist_bloc.dart';
 import '../../routes/app_router.dart';
@@ -74,8 +75,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Future<void> _markOnboardingComplete() async {
-    final storage = getIt<IStorageService>();
-    await storage.setBool(StorageKeys.onboardingCompleted, true);
+    try {
+      final storage = getIt<IStorageService>();
+      final result = await storage.setBool(StorageKeys.onboardingCompleted, true);
+      if (result.isFailure) {
+        moduleLogger.warning(
+          'Failed to save onboarding completion status',
+          tag: 'Onboarding',
+          error: result.error,
+        );
+      }
+    } catch (e, stackTrace) {
+      moduleLogger.error(
+        'Error saving onboarding completion',
+        tag: 'Onboarding',
+        error: e,
+        stackTrace: stackTrace,
+      );
+    }
   }
 
   @override

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/mockito.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:watchtheflix/modules/core/storage/storage_service.dart';
 
 class MockStorageService extends Mock implements IStorageService {}
@@ -14,7 +14,7 @@ void main() {
 
     test('should save onboarding completion status', () async {
       // Arrange
-      when(mockStorage.setBool(StorageKeys.onboardingCompleted, true))
+      when(() => mockStorage.setBool(StorageKeys.onboardingCompleted, true))
           .thenAnswer((_) async => const StorageResult<void>());
 
       // Act
@@ -25,13 +25,13 @@ void main() {
 
       // Assert
       expect(result.isSuccess, true);
-      verify(mockStorage.setBool(StorageKeys.onboardingCompleted, true))
+      verify(() => mockStorage.setBool(StorageKeys.onboardingCompleted, true))
           .called(1);
     });
 
     test('should retrieve onboarding completion status', () async {
       // Arrange
-      when(mockStorage.getBool(StorageKeys.onboardingCompleted))
+      when(() => mockStorage.getBool(StorageKeys.onboardingCompleted))
           .thenAnswer((_) async => const StorageResult<bool>(data: true));
 
       // Act
@@ -42,12 +42,12 @@ void main() {
       // Assert
       expect(result.isSuccess, true);
       expect(result.data, true);
-      verify(mockStorage.getBool(StorageKeys.onboardingCompleted)).called(1);
+      verify(() => mockStorage.getBool(StorageKeys.onboardingCompleted)).called(1);
     });
 
     test('should return false when onboarding not completed', () async {
       // Arrange
-      when(mockStorage.getBool(StorageKeys.onboardingCompleted)).thenAnswer(
+      when(() => mockStorage.getBool(StorageKeys.onboardingCompleted)).thenAnswer(
         (_) async => const StorageResult<bool>(
           error: StorageError(
             type: StorageErrorType.notFound,

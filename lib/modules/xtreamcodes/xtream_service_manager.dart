@@ -3,10 +3,10 @@
 
 import '../../core/logging/app_logger.dart';
 import '../../core/storage/storage_service.dart';
-import '../auth/xtream_auth_service.dart';
-import '../auth/xtream_credentials.dart';
-import '../epg/xmltv_parser.dart';
-import 'xtream_repository_factory.dart';
+import 'auth/xtream_auth_service.dart';
+import 'auth/xtream_credentials.dart';
+import 'epg/xmltv_parser.dart';
+import 'repositories/xtream_repository_factory.dart';
 
 /// Xtream service manager
 class XtreamServiceManager {
