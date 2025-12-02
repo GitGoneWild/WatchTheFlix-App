@@ -45,9 +45,12 @@ void main() {
     });
 
     group('Cache duration validation', () {
+      // 6 hours in minutes, matching the default TTL
+      const int sixHoursInMinutes = 6 * 60;
+      
       test('should validate cache based on TTL (6 hours default)', () {
         // This test validates the cache TTL strategy mentioned in requirements
-        // Cache should be valid within TTL, invalid after TTL expires
+        // Cache should be valid within TTL, considered expired at or after TTL
         
         const cacheDuration = Duration(hours: 6);
         final now = DateTime.now();
@@ -60,7 +63,7 @@ void main() {
         final withinTtl = now.subtract(const Duration(hours: 5));
         expect(now.difference(withinTtl) < cacheDuration, isTrue);
         
-        // Cache exactly at TTL boundary - should be expired
+        // Cache exactly at TTL boundary - considered expired (inclusive boundary)
         final atTtl = now.subtract(const Duration(hours: 6));
         expect(now.difference(atTtl) >= cacheDuration, isTrue);
         
@@ -82,7 +85,7 @@ void main() {
           final age = checkTime.difference(cacheCreatedAt);
           
           // All checks within first 6 hours should find cache valid
-          if (i < 360) { // 360 minutes = 6 hours
+          if (i < sixHoursInMinutes) {
             expect(age < cacheDuration, isTrue,
               reason: 'Cache should be valid at $i minutes');
           }
