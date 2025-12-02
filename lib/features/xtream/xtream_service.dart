@@ -150,6 +150,10 @@ class XtreamService {
   }
 
   /// Refresh EPG data
+  ///
+  /// This method fetches EPG data from the server and caches it.
+  /// If the fetch fails or returns empty data, an empty map is cached.
+  /// EPG data is optional and the app should function without it.
   Future<void> refreshEpg(XtreamCredentials credentials) async {
     final cacheKey = _getCacheKey(credentials);
 
@@ -160,15 +164,28 @@ class XtreamService {
       channelIds = cachedChannels.data.map((c) => c.id).toList();
     }
 
-    final epg = await _apiClient.fetchAllEpg(
-      credentials,
-      channelIds: channelIds,
-    );
-    _epgCache[cacheKey] = _CacheEntry(epg);
-    AppLogger.info('Refreshed EPG: ${epg.length} channels');
+    try {
+      AppLogger.info('Refreshing EPG data for ${credentials.username}');
+      final epg = await _apiClient.fetchAllEpg(
+        credentials,
+        channelIds: channelIds,
+      );
+      _epgCache[cacheKey] = _CacheEntry(epg);
+      AppLogger.info('Refreshed EPG: ${epg.length} channels with EPG data');
+    } catch (e, stackTrace) {
+      // EPG is optional - log the error but don't throw
+      AppLogger.warning('Failed to refresh EPG data: $e');
+      AppLogger.error('EPG refresh failed', e, stackTrace);
+      // Cache empty data to prevent repeated failed requests
+      _epgCache[cacheKey] = _CacheEntry(<String, List<EpgEntry>>{});
+    }
   }
 
   /// Get EPG data (from cache or fetch)
+  ///
+  /// This method returns EPG data, fetching from the server if needed.
+  /// If the server returns empty data or an error, an empty map is returned.
+  /// EPG data is optional and errors are handled gracefully.
   Future<Map<String, List<EpgEntry>>> getEpg(
     XtreamCredentials credentials, {
     bool forceRefresh = false,
@@ -177,6 +194,7 @@ class XtreamService {
     final cached = _epgCache[cacheKey];
 
     if (!forceRefresh && cached != null && !cached.isExpired) {
+      AppLogger.debug('Returning cached EPG data for ${credentials.username}');
       return cached.data;
     }
 
@@ -187,12 +205,37 @@ class XtreamService {
       channelIds = cachedChannels.data.map((c) => c.id).toList();
     }
 
-    final epg = await _apiClient.fetchAllEpg(
-      credentials,
-      channelIds: channelIds,
-    );
-    _epgCache[cacheKey] = _CacheEntry(epg);
-    return epg;
+    try {
+      AppLogger.info('Fetching EPG data for ${credentials.username}');
+      final epg = await _apiClient.fetchAllEpg(
+        credentials,
+        channelIds: channelIds,
+      );
+      _epgCache[cacheKey] = _CacheEntry(epg);
+
+      // Log success with appropriate message
+      if (epg.isEmpty) {
+        AppLogger.info('EPG fetch completed: no EPG data available from provider');
+      } else {
+        AppLogger.info('EPG fetch completed: ${epg.length} channels with EPG data');
+      }
+
+      return epg;
+    } catch (e, stackTrace) {
+      // EPG is optional - log the error but return empty data instead of throwing
+      AppLogger.warning('Failed to fetch EPG data: $e');
+      AppLogger.error('EPG fetch failed', e, stackTrace);
+
+      // If we have cached data (even if expired), return it
+      if (cached != null) {
+        AppLogger.info('Returning expired EPG cache due to fetch failure');
+        return cached.data;
+      }
+
+      // Cache empty data to prevent repeated failed requests in quick succession
+      _epgCache[cacheKey] = _CacheEntry(<String, List<EpgEntry>>{});
+      return {};
+    }
   }
 
   /// Full refresh of all data
