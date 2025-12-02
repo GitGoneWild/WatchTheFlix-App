@@ -119,7 +119,8 @@ class UnifiedEpgRepository {
       ));
     }
 
-    final cacheKey = 'xtream_${credentials.baseUrl}_${credentials.username}';
+    final cacheKey = EpgLocalStorage.generateXtreamSourceId(
+        '${credentials.baseUrl}_${credentials.username}');
     return _xtreamRepository!.fetchFullXmltvEpg(credentials).then((result) {
       if (result.isSuccess) {
         _updateCache(cacheKey, result.data);
