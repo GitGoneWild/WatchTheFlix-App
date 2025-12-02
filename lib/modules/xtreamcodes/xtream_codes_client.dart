@@ -5,17 +5,18 @@
 import 'package:dio/dio.dart';
 
 import '../core/config/app_config.dart';
+import '../core/logging/app_logger.dart';
 import '../core/models/api_result.dart';
 import '../core/models/base_models.dart';
-import '../core/logging/app_logger.dart';
-import 'auth/xtream_auth_service.dart';
 import 'account/xtream_account_models.dart';
 import 'account/xtream_account_service.dart';
+import 'auth/xtream_auth_service.dart';
+import 'epg/epg_models.dart';
+import 'epg/epg_service.dart';
 import 'livetv/livetv_service.dart';
 import 'movies/movies_service.dart';
-import 'series/series_service.dart';
-import 'epg/epg_service.dart';
 import 'repositories/repositories.dart';
+import 'series/series_service.dart';
 
 /// Xtream Codes API client providing unified access to all services
 class XtreamCodesClient {
@@ -265,6 +266,38 @@ class XtreamCodesClient {
     XtreamCredentialsModel credentials,
   ) {
     return _epgService.refresh(credentials);
+  }
+
+  /// Get full XMLTV EPG data (preferred method for complete EPG).
+  Future<ApiResult<EpgData>> getFullEpg(
+    XtreamCredentialsModel credentials,
+  ) {
+    return _epgService.getFullEpg(credentials);
+  }
+
+  /// Get daily schedule for a channel.
+  Future<ApiResult<List<EpgProgram>>> getDailySchedule(
+    XtreamCredentialsModel credentials,
+    String channelId,
+    DateTime date,
+  ) {
+    return _epgService.getDailySchedule(credentials, channelId, date);
+  }
+
+  /// Get next program for a channel.
+  Future<ApiResult<EpgEntry?>> getNextProgram(
+    XtreamCredentialsModel credentials,
+    String channelId,
+  ) {
+    return _epgService.getNextProgram(credentials, channelId);
+  }
+
+  /// Get current and next program info for display.
+  Future<ApiResult<EpgInfo>> getCurrentAndNextInfo(
+    XtreamCredentialsModel credentials,
+    String channelId,
+  ) {
+    return _epgService.getCurrentAndNextInfo(credentials, channelId);
   }
 
   // ============ Bulk Operations ============

@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:watchtheflix/modules/xtreamcodes/epg/epg_models.dart';
 import 'package:watchtheflix/modules/xtreamcodes/epg/epg_service.dart';
 import 'package:watchtheflix/modules/core/models/base_models.dart';
 
@@ -77,6 +78,44 @@ void main() {
         // Default times should be set
         expect(entry.startTime, isNotNull);
         expect(entry.endTime, isNotNull);
+      });
+    });
+
+    group('fromEpgProgram', () {
+      test('should create EpgEntry from EpgProgram', () {
+        final program = EpgProgram(
+          channelId: 'ch1',
+          title: 'Test Program',
+          description: 'Test description',
+          startTime: DateTime.utc(2024, 1, 1, 10, 0),
+          endTime: DateTime.utc(2024, 1, 1, 11, 0),
+          language: 'en',
+        );
+
+        final entry = EpgEntry.fromEpgProgram(program);
+
+        expect(entry.channelId, equals('ch1'));
+        expect(entry.title, equals('Test Program'));
+        expect(entry.description, equals('Test description'));
+        expect(entry.startTime, equals(program.startTime));
+        expect(entry.endTime, equals(program.endTime));
+        expect(entry.language, equals('en'));
+      });
+
+      test('should handle EpgProgram with null optional fields', () {
+        final program = EpgProgram(
+          channelId: 'ch1',
+          title: 'Test Program',
+          startTime: DateTime.utc(2024, 1, 1, 10, 0),
+          endTime: DateTime.utc(2024, 1, 1, 11, 0),
+        );
+
+        final entry = EpgEntry.fromEpgProgram(program);
+
+        expect(entry.channelId, equals('ch1'));
+        expect(entry.title, equals('Test Program'));
+        expect(entry.description, isNull);
+        expect(entry.language, isNull);
       });
     });
 
