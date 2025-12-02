@@ -7,6 +7,7 @@ import '../../../modules/core/logging/app_logger.dart';
 import '../../../modules/xtreamcodes/account/xtream_api_client.dart';
 import '../../../modules/xtreamcodes/auth/xtream_auth_service.dart';
 import '../../../modules/xtreamcodes/auth/xtream_credentials.dart';
+import '../../../modules/xtreamcodes/xtream_service_manager.dart';
 import 'xtream_auth_event.dart';
 import 'xtream_auth_state.dart';
 
@@ -14,7 +15,9 @@ import 'xtream_auth_state.dart';
 class XtreamAuthBloc extends Bloc<XtreamAuthEvent, XtreamAuthState> {
   XtreamAuthBloc({
     required IXtreamAuthService authService,
+    required XtreamServiceManager serviceManager,
   })  : _authService = authService,
+        _serviceManager = serviceManager,
         super(const XtreamAuthInitial()) {
     on<XtreamAuthLoginRequested>(_onLoginRequested);
     on<XtreamAuthLoadCredentials>(_onLoadCredentials);
@@ -23,6 +26,7 @@ class XtreamAuthBloc extends Bloc<XtreamAuthEvent, XtreamAuthState> {
   }
 
   final IXtreamAuthService _authService;
+  final XtreamServiceManager _serviceManager;
 
   /// Handle login request
   Future<void> _onLoginRequested(
@@ -81,6 +85,9 @@ class XtreamAuthBloc extends Bloc<XtreamAuthEvent, XtreamAuthState> {
           error: saveResult.error,
         );
       }
+
+      // Initialize service manager with credentials
+      await _serviceManager.initialize(credentials);
 
       moduleLogger.info('Xtream authentication successful', tag: 'XtreamAuth');
 
@@ -147,6 +154,9 @@ class XtreamAuthBloc extends Bloc<XtreamAuthEvent, XtreamAuthState> {
         tag: 'XtreamAuth',
       );
 
+      // Initialize service manager with credentials
+      await _serviceManager.initialize(credentials);
+
       emit(XtreamAuthAuthenticated(
         credentials: credentials,
         userInfo: authResponse.userInfo,
@@ -172,6 +182,7 @@ class XtreamAuthBloc extends Bloc<XtreamAuthEvent, XtreamAuthState> {
       moduleLogger.info('Logging out from Xtream', tag: 'XtreamAuth');
 
       await _authService.clearCredentials();
+      await _serviceManager.clear();
 
       moduleLogger.info('Logout successful', tag: 'XtreamAuth');
 

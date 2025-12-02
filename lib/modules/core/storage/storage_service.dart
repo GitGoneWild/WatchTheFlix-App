@@ -99,6 +99,9 @@ class StorageKeys {
   static const String vpnPreference = 'vpn_preference';
   static const String contentSourceStrategy = 'content_source_strategy';
 
+  // Onboarding keys
+  static const String onboardingCompleted = 'onboarding_completed';
+
   // Cache keys
   static const String lastRefreshTime = 'last_refresh_time';
   static const String epgCache = 'epg_cache';

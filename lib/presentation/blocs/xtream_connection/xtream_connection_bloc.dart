@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../modules/core/logging/app_logger.dart';
 import '../../../modules/xtreamcodes/account/xtream_api_client.dart';
 import '../../../modules/xtreamcodes/auth/xtream_auth_service.dart';
+import '../../../modules/xtreamcodes/xtream_service_manager.dart';
 import 'xtream_connection_event.dart';
 import 'xtream_connection_state.dart';
 
@@ -14,13 +15,16 @@ class XtreamConnectionBloc
     extends Bloc<XtreamConnectionEvent, XtreamConnectionState> {
   XtreamConnectionBloc({
     required IXtreamAuthService authService,
+    required XtreamServiceManager serviceManager,
   })  : _authService = authService,
+        _serviceManager = serviceManager,
         super(const XtreamConnectionInitial()) {
     on<XtreamConnectionStarted>(_onConnectionStarted);
     on<XtreamConnectionReset>(_onConnectionReset);
   }
 
   final IXtreamAuthService _authService;
+  final XtreamServiceManager _serviceManager;
 
   /// Handle connection started
   Future<void> _onConnectionStarted(
@@ -55,6 +59,9 @@ class XtreamConnectionBloc
 
       // Save credentials after successful test
       await _authService.saveCredentials(event.credentials);
+
+      // Initialize service manager
+      await _serviceManager.initialize(event.credentials);
 
       // Step 2: Fetch live channels
       emit(const XtreamConnectionInProgress(
@@ -126,8 +133,29 @@ class XtreamConnectionBloc
         message: 'Updating program guide...',
       ));
 
-      // EPG fetching is done in background - don't block on it
-      // The EPG repository will handle this when content is accessed
+      // Trigger EPG refresh in background (don't wait for it to complete)
+      if (_serviceManager.isInitialized) {
+        _serviceManager.repositoryFactory.epgRepository.refreshEpg().then(
+          (result) {
+            if (result.isSuccess) {
+              moduleLogger.info('EPG refreshed successfully', tag: 'XtreamConnection');
+            } else {
+              moduleLogger.warning(
+                'EPG refresh failed, will retry later',
+                tag: 'XtreamConnection',
+                error: result.error,
+              );
+            }
+          },
+        ).catchError((error, stackTrace) {
+          moduleLogger.error(
+            'Error during EPG refresh',
+            tag: 'XtreamConnection',
+            error: error,
+            stackTrace: stackTrace,
+          );
+        });
+      }
 
       // Step 6: Completed
       emit(const XtreamConnectionInProgress(

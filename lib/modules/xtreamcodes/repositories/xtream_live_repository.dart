@@ -9,6 +9,7 @@ import '../../core/models/api_result.dart';
 import '../../core/models/base_models.dart';
 import '../../core/storage/storage_service.dart';
 import '../account/xtream_api_client.dart';
+import '../epg/xtream_epg_repository.dart';
 import '../mappers/xtream_mappers.dart';
 import '../models/xtream_api_models.dart';
 
@@ -16,6 +17,9 @@ import '../models/xtream_api_models.dart';
 const String _liveChannelsCacheKey = 'xtream_live_channels';
 const String _liveCategoriesCacheKey = 'xtream_live_categories';
 const String _liveChannelsTimestampKey = 'xtream_live_channels_timestamp';
+
+/// Metadata key for EPG channel ID
+const String _metadataKeyEpgChannelId = 'epgChannelId';
 
 /// Xtream Live TV repository interface
 abstract class IXtreamLiveRepository {
@@ -42,11 +46,14 @@ class XtreamLiveRepository implements IXtreamLiveRepository {
   XtreamLiveRepository({
     required XtreamApiClient apiClient,
     required IStorageService storage,
+    IXtreamEpgRepository? epgRepository,
   })  : _apiClient = apiClient,
-        _storage = storage;
+        _storage = storage,
+        _epgRepository = epgRepository;
 
   final XtreamApiClient _apiClient;
   final IStorageService _storage;
+  final IXtreamEpgRepository? _epgRepository;
 
   /// In-memory cache
   List<DomainChannel>? _cachedChannels;
@@ -86,6 +93,11 @@ class XtreamLiveRepository implements IXtreamLiveRepository {
         channels = channels
             .where((c) => c.categoryId == categoryId)
             .toList();
+      }
+
+      // Enrich channels with EPG data
+      if (_epgRepository != null) {
+        channels = await _enrichChannelsWithEpg(channels);
       }
 
       return ApiResult.success(channels);
@@ -384,5 +396,59 @@ class XtreamLiveRepository implements IXtreamLiveRepository {
       );
       return null;
     }
+  }
+
+  /// Enrich channels with EPG data
+  Future<List<DomainChannel>> _enrichChannelsWithEpg(
+    List<DomainChannel> channels,
+  ) async {
+    final enrichedChannels = <DomainChannel>[];
+
+    for (final channel in channels) {
+      try {
+        // Get EPG channel ID from metadata
+        final epgChannelId = channel.metadata?[_metadataKeyEpgChannelId] as String?;
+        
+        if (epgChannelId == null || epgChannelId.isEmpty) {
+          enrichedChannels.add(channel);
+          continue;
+        }
+
+        // Fetch current and next program
+        final epgResult = await _epgRepository!.getCurrentAndNextProgram(
+          epgChannelId,
+        );
+
+        if (epgResult.isSuccess) {
+          final epgPair = epgResult.data;
+          final current = epgPair.current;
+          final next = epgPair.next;
+
+          // Create EPG info
+          final epgInfo = EpgInfo(
+            currentProgram: current?.title,
+            nextProgram: next?.title,
+            startTime: current?.start,
+            endTime: current?.stop,
+            description: current?.description,
+          );
+
+          // Add channel with EPG info
+          enrichedChannels.add(channel.copyWith(epgInfo: epgInfo));
+        } else {
+          // No EPG available, add channel as is
+          enrichedChannels.add(channel);
+        }
+      } catch (e) {
+        moduleLogger.warning(
+          'Failed to enrich channel ${channel.name} with EPG',
+          tag: 'XtreamLive',
+          error: e,
+        );
+        enrichedChannels.add(channel);
+      }
+    }
+
+    return enrichedChannels;
   }
 }
