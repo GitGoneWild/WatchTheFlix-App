@@ -69,25 +69,6 @@ Future<void> initDependencies() async {
     () => XmltvParser(),
   );
 
-  getIt.registerLazySingleton<XtreamEpgRepository>(
-    () => XtreamEpgRepository(
-      xmltvParser: getIt<IXmltvParser>(),
-      authService: getIt<IXtreamAuthService>(),
-    ),
-  );
-
-  getIt.registerLazySingleton<XtreamLiveRepository>(
-    () => XtreamLiveRepository(
-      authService: getIt<IXtreamAuthService>(),
-    ),
-  );
-
-  getIt.registerLazySingleton<XtreamVodRepository>(
-    () => XtreamVodRepository(
-      authService: getIt<IXtreamAuthService>(),
-    ),
-  );
-
   // Repositories
   getIt.registerLazySingleton<PlaylistRepository>(
     () => PlaylistRepositoryImpl(
@@ -156,9 +137,6 @@ Future<void> initDependencies() async {
   getIt.registerFactory(
     () => XtreamConnectionBloc(
       authService: getIt<IXtreamAuthService>(),
-      liveRepository: getIt<XtreamLiveRepository>(),
-      vodRepository: getIt<XtreamVodRepository>(),
-      epgRepository: getIt<XtreamEpgRepository>(),
     ),
   );
 }

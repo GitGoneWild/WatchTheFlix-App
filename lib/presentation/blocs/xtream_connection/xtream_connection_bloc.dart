@@ -6,9 +6,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../modules/core/logging/app_logger.dart';
 import '../../../modules/xtreamcodes/account/xtream_api_client.dart';
 import '../../../modules/xtreamcodes/auth/xtream_auth_service.dart';
-import '../../../modules/xtreamcodes/epg/xtream_epg_repository.dart';
-import '../../../modules/xtreamcodes/repositories/xtream_live_repository.dart';
-import '../../../modules/xtreamcodes/repositories/xtream_vod_repository.dart';
 import 'xtream_connection_event.dart';
 import 'xtream_connection_state.dart';
 
@@ -17,22 +14,13 @@ class XtreamConnectionBloc
     extends Bloc<XtreamConnectionEvent, XtreamConnectionState> {
   XtreamConnectionBloc({
     required IXtreamAuthService authService,
-    required XtreamLiveRepository liveRepository,
-    required XtreamVodRepository vodRepository,
-    required XtreamEpgRepository epgRepository,
   })  : _authService = authService,
-        _liveRepository = liveRepository,
-        _vodRepository = vodRepository,
-        _epgRepository = epgRepository,
         super(const XtreamConnectionInitial()) {
     on<XtreamConnectionStarted>(_onConnectionStarted);
     on<XtreamConnectionReset>(_onConnectionReset);
   }
 
   final IXtreamAuthService _authService;
-  final XtreamLiveRepository _liveRepository;
-  final XtreamVodRepository _vodRepository;
-  final XtreamEpgRepository _epgRepository;
 
   /// Handle connection started
   Future<void> _onConnectionStarted(
@@ -76,10 +64,7 @@ class XtreamConnectionBloc
       ));
 
       final categoriesResult = await apiClient.getLiveCategories();
-      if (categoriesResult.isSuccess) {
-        // Trigger cache refresh for live channels
-        await _liveRepository.refreshCache();
-      }
+      // Continue even if this fails - it's not critical
 
       // Step 3: Fetch movies
       emit(const XtreamConnectionInProgress(
@@ -89,10 +74,7 @@ class XtreamConnectionBloc
       ));
 
       final vodCategoriesResult = await apiClient.getVodCategories();
-      if (vodCategoriesResult.isSuccess) {
-        // Trigger cache refresh for VOD
-        await _vodRepository.refreshCache();
-      }
+      // Continue even if this fails - it's not critical
 
       // Step 4: Fetch series (optional)
       emit(const XtreamConnectionInProgress(
@@ -111,16 +93,8 @@ class XtreamConnectionBloc
         message: 'Updating program guide...',
       ));
 
-      // Trigger EPG refresh in background (don't wait)
-      _epgRepository.refreshEpg().then((_) {
-        moduleLogger.info('EPG refresh completed', tag: 'XtreamConnection');
-      }).catchError((error) {
-        moduleLogger.warning(
-          'EPG refresh failed, will retry later',
-          tag: 'XtreamConnection',
-          error: error,
-        );
-      });
+      // EPG fetching is done in background - don't block on it
+      // The EPG repository will handle this when content is accessed
 
       // Step 6: Completed
       emit(const XtreamConnectionInProgress(
