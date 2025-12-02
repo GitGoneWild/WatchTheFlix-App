@@ -31,6 +31,11 @@ class AppConfig {
   /// VPN configuration
   bool vpnDetectionEnabled = true;
 
+  /// Xtream Codes configuration
+  bool xtreamEnabled = true;
+  Duration xtreamEpgTtl = const Duration(hours: 6);
+  bool xtreamEpgAutoRefreshOnStartup = false;
+
   /// Cache configuration
   Duration cacheExpiration = const Duration(hours: 24);
   Duration epgCacheExpiration = const Duration(hours: 6);
@@ -49,6 +54,9 @@ class AppConfig {
     String? firebaseAppId,
     ContentSourceStrategy? contentSourceStrategy,
     bool? vpnDetectionEnabled,
+    bool? xtreamEnabled,
+    Duration? xtreamEpgTtl,
+    bool? xtreamEpgAutoRefreshOnStartup,
   }) async {
     if (firebaseEnabled != null) this.firebaseEnabled = firebaseEnabled;
     if (firebaseProjectId != null) this.firebaseProjectId = firebaseProjectId;
@@ -59,6 +67,15 @@ class AppConfig {
     }
     if (vpnDetectionEnabled != null) {
       this.vpnDetectionEnabled = vpnDetectionEnabled;
+    }
+    if (xtreamEnabled != null) {
+      this.xtreamEnabled = xtreamEnabled;
+    }
+    if (xtreamEpgTtl != null) {
+      this.xtreamEpgTtl = xtreamEpgTtl;
+    }
+    if (xtreamEpgAutoRefreshOnStartup != null) {
+      this.xtreamEpgAutoRefreshOnStartup = xtreamEpgAutoRefreshOnStartup;
     }
   }
 
@@ -76,6 +93,9 @@ class AppConfig {
       'firebaseProjectId': firebaseProjectId,
       'contentSourceStrategy': contentSourceStrategy.name,
       'vpnDetectionEnabled': vpnDetectionEnabled,
+      'xtreamEnabled': xtreamEnabled,
+      'xtreamEpgTtl': xtreamEpgTtl.inHours,
+      'xtreamEpgAutoRefreshOnStartup': xtreamEpgAutoRefreshOnStartup,
       'cacheExpiration': cacheExpiration.inHours,
     };
   }
