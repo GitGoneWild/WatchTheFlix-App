@@ -4,29 +4,112 @@ This document explains how the Xtream Codes API integration works in WatchTheFli
 
 ## Overview
 
-The Xtream Codes module (`lib/modules/xtreamcodes/`) provides complete integration with Xtream Codes API servers.
+The Xtream Codes module (`lib/modules/xtreamcodes/`) provides complete integration with Xtream Codes API servers. The module follows Clean Architecture principles with clear separation between services, repositories, and domain models.
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Presentation Layer                        │
+│  (BLoCs, Screens, Widgets)                                  │
+├─────────────────────────────────────────────────────────────┤
+│                   XtreamCodesClient                          │
+│  (Unified API for all Xtream operations)                    │
+├─────────────────────────────────────────────────────────────┤
+│                    Service Layer                             │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐       │
+│  │  Auth    │ │ LiveTV   │ │ Movies   │ │ Series   │ ...   │
+│  │ Service  │ │ Service  │ │ Service  │ │ Service  │       │
+│  └────┬─────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘       │
+├───────┼────────────┼────────────┼────────────┼──────────────┤
+│       ▼            ▼            ▼            ▼              │
+│                 Repository Layer                             │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐       │
+│  │  Auth    │ │ LiveTV   │ │ Movies   │ │ Series   │       │
+│  │Repository│ │Repository│ │Repository│ │Repository│       │
+│  └────┬─────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘       │
+├───────┼────────────┼────────────┼────────────┼──────────────┤
+│       ▼            ▼            ▼            ▼              │
+│              XtreamRepositoryBase                            │
+│  (URL building, error handling, parsing utilities)          │
+├─────────────────────────────────────────────────────────────┤
+│                   Network Layer (Dio)                        │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ## Module Structure
 
 ```
 xtreamcodes/
 ├── auth/
-│   └── xtream_auth_service.dart    # Login & session management
+│   ├── auth.dart                      # Module exports
+│   └── xtream_auth_service.dart       # Login & session management
 ├── account/
-│   ├── xtream_account_models.dart  # Typed account models
-│   └── xtream_account_service.dart # Account info service
+│   ├── account.dart                   # Module exports
+│   ├── xtream_account_models.dart     # Typed account models
+│   └── xtream_account_service.dart    # Account info service
 ├── livetv/
-│   └── livetv_service.dart         # Live TV channels & categories
+│   ├── livetv.dart                    # Module exports
+│   └── livetv_service.dart            # Live TV channels & categories
 ├── movies/
-│   └── movies_service.dart         # VOD movies
+│   ├── movies.dart                    # Module exports
+│   └── movies_service.dart            # VOD movies
 ├── series/
-│   └── series_service.dart         # TV series
+│   ├── series.dart                    # Module exports
+│   └── series_service.dart            # TV series
 ├── epg/
-│   └── epg_service.dart            # Electronic Program Guide
+│   ├── epg.dart                       # Module exports
+│   └── epg_service.dart               # Electronic Program Guide
 ├── mappers/
-│   └── xtream_to_domain_mappers.dart # API to domain conversion
-└── repositories/
-    └── xtream_repository_base.dart   # Shared repository utilities
+│   ├── mappers.dart                   # Module exports
+│   └── xtream_to_domain_mappers.dart  # API to domain conversion
+├── repositories/
+│   ├── repositories.dart              # Module exports
+│   ├── xtream_repository_base.dart    # Shared repository utilities
+│   ├── xtream_auth_repository_impl.dart
+│   ├── xtream_account_repository_impl.dart
+│   ├── livetv_repository_impl.dart
+│   ├── movies_repository_impl.dart
+│   ├── series_repository_impl.dart
+│   └── epg_repository_impl.dart
+├── xtream_codes_client.dart           # Unified client interface
+└── xtreamcodes.dart                   # Main module export
+```
+
+## Quick Start
+
+### Using XtreamCodesClient (Recommended)
+
+The easiest way to use the Xtream integration is via `XtreamCodesClient`:
+
+```dart
+// Get from DI container
+final client = getIt<XtreamCodesClient>();
+
+// Or create directly
+final client = XtreamCodesClient();
+
+// Create credentials
+final credentials = XtreamCredentialsModel(
+  host: 'http://server.com:8080',
+  username: 'user',
+  password: 'pass',
+);
+
+// Authenticate
+final loginResult = await client.login(credentials);
+if (loginResult.isSuccess && loginResult.data.isAuthenticated) {
+  final accountInfo = loginResult.data.accountInfo;
+  print('Welcome ${accountInfo!.userInfo.username}');
+}
+
+// Fetch content
+final channels = await client.getLiveTvChannels(credentials);
+final movies = await client.getMovies(credentials);
+final series = await client.getSeries(credentials);
+
+// Get stream URLs
+final streamUrl = client.getLiveStreamUrl(credentials, streamId);
 ```
 
 ## API Endpoints
@@ -40,11 +123,11 @@ The integration supports these Xtream Codes API endpoints:
 | `get_live_streams` | Live TV channels |
 | `get_vod_categories` | Movie categories |
 | `get_vod_streams` | Movies |
+| `get_vod_info` | Movie details |
 | `get_series_categories` | Series categories |
 | `get_series` | Series list |
 | `get_series_info` | Series details with episodes |
 | `get_short_epg` | Current/next EPG for a channel |
-| `get_simple_data_table` | Full EPG data |
 
 ## Account Models
 
@@ -64,6 +147,11 @@ class XtreamUserInfo {
   final DateTime? createdAt;
   final int maxConnections;
   final List<String> allowedOutputFormats;
+
+  bool get isAuthenticated => auth == 1;
+  bool get isActive => status.toLowerCase() == 'active';
+  bool get isExpired => expDate != null && DateTime.now().isAfter(expDate!);
+  AccountStatus get accountStatus => ...;
 }
 ```
 
@@ -79,6 +167,10 @@ class XtreamServerInfo {
   final DateTime? timestampNow;
   final String timeNow;
   final bool process;
+
+  String get fullUrl => ...;
+  bool get hasHttps => ...;
+  bool get hasRtmp => ...;
 }
 ```
 
@@ -95,48 +187,77 @@ final credentials = XtreamCredentialsModel(
   password: 'pass',
 );
 
-// Authenticate
-final authService = XtreamAuthService(repository: repository);
-final result = await authService.login(credentials);
+// Authenticate using XtreamCodesClient
+final client = XtreamCodesClient();
+final result = await client.login(credentials);
 
-if (result.isSuccess && result.data.isAuthenticated) {
-  // Login successful
-  final accountInfo = result.data.accountInfo;
-}
+result.fold(
+  onSuccess: (authResult) {
+    if (authResult.isAuthenticated) {
+      final accountInfo = authResult.accountInfo!;
+      print('Status: ${accountInfo.userInfo.status}');
+      print('Expires: ${accountInfo.userInfo.expDate}');
+    } else {
+      print('Auth failed: ${authResult.error?.message}');
+    }
+  },
+  onFailure: (error) {
+    print('Network error: ${error.message}');
+  },
+);
 ```
 
 ## Fetching Content
 
 ### Live TV
 ```dart
-final liveTvService = LiveTvService(repository: repository);
+final client = XtreamCodesClient();
 
 // Get categories
-final categories = await liveTvService.getCategories(credentials);
+final categoriesResult = await client.getLiveTvCategories(credentials);
+if (categoriesResult.isSuccess) {
+  for (final category in categoriesResult.data) {
+    print('${category.name}: ${category.channelCount} channels');
+  }
+}
 
 // Get channels
-final channels = await liveTvService.getChannels(credentials);
+final channelsResult = await client.getLiveTvChannels(credentials);
+
+// Get channels for specific category
+final filteredResult = await client.getLiveTvChannels(
+  credentials,
+  categoryId: '5',
+);
 
 // Get channels with EPG
-final channelsWithEpg = await liveTvService.getChannelsWithEpg(credentials);
+final channelsWithEpg = await client.getLiveTvChannelsWithEpg(credentials);
 ```
 
 ### Movies
 ```dart
-final moviesService = MoviesService(repository: repository);
+final client = XtreamCodesClient();
 
-final categories = await moviesService.getCategories(credentials);
-final movies = await moviesService.getMovies(credentials);
-final movieDetails = await moviesService.getMovieDetails(credentials, movieId);
+final categories = await client.getMovieCategories(credentials);
+final movies = await client.getMovies(credentials);
+final movieDetails = await client.getMovieDetails(credentials, movieId);
 ```
 
 ### Series
 ```dart
-final seriesService = SeriesService(repository: repository);
+final client = XtreamCodesClient();
 
-final categories = await seriesService.getCategories(credentials);
-final series = await seriesService.getSeries(credentials);
-final seriesDetails = await seriesService.getSeriesDetails(credentials, seriesId);
+final categories = await client.getSeriesCategories(credentials);
+final series = await client.getSeries(credentials);
+final seriesDetails = await client.getSeriesDetails(credentials, seriesId);
+
+// Access seasons and episodes
+for (final season in seriesDetails.data.seasons) {
+  print('Season ${season.seasonNumber}');
+  for (final episode in season.episodes) {
+    print('  - ${episode.name}: ${episode.streamUrl}');
+  }
+}
 ```
 
 ## Stream URLs
@@ -144,26 +265,51 @@ final seriesDetails = await seriesService.getSeriesDetails(credentials, seriesId
 Generate playback URLs:
 
 ```dart
+final client = XtreamCodesClient();
+
 // Live stream
-final liveUrl = liveTvService.getStreamUrl(
+final liveUrl = client.getLiveStreamUrl(
   credentials,
   streamId,
   format: 'm3u8',  // or 'ts', 'rtmp'
 );
 
 // Movie stream
-final movieUrl = moviesService.getStreamUrl(
+final movieUrl = client.getMovieStreamUrl(
   credentials,
   streamId,
   extension: 'mp4',
 );
 
 // Series episode stream
-final episodeUrl = seriesService.getStreamUrl(
+final episodeUrl = client.getSeriesStreamUrl(
   credentials,
   streamId,
   extension: 'mkv',
 );
+```
+
+## EPG (Electronic Program Guide)
+
+```dart
+final client = XtreamCodesClient();
+
+// Get EPG for specific channel
+final channelEpg = await client.getChannelEpg(credentials, channelId);
+if (channelEpg.isSuccess) {
+  for (final entry in channelEpg.data) {
+    print('${entry.title}: ${entry.startTime} - ${entry.endTime}');
+    if (entry.isCurrentlyAiring) {
+      print('  Currently airing! Progress: ${entry.progress * 100}%');
+    }
+  }
+}
+
+// Get current program
+final currentProgram = await client.getCurrentProgram(credentials, channelId);
+
+// Get EPG for all channels
+final allEpg = await client.getAllEpg(credentials);
 ```
 
 ## Mapping
@@ -183,8 +329,11 @@ final movie = XtreamToDomainMappers.mapMovie(json, streamUrl);
 // Map series with episodes
 final series = XtreamToDomainMappers.mapSeriesWithEpisodes(
   json,
-  buildStreamUrl,
+  (streamId, extension) => buildStreamUrl(streamId, extension),
 );
+
+// Map EPG entry
+final epgInfo = XtreamToDomainMappers.mapEpgEntry(json);
 ```
 
 ## Error Handling
@@ -205,30 +354,136 @@ enum AuthErrorType {
 All services return `ApiResult<T>` for consistent error handling:
 
 ```dart
-final result = await service.getChannels(credentials);
+final result = await client.getLiveTvChannels(credentials);
 
 result.fold(
-  onSuccess: (channels) => // Handle success,
-  onFailure: (error) => // Handle error,
+  onSuccess: (channels) {
+    // Handle success
+    for (final channel in channels) {
+      print(channel.name);
+    }
+  },
+  onFailure: (error) {
+    // Handle error
+    switch (error.type) {
+      case ApiErrorType.network:
+        print('Network error: ${error.message}');
+        break;
+      case ApiErrorType.auth:
+        print('Authentication error: ${error.message}');
+        break;
+      case ApiErrorType.timeout:
+        print('Request timed out');
+        break;
+      default:
+        print('Error: ${error.message}');
+    }
+  },
 );
 ```
+
+## Configuration
+
+### AppConfig Integration
+
+The Xtream module integrates with `AppConfig` for content source strategy:
+
+```dart
+// In lib/modules/core/config/app_config.dart
+enum ContentSourceStrategy {
+  xtreamApiDirect,    // Use Xtream API directly (recommended)
+  xtreamM3uImport,    // Import M3U from Xtream server
+}
+
+// Check current strategy
+final strategy = AppConfig().contentSourceStrategy;
+if (strategy == ContentSourceStrategy.xtreamApiDirect) {
+  // Use XtreamCodesClient
+}
+```
+
+### Dependency Injection
+
+The `XtreamCodesClient` is registered as a lazy singleton:
+
+```dart
+// In lib/core/config/dependency_injection.dart
+getIt.registerLazySingleton<XtreamCodesClient>(
+  () => XtreamCodesClient(),
+);
+
+// Usage
+final client = getIt<XtreamCodesClient>();
+```
+
+## Caching
+
+All repository implementations include built-in caching:
+
+- **Categories/Channels/Movies/Series**: 1 hour cache
+- **EPG**: 6 hour cache (EPG data changes more frequently)
+
+To force refresh:
+
+```dart
+await client.refreshLiveTv(credentials);
+await client.refreshMovies(credentials);
+await client.refreshSeries(credentials);
+await client.refreshEpg(credentials);
+
+// Or refresh all
+await client.refreshAll(credentials);
+```
+
+## Testing
+
+Run Xtream module tests:
+
+```bash
+flutter test test/modules/xtreamcodes/
+```
+
+### Test Files
+
+- `xtream_account_models_test.dart` - Account model parsing
+- `xtream_mappers_test.dart` - API to domain mapping
+- `xtream_repository_base_test.dart` - Repository utilities
+- `xtream_auth_service_test.dart` - Authentication logic
+- `epg_service_test.dart` - EPG functionality
 
 ## Adding New Endpoints
 
 To add a new Xtream API endpoint:
 
-1. Add the endpoint action to `XtreamRepositoryBase.buildUrl()`
-2. Create a method in the appropriate service
-3. Add mapping in `XtreamToDomainMappers`
-4. Add corresponding domain model if needed
+1. Add the endpoint action in the appropriate repository implementation
+2. Create a method in the corresponding service
+3. Add mapping in `XtreamToDomainMappers` if needed
+4. Expose the method via `XtreamCodesClient`
+5. Add unit tests
 
 Example:
+
 ```dart
-// In repository
-Future<ApiResult<List<SomeModel>>> fetchNewData(
+// 1. In repository (e.g., livetv_repository_impl.dart)
+Future<ApiResult<SomeData>> fetchNewData(
   XtreamCredentialsModel credentials,
 ) async {
   final url = buildUrl(credentials, 'new_action');
-  // ... fetch and map
+  final response = await _dio.get<dynamic>(url);
+  // ... parse and return
+}
+
+// 2. In service (e.g., livetv_service.dart)
+Future<ApiResult<SomeData>> getNewData(
+  XtreamCredentialsModel credentials,
+) {
+  return _repository.fetchNewData(credentials);
+}
+
+// 3. In XtreamCodesClient
+Future<ApiResult<SomeData>> getNewData(
+  XtreamCredentialsModel credentials,
+) {
+  return _liveTvService.getNewData(credentials);
 }
 ```

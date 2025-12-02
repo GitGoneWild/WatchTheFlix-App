@@ -10,3 +10,4 @@ export 'series/series.dart';
 export 'epg/epg.dart';
 export 'mappers/mappers.dart';
 export 'repositories/repositories.dart';
+export 'xtream_codes_client.dart';
