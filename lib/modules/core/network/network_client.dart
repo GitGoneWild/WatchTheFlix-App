@@ -2,6 +2,7 @@
 // HTTP client wrapper with retry logic, interceptors, and error handling.
 // Provides a consistent network interface for all modules.
 
+import 'dart:async';
 import 'dart:math' as math;
 
 import '../config/app_config.dart';

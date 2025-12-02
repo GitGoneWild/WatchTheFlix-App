@@ -14,6 +14,7 @@ import '../../domain/usecases/get_categories.dart';
 import '../../features/m3u/m3u_parser.dart';
 import '../../features/xtream/xtream_api_client.dart';
 import '../../features/xtream/xtream_service.dart';
+import '../../modules/xtreamcodes/xtreamcodes.dart';
 import '../../presentation/blocs/playlist/playlist_bloc.dart';
 import '../../presentation/blocs/channel/channel_bloc.dart';
 import '../../presentation/blocs/player/player_bloc.dart';
@@ -44,6 +45,7 @@ Future<void> initDependencies() async {
     () => M3UParserImpl(),
   );
 
+  // Legacy Xtream services (for backward compatibility)
   getIt.registerLazySingleton<XtreamApiClient>(
     () => XtreamApiClientImpl(apiClient: getIt()),
   );
@@ -53,6 +55,11 @@ Future<void> initDependencies() async {
       apiClient: getIt(),
       localStorage: getIt(),
     ),
+  );
+
+  // New modular Xtream Codes client
+  getIt.registerLazySingleton<XtreamCodesClient>(
+    () => XtreamCodesClient(),
   );
 
   // Repositories
