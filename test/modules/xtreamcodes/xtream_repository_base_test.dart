@@ -13,7 +13,7 @@ void main() {
 
     group('buildUrl', () {
       test('should build correct URL without action', () {
-        final credentials = XtreamCredentialsModel(
+        const credentials = XtreamCredentialsModel(
           host: 'http://server.example.com:8080',
           username: 'testuser',
           password: 'testpass',
@@ -27,7 +27,7 @@ void main() {
       });
 
       test('should build correct URL with action', () {
-        final credentials = XtreamCredentialsModel(
+        const credentials = XtreamCredentialsModel(
           host: 'http://server.example.com:8080',
           username: 'testuser',
           password: 'testpass',
@@ -39,7 +39,7 @@ void main() {
       });
 
       test('should encode special characters in username', () {
-        final credentials = XtreamCredentialsModel(
+        const credentials = XtreamCredentialsModel(
           host: 'http://server.example.com',
           username: 'test@user',
           password: 'test pass',
@@ -52,7 +52,7 @@ void main() {
       });
 
       test('should handle trailing slash in host', () {
-        final credentials = XtreamCredentialsModel(
+        const credentials = XtreamCredentialsModel(
           host: 'http://server.example.com/',
           username: 'user',
           password: 'pass',
@@ -67,7 +67,7 @@ void main() {
 
     group('buildLiveStreamUrl', () {
       test('should build correct live stream URL', () {
-        final credentials = XtreamCredentialsModel(
+        const credentials = XtreamCredentialsModel(
           host: 'http://server.example.com',
           username: 'user',
           password: 'pass',
@@ -75,17 +75,19 @@ void main() {
 
         final url = repository.buildLiveStreamUrl(credentials, '12345');
 
-        expect(url, equals('http://server.example.com/live/user/pass/12345.m3u8'));
+        expect(
+            url, equals('http://server.example.com/live/user/pass/12345.m3u8'));
       });
 
       test('should use custom format', () {
-        final credentials = XtreamCredentialsModel(
+        const credentials = XtreamCredentialsModel(
           host: 'http://server.example.com',
           username: 'user',
           password: 'pass',
         );
 
-        final url = repository.buildLiveStreamUrl(credentials, '12345', format: 'ts');
+        final url =
+            repository.buildLiveStreamUrl(credentials, '12345', format: 'ts');
 
         expect(url, endsWith('/12345.ts'));
       });
@@ -93,7 +95,7 @@ void main() {
 
     group('buildMovieStreamUrl', () {
       test('should build correct movie stream URL', () {
-        final credentials = XtreamCredentialsModel(
+        const credentials = XtreamCredentialsModel(
           host: 'http://server.example.com',
           username: 'user',
           password: 'pass',
@@ -101,17 +103,19 @@ void main() {
 
         final url = repository.buildMovieStreamUrl(credentials, '67890');
 
-        expect(url, equals('http://server.example.com/movie/user/pass/67890.mp4'));
+        expect(
+            url, equals('http://server.example.com/movie/user/pass/67890.mp4'));
       });
 
       test('should use custom extension', () {
-        final credentials = XtreamCredentialsModel(
+        const credentials = XtreamCredentialsModel(
           host: 'http://server.example.com',
           username: 'user',
           password: 'pass',
         );
 
-        final url = repository.buildMovieStreamUrl(credentials, '67890', extension: 'mkv');
+        final url = repository.buildMovieStreamUrl(credentials, '67890',
+            extension: 'mkv');
 
         expect(url, endsWith('/67890.mkv'));
       });
@@ -119,7 +123,7 @@ void main() {
 
     group('buildSeriesStreamUrl', () {
       test('should build correct series stream URL', () {
-        final credentials = XtreamCredentialsModel(
+        const credentials = XtreamCredentialsModel(
           host: 'http://server.example.com',
           username: 'user',
           password: 'pass',
@@ -127,43 +131,50 @@ void main() {
 
         final url = repository.buildSeriesStreamUrl(credentials, '11111');
 
-        expect(url, equals('http://server.example.com/series/user/pass/11111.mp4'));
+        expect(url,
+            equals('http://server.example.com/series/user/pass/11111.mp4'));
       });
     });
 
     group('handleApiError', () {
       test('should return timeout error for timeout exceptions', () {
-        final error = repository.handleApiError('timeout error', 'Test operation');
+        final error =
+            repository.handleApiError('timeout error', 'Test operation');
 
         expect(error.type, equals(ApiErrorType.timeout));
       });
 
       test('should return network error for connection errors', () {
-        final error = repository.handleApiError('connection failed', 'Test operation');
+        final error =
+            repository.handleApiError('connection failed', 'Test operation');
 
         expect(error.type, equals(ApiErrorType.network));
       });
 
       test('should return auth error for 401 errors', () {
-        final error = repository.handleApiError('401 unauthorized', 'Test operation');
+        final error =
+            repository.handleApiError('401 unauthorized', 'Test operation');
 
         expect(error.type, equals(ApiErrorType.auth));
       });
 
       test('should return not found error for 404 errors', () {
-        final error = repository.handleApiError('404 not found', 'Test operation');
+        final error =
+            repository.handleApiError('404 not found', 'Test operation');
 
         expect(error.type, equals(ApiErrorType.notFound));
       });
 
       test('should return server error for 500 errors', () {
-        final error = repository.handleApiError('500 server error', 'Test operation');
+        final error =
+            repository.handleApiError('500 server error', 'Test operation');
 
         expect(error.type, equals(ApiErrorType.server));
       });
 
       test('should return unknown error for other cases', () {
-        final error = repository.handleApiError('some random error', 'Test operation');
+        final error =
+            repository.handleApiError('some random error', 'Test operation');
 
         expect(error.type, equals(ApiErrorType.unknown));
       });

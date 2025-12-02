@@ -5,15 +5,6 @@ import '../../core/logging/app_logger.dart';
 
 /// Parsed M3U entry
 class M3uEntry {
-  final String name;
-  final String url;
-  final String? tvgId;
-  final String? tvgName;
-  final String? tvgLogo;
-  final String? groupTitle;
-  final int duration;
-  final Map<String, String> attributes;
-
   const M3uEntry({
     required this.name,
     required this.url,
@@ -24,6 +15,14 @@ class M3uEntry {
     this.duration = -1,
     this.attributes = const {},
   });
+  final String name;
+  final String url;
+  final String? tvgId;
+  final String? tvgName;
+  final String? tvgLogo;
+  final String? groupTitle;
+  final int duration;
+  final Map<String, String> attributes;
 
   /// Get content type based on URL and group
   String get contentType {

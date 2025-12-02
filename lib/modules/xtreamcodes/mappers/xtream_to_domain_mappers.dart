@@ -21,7 +21,6 @@ class XtreamToDomainMappers {
       logoUrl: json['stream_icon']?.toString() ?? json['cover']?.toString(),
       groupTitle: json['category_name']?.toString(),
       categoryId: json['category_id']?.toString(),
-      type: ContentType.live,
       metadata: _extractMetadata(json, [
         'stream_id',
         'name',
@@ -63,7 +62,6 @@ class XtreamToDomainMappers {
           json['releaseDate']?.toString() ?? json['release_date']?.toString(),
       rating: _parseRating(json['rating']),
       duration: _parseInt(json['duration_secs']),
-      type: ContentType.movie,
       metadata: _extractMetadata(json, [
         'stream_id',
         'name',
@@ -131,15 +129,19 @@ class XtreamToDomainMappers {
         final streamId = e['id']?.toString() ?? '';
         final extension = e['container_extension']?.toString() ?? 'mp4';
         return mapEpisode(
-            e as Map<String, dynamic>, buildStreamUrl(streamId, extension));
+          e as Map<String, dynamic>,
+          buildStreamUrl(streamId, extension),
+        );
       }).toList();
 
-      seasons.add(Season(
-        id: seasonNumber,
-        seasonNumber: int.tryParse(seasonNumber) ?? 1,
-        name: 'Season $seasonNumber',
-        episodes: episodes,
-      ));
+      seasons.add(
+        Season(
+          id: seasonNumber,
+          seasonNumber: int.tryParse(seasonNumber) ?? 1,
+          name: 'Season $seasonNumber',
+          episodes: episodes,
+        ),
+      );
     });
 
     return mapSeries(info, seasons: seasons);

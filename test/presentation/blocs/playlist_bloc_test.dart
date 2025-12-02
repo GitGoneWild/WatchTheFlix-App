@@ -27,7 +27,6 @@ void main() {
         url: 'http://example.com/playlist.m3u',
         type: PlaylistSourceType.m3uUrl,
         addedAt: DateTime.now(),
-        isActive: true,
       ),
     ];
 

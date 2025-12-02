@@ -63,6 +63,30 @@ extension HiveContentTypeExtension on HiveContentType {
 /// Hive model for storing channel data locally
 @HiveType(typeId: XtreamHiveTypeIds.channel)
 class HiveChannel extends HiveObject {
+  HiveChannel({
+    required this.id,
+    required this.name,
+    required this.streamUrl,
+    this.logoUrl,
+    this.groupTitle,
+    this.categoryId,
+    this.type = HiveContentType.live,
+    this.metadata,
+  });
+
+  /// Create from domain model
+  factory HiveChannel.fromDomain(DomainChannel channel) {
+    return HiveChannel(
+      id: channel.id,
+      name: channel.name,
+      streamUrl: channel.streamUrl,
+      logoUrl: channel.logoUrl,
+      groupTitle: channel.groupTitle,
+      categoryId: channel.categoryId,
+      type: HiveContentTypeExtension.fromDomain(channel.type),
+      metadata: channel.metadata,
+    );
+  }
   @HiveField(0)
   String id;
 
@@ -87,17 +111,6 @@ class HiveChannel extends HiveObject {
   @HiveField(7)
   Map<String, dynamic>? metadata;
 
-  HiveChannel({
-    required this.id,
-    required this.name,
-    required this.streamUrl,
-    this.logoUrl,
-    this.groupTitle,
-    this.categoryId,
-    this.type = HiveContentType.live,
-    this.metadata,
-  });
-
   /// Convert to domain model
   DomainChannel toDomain() {
     return DomainChannel(
@@ -111,25 +124,33 @@ class HiveChannel extends HiveObject {
       metadata: metadata,
     );
   }
-
-  /// Create from domain model
-  factory HiveChannel.fromDomain(DomainChannel channel) {
-    return HiveChannel(
-      id: channel.id,
-      name: channel.name,
-      streamUrl: channel.streamUrl,
-      logoUrl: channel.logoUrl,
-      groupTitle: channel.groupTitle,
-      categoryId: channel.categoryId,
-      type: HiveContentTypeExtension.fromDomain(channel.type),
-      metadata: channel.metadata,
-    );
-  }
 }
 
 /// Hive model for storing category data locally
 @HiveType(typeId: XtreamHiveTypeIds.category)
 class HiveCategory extends HiveObject {
+  // 'live', 'movie', 'series'
+
+  HiveCategory({
+    required this.id,
+    required this.name,
+    this.channelCount = 0,
+    this.iconUrl,
+    this.sortOrder,
+    required this.categoryType,
+  });
+
+  /// Create from domain model
+  factory HiveCategory.fromDomain(DomainCategory category, String type) {
+    return HiveCategory(
+      id: category.id,
+      name: category.name,
+      channelCount: category.channelCount,
+      iconUrl: category.iconUrl,
+      sortOrder: category.sortOrder,
+      categoryType: type,
+    );
+  }
   @HiveField(0)
   String id;
 
@@ -146,16 +167,7 @@ class HiveCategory extends HiveObject {
   int? sortOrder;
 
   @HiveField(5)
-  String categoryType; // 'live', 'movie', 'series'
-
-  HiveCategory({
-    required this.id,
-    required this.name,
-    this.channelCount = 0,
-    this.iconUrl,
-    this.sortOrder,
-    required this.categoryType,
-  });
+  String categoryType;
 
   /// Convert to domain model
   DomainCategory toDomain() {
@@ -167,23 +179,43 @@ class HiveCategory extends HiveObject {
       sortOrder: sortOrder,
     );
   }
-
-  /// Create from domain model
-  factory HiveCategory.fromDomain(DomainCategory category, String type) {
-    return HiveCategory(
-      id: category.id,
-      name: category.name,
-      channelCount: category.channelCount,
-      iconUrl: category.iconUrl,
-      sortOrder: category.sortOrder,
-      categoryType: type,
-    );
-  }
 }
 
 /// Hive model for storing VOD (movie) data locally
 @HiveType(typeId: XtreamHiveTypeIds.vodItem)
 class HiveVodItem extends HiveObject {
+  HiveVodItem({
+    required this.id,
+    required this.name,
+    required this.streamUrl,
+    this.posterUrl,
+    this.backdropUrl,
+    this.description,
+    this.categoryId,
+    this.genre,
+    this.releaseDate,
+    this.rating,
+    this.duration,
+    this.metadata,
+  });
+
+  /// Create from domain model
+  factory HiveVodItem.fromDomain(VodItem movie) {
+    return HiveVodItem(
+      id: movie.id,
+      name: movie.name,
+      streamUrl: movie.streamUrl,
+      posterUrl: movie.posterUrl,
+      backdropUrl: movie.backdropUrl,
+      description: movie.description,
+      categoryId: movie.categoryId,
+      genre: movie.genre,
+      releaseDate: movie.releaseDate,
+      rating: movie.rating,
+      duration: movie.duration,
+      metadata: movie.metadata,
+    );
+  }
   @HiveField(0)
   String id;
 
@@ -220,21 +252,6 @@ class HiveVodItem extends HiveObject {
   @HiveField(11)
   Map<String, dynamic>? metadata;
 
-  HiveVodItem({
-    required this.id,
-    required this.name,
-    required this.streamUrl,
-    this.posterUrl,
-    this.backdropUrl,
-    this.description,
-    this.categoryId,
-    this.genre,
-    this.releaseDate,
-    this.rating,
-    this.duration,
-    this.metadata,
-  });
-
   /// Convert to domain model
   VodItem toDomain() {
     return VodItem(
@@ -249,26 +266,7 @@ class HiveVodItem extends HiveObject {
       releaseDate: releaseDate,
       rating: rating,
       duration: duration,
-      type: ContentType.movie,
       metadata: metadata,
-    );
-  }
-
-  /// Create from domain model
-  factory HiveVodItem.fromDomain(VodItem movie) {
-    return HiveVodItem(
-      id: movie.id,
-      name: movie.name,
-      streamUrl: movie.streamUrl,
-      posterUrl: movie.posterUrl,
-      backdropUrl: movie.backdropUrl,
-      description: movie.description,
-      categoryId: movie.categoryId,
-      genre: movie.genre,
-      releaseDate: movie.releaseDate,
-      rating: movie.rating,
-      duration: movie.duration,
-      metadata: movie.metadata,
     );
   }
 }
@@ -276,6 +274,30 @@ class HiveVodItem extends HiveObject {
 /// Hive model for storing episode data
 @HiveType(typeId: XtreamHiveTypeIds.episode)
 class HiveEpisode extends HiveObject {
+  HiveEpisode({
+    required this.id,
+    required this.episodeNumber,
+    required this.name,
+    required this.streamUrl,
+    this.description,
+    this.thumbnailUrl,
+    this.duration,
+    this.airDate,
+  });
+
+  /// Create from domain model
+  factory HiveEpisode.fromDomain(Episode episode) {
+    return HiveEpisode(
+      id: episode.id,
+      episodeNumber: episode.episodeNumber,
+      name: episode.name,
+      streamUrl: episode.streamUrl,
+      description: episode.description,
+      thumbnailUrl: episode.thumbnailUrl,
+      duration: episode.duration,
+      airDate: episode.airDate,
+    );
+  }
   @HiveField(0)
   String id;
 
@@ -300,17 +322,6 @@ class HiveEpisode extends HiveObject {
   @HiveField(7)
   String? airDate;
 
-  HiveEpisode({
-    required this.id,
-    required this.episodeNumber,
-    required this.name,
-    required this.streamUrl,
-    this.description,
-    this.thumbnailUrl,
-    this.duration,
-    this.airDate,
-  });
-
   /// Convert to domain model
   Episode toDomain() {
     return Episode(
@@ -324,25 +335,29 @@ class HiveEpisode extends HiveObject {
       airDate: airDate,
     );
   }
-
-  /// Create from domain model
-  factory HiveEpisode.fromDomain(Episode episode) {
-    return HiveEpisode(
-      id: episode.id,
-      episodeNumber: episode.episodeNumber,
-      name: episode.name,
-      streamUrl: episode.streamUrl,
-      description: episode.description,
-      thumbnailUrl: episode.thumbnailUrl,
-      duration: episode.duration,
-      airDate: episode.airDate,
-    );
-  }
 }
 
 /// Hive model for storing season data
 @HiveType(typeId: XtreamHiveTypeIds.season)
 class HiveSeason extends HiveObject {
+  HiveSeason({
+    required this.id,
+    required this.seasonNumber,
+    this.name,
+    this.posterUrl,
+    this.episodes = const [],
+  });
+
+  /// Create from domain model
+  factory HiveSeason.fromDomain(Season season) {
+    return HiveSeason(
+      id: season.id,
+      seasonNumber: season.seasonNumber,
+      name: season.name,
+      posterUrl: season.posterUrl,
+      episodes: season.episodes.map((e) => HiveEpisode.fromDomain(e)).toList(),
+    );
+  }
   @HiveField(0)
   String id;
 
@@ -358,14 +373,6 @@ class HiveSeason extends HiveObject {
   @HiveField(4)
   List<HiveEpisode> episodes;
 
-  HiveSeason({
-    required this.id,
-    required this.seasonNumber,
-    this.name,
-    this.posterUrl,
-    this.episodes = const [],
-  });
-
   /// Convert to domain model
   Season toDomain() {
     return Season(
@@ -376,22 +383,41 @@ class HiveSeason extends HiveObject {
       episodes: episodes.map((e) => e.toDomain()).toList(),
     );
   }
-
-  /// Create from domain model
-  factory HiveSeason.fromDomain(Season season) {
-    return HiveSeason(
-      id: season.id,
-      seasonNumber: season.seasonNumber,
-      name: season.name,
-      posterUrl: season.posterUrl,
-      episodes: season.episodes.map((e) => HiveEpisode.fromDomain(e)).toList(),
-    );
-  }
 }
 
 /// Hive model for storing series data locally
 @HiveType(typeId: XtreamHiveTypeIds.series)
 class HiveSeries extends HiveObject {
+  HiveSeries({
+    required this.id,
+    required this.name,
+    this.posterUrl,
+    this.backdropUrl,
+    this.description,
+    this.categoryId,
+    this.genre,
+    this.releaseDate,
+    this.rating,
+    this.seasons = const [],
+    this.metadata,
+  });
+
+  /// Create from domain model
+  factory HiveSeries.fromDomain(DomainSeries series) {
+    return HiveSeries(
+      id: series.id,
+      name: series.name,
+      posterUrl: series.posterUrl,
+      backdropUrl: series.backdropUrl,
+      description: series.description,
+      categoryId: series.categoryId,
+      genre: series.genre,
+      releaseDate: series.releaseDate,
+      rating: series.rating,
+      seasons: series.seasons.map((s) => HiveSeason.fromDomain(s)).toList(),
+      metadata: series.metadata,
+    );
+  }
   @HiveField(0)
   String id;
 
@@ -425,20 +451,6 @@ class HiveSeries extends HiveObject {
   @HiveField(10)
   Map<String, dynamic>? metadata;
 
-  HiveSeries({
-    required this.id,
-    required this.name,
-    this.posterUrl,
-    this.backdropUrl,
-    this.description,
-    this.categoryId,
-    this.genre,
-    this.releaseDate,
-    this.rating,
-    this.seasons = const [],
-    this.metadata,
-  });
-
   /// Convert to domain model
   DomainSeries toDomain() {
     return DomainSeries(
@@ -455,28 +467,39 @@ class HiveSeries extends HiveObject {
       metadata: metadata,
     );
   }
-
-  /// Create from domain model
-  factory HiveSeries.fromDomain(DomainSeries series) {
-    return HiveSeries(
-      id: series.id,
-      name: series.name,
-      posterUrl: series.posterUrl,
-      backdropUrl: series.backdropUrl,
-      description: series.description,
-      categoryId: series.categoryId,
-      genre: series.genre,
-      releaseDate: series.releaseDate,
-      rating: series.rating,
-      seasons: series.seasons.map((s) => HiveSeason.fromDomain(s)).toList(),
-      metadata: series.metadata,
-    );
-  }
 }
 
 /// Hive model for storing EPG program data
 @HiveType(typeId: XtreamHiveTypeIds.epgProgram)
 class HiveEpgProgram extends HiveObject {
+  HiveEpgProgram({
+    required this.channelId,
+    required this.title,
+    this.description,
+    required this.startTime,
+    required this.endTime,
+    this.category,
+    this.language,
+    this.episodeNumber,
+    this.iconUrl,
+    this.subtitle,
+  });
+
+  /// Create from domain model
+  factory HiveEpgProgram.fromDomain(EpgProgram program) {
+    return HiveEpgProgram(
+      channelId: program.channelId,
+      title: program.title,
+      description: program.description,
+      startTime: program.startTime,
+      endTime: program.endTime,
+      category: program.category,
+      language: program.language,
+      episodeNumber: program.episodeNumber,
+      iconUrl: program.iconUrl,
+      subtitle: program.subtitle,
+    );
+  }
   @HiveField(0)
   String channelId;
 
@@ -507,19 +530,6 @@ class HiveEpgProgram extends HiveObject {
   @HiveField(9)
   String? subtitle;
 
-  HiveEpgProgram({
-    required this.channelId,
-    required this.title,
-    this.description,
-    required this.startTime,
-    required this.endTime,
-    this.category,
-    this.language,
-    this.episodeNumber,
-    this.iconUrl,
-    this.subtitle,
-  });
-
   /// Convert to domain model
   EpgProgram toDomain() {
     return EpgProgram(
@@ -535,27 +545,24 @@ class HiveEpgProgram extends HiveObject {
       subtitle: subtitle,
     );
   }
-
-  /// Create from domain model
-  factory HiveEpgProgram.fromDomain(EpgProgram program) {
-    return HiveEpgProgram(
-      channelId: program.channelId,
-      title: program.title,
-      description: program.description,
-      startTime: program.startTime,
-      endTime: program.endTime,
-      category: program.category,
-      language: program.language,
-      episodeNumber: program.episodeNumber,
-      iconUrl: program.iconUrl,
-      subtitle: program.subtitle,
-    );
-  }
 }
 
 /// Sync status for tracking data freshness
 @HiveType(typeId: XtreamHiveTypeIds.syncStatus)
 class HiveSyncStatus extends HiveObject {
+  HiveSyncStatus({
+    required this.profileId,
+    this.lastChannelSync,
+    this.lastMovieSync,
+    this.lastSeriesSync,
+    this.lastEpgSync,
+    this.lastCategorySync,
+    this.isInitialSyncComplete = false,
+    this.channelCount,
+    this.movieCount,
+    this.seriesCount,
+    this.epgProgramCount,
+  });
   @HiveField(0)
   String profileId;
 
@@ -588,20 +595,6 @@ class HiveSyncStatus extends HiveObject {
 
   @HiveField(10)
   int? epgProgramCount;
-
-  HiveSyncStatus({
-    required this.profileId,
-    this.lastChannelSync,
-    this.lastMovieSync,
-    this.lastSeriesSync,
-    this.lastEpgSync,
-    this.lastCategorySync,
-    this.isInitialSyncComplete = false,
-    this.channelCount,
-    this.movieCount,
-    this.seriesCount,
-    this.epgProgramCount,
-  });
 
   /// Check if channels need refresh based on TTL
   bool needsChannelRefresh(Duration ttl) {

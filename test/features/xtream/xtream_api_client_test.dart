@@ -14,7 +14,7 @@ void main() {
   setUpAll(() {
     registerFallbackValue(FakeOptions());
   });
-  
+
   group('XtreamApiClient', () {
     late MockApiClient mockApiClient;
     late XtreamApiClientImpl xtreamClient;
@@ -50,14 +50,18 @@ void main() {
           },
         };
 
-        when(() => mockApiClient.get<Map<String, dynamic>>(
-          any(),
-          queryParameters: any(named: 'queryParameters'),
-          options: any(named: 'options'),
-        )).thenAnswer((_) async => Response(
-              data: responseData,
-              requestOptions: RequestOptions(path: ''),
-            ));
+        when(
+          () => mockApiClient.get<Map<String, dynamic>>(
+            any(),
+            queryParameters: any(named: 'queryParameters'),
+            options: any(named: 'options'),
+          ),
+        ).thenAnswer(
+          (_) async => Response(
+            data: responseData,
+            requestOptions: RequestOptions(),
+          ),
+        );
 
         // Act
         final result = await xtreamClient.login(credentials);
@@ -81,14 +85,18 @@ void main() {
           'server_info': {},
         };
 
-        when(() => mockApiClient.get<Map<String, dynamic>>(
-          any(),
-          queryParameters: any(named: 'queryParameters'),
-          options: any(named: 'options'),
-        )).thenAnswer((_) async => Response(
-              data: responseData,
-              requestOptions: RequestOptions(path: ''),
-            ));
+        when(
+          () => mockApiClient.get<Map<String, dynamic>>(
+            any(),
+            queryParameters: any(named: 'queryParameters'),
+            options: any(named: 'options'),
+          ),
+        ).thenAnswer(
+          (_) async => Response(
+            data: responseData,
+            requestOptions: RequestOptions(),
+          ),
+        );
 
         // Act & Assert
         expect(
@@ -104,13 +112,15 @@ void main() {
         final url = xtreamClient.getLiveStreamUrl(
           credentials,
           '12345',
-          format: 'm3u8',
         );
 
         // Assert
-        expect(url, equals(
-          'http://test.server.com:8080/live/testuser/testpass/12345.m3u8',
-        ));
+        expect(
+          url,
+          equals(
+            'http://test.server.com:8080/live/testuser/testpass/12345.m3u8',
+          ),
+        );
       });
 
       test('should generate correct movie stream URL', () {
@@ -118,13 +128,15 @@ void main() {
         final url = xtreamClient.getMovieStreamUrl(
           credentials,
           '54321',
-          extension: 'mp4',
         );
 
         // Assert
-        expect(url, equals(
-          'http://test.server.com:8080/movie/testuser/testpass/54321.mp4',
-        ));
+        expect(
+          url,
+          equals(
+            'http://test.server.com:8080/movie/testuser/testpass/54321.mp4',
+          ),
+        );
       });
 
       test('should generate correct series stream URL', () {
@@ -136,9 +148,12 @@ void main() {
         );
 
         // Assert
-        expect(url, equals(
-          'http://test.server.com:8080/series/testuser/testpass/99999.mkv',
-        ));
+        expect(
+          url,
+          equals(
+            'http://test.server.com:8080/series/testuser/testpass/99999.mkv',
+          ),
+        );
       });
     });
 
@@ -160,14 +175,18 @@ void main() {
           },
         ];
 
-        when(() => mockApiClient.get<dynamic>(
-          any(),
-          queryParameters: any(named: 'queryParameters'),
-          options: any(named: 'options'),
-        )).thenAnswer((_) async => Response(
-              data: responseData,
-              requestOptions: RequestOptions(path: ''),
-            ));
+        when(
+          () => mockApiClient.get<dynamic>(
+            any(),
+            queryParameters: any(named: 'queryParameters'),
+            options: any(named: 'options'),
+          ),
+        ).thenAnswer(
+          (_) async => Response(
+            data: responseData,
+            requestOptions: RequestOptions(),
+          ),
+        );
 
         // Act
         final result = await xtreamClient.fetchLiveChannels(credentials);
@@ -190,14 +209,18 @@ void main() {
           },
         ];
 
-        when(() => mockApiClient.get<dynamic>(
-          any(),
-          queryParameters: any(named: 'queryParameters'),
-          options: any(named: 'options'),
-        )).thenAnswer((_) async => Response(
-              data: responseData,
-              requestOptions: RequestOptions(path: ''),
-            ));
+        when(
+          () => mockApiClient.get<dynamic>(
+            any(),
+            queryParameters: any(named: 'queryParameters'),
+            options: any(named: 'options'),
+          ),
+        ).thenAnswer(
+          (_) async => Response(
+            data: responseData,
+            requestOptions: RequestOptions(),
+          ),
+        );
 
         // Act
         final result = await xtreamClient.fetchLiveChannels(
@@ -229,14 +252,18 @@ void main() {
           },
         ];
 
-        when(() => mockApiClient.get<dynamic>(
-          any(),
-          queryParameters: any(named: 'queryParameters'),
-          options: any(named: 'options'),
-        )).thenAnswer((_) async => Response(
-              data: responseData,
-              requestOptions: RequestOptions(path: ''),
-            ));
+        when(
+          () => mockApiClient.get<dynamic>(
+            any(),
+            queryParameters: any(named: 'queryParameters'),
+            options: any(named: 'options'),
+          ),
+        ).thenAnswer(
+          (_) async => Response(
+            data: responseData,
+            requestOptions: RequestOptions(),
+          ),
+        );
 
         // Act
         final result = await xtreamClient.fetchLiveCategories(credentials);
@@ -274,8 +301,11 @@ void main() {
     test('should handle Unix timestamp format', () {
       // Arrange
       final now = DateTime.now();
-      final startTimestamp = now.subtract(const Duration(minutes: 30)).millisecondsSinceEpoch ~/ 1000;
-      final endTimestamp = now.add(const Duration(minutes: 30)).millisecondsSinceEpoch ~/ 1000;
+      final startTimestamp =
+          now.subtract(const Duration(minutes: 30)).millisecondsSinceEpoch ~/
+              1000;
+      final endTimestamp =
+          now.add(const Duration(minutes: 30)).millisecondsSinceEpoch ~/ 1000;
 
       final json = {
         'epg_id': '456',

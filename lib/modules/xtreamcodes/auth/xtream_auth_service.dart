@@ -19,8 +19,6 @@ enum AuthErrorType {
 
 /// Authentication error model
 class XtreamAuthError extends ApiError {
-  final AuthErrorType authErrorType;
-
   const XtreamAuthError({
     required this.authErrorType,
     required super.message,
@@ -55,14 +53,11 @@ class XtreamAuthError extends ApiError {
       message: message ?? 'Account is disabled',
     );
   }
+  final AuthErrorType authErrorType;
 }
 
 /// Authentication result model
 class XtreamAuthResult {
-  final bool isAuthenticated;
-  final XtreamAccountOverview? accountInfo;
-  final XtreamAuthError? error;
-
   const XtreamAuthResult({
     required this.isAuthenticated,
     this.accountInfo,
@@ -82,6 +77,9 @@ class XtreamAuthResult {
       error: error,
     );
   }
+  final bool isAuthenticated;
+  final XtreamAccountOverview? accountInfo;
+  final XtreamAuthError? error;
 }
 
 /// Xtream authentication service interface
@@ -95,10 +93,9 @@ abstract class IXtreamAuthService {
 
 /// Xtream authentication service implementation
 class XtreamAuthService implements IXtreamAuthService {
-  final XtreamAuthRepository _repository;
-
   XtreamAuthService({required XtreamAuthRepository repository})
       : _repository = repository;
+  final XtreamAuthRepository _repository;
 
   @override
   Future<ApiResult<XtreamAuthResult>> login(

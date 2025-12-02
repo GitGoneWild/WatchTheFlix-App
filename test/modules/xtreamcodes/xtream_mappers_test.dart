@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:watchtheflix/modules/xtreamcodes/mappers/xtream_to_domain_mappers.dart';
 import 'package:watchtheflix/modules/core/models/base_models.dart';
+import 'package:watchtheflix/modules/xtreamcodes/mappers/xtream_to_domain_mappers.dart';
 
 void main() {
   group('XtreamToDomainMappers', () {
@@ -24,7 +24,8 @@ void main() {
         expect(channel.logoUrl, equals('http://logo.com/espn.png'));
         expect(channel.categoryId, equals('5'));
         expect(channel.groupTitle, equals('Sports'));
-        expect(channel.streamUrl, equals('http://stream.com/live/user/pass/12345.m3u8'));
+        expect(channel.streamUrl,
+            equals('http://stream.com/live/user/pass/12345.m3u8'));
         expect(channel.type, equals(ContentType.live));
       });
 
@@ -146,7 +147,8 @@ void main() {
         expect(series.name, equals('Breaking Bad'));
         expect(series.posterUrl, equals('http://poster.com/bb.jpg'));
         expect(series.backdropUrl, equals('http://backdrop.com/bb.jpg'));
-        expect(series.description, equals('A chemistry teacher turned drug lord'));
+        expect(
+            series.description, equals('A chemistry teacher turned drug lord'));
         expect(series.rating, equals(9.5));
       });
 
@@ -220,7 +222,8 @@ void main() {
       test('should map EPG entry from Xtream response', () {
         final now = DateTime.now();
         final startTimestamp = now.millisecondsSinceEpoch ~/ 1000;
-        final endTimestamp = now.add(const Duration(hours: 1)).millisecondsSinceEpoch ~/ 1000;
+        final endTimestamp =
+            now.add(const Duration(hours: 1)).millisecondsSinceEpoch ~/ 1000;
 
         final json = {
           'title': 'News at 10',
@@ -240,7 +243,9 @@ void main() {
       test('should handle string timestamps', () {
         final now = DateTime.now();
         final startTimestamp = (now.millisecondsSinceEpoch ~/ 1000).toString();
-        final endTimestamp = (now.add(const Duration(hours: 1)).millisecondsSinceEpoch ~/ 1000).toString();
+        final endTimestamp =
+            (now.add(const Duration(hours: 1)).millisecondsSinceEpoch ~/ 1000)
+                .toString();
 
         final json = {
           'title': 'Show',

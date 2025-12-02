@@ -37,10 +37,9 @@ abstract class ISeriesService {
 
 /// Series service implementation
 class SeriesService implements ISeriesService {
-  final SeriesRepository _repository;
-
   SeriesService({required SeriesRepository repository})
       : _repository = repository;
+  final SeriesRepository _repository;
 
   @override
   Future<ApiResult<List<DomainCategory>>> getCategories(

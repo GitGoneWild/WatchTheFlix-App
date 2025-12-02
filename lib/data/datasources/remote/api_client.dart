@@ -27,8 +27,6 @@ abstract class ApiClient {
 
 /// API client implementation using Dio
 class ApiClientImpl implements ApiClient {
-  late final Dio _dio;
-
   ApiClientImpl() {
     _dio = Dio(
       BaseOptions(
@@ -58,6 +56,7 @@ class ApiClientImpl implements ApiClient {
       return true;
     }());
   }
+  late final Dio _dio;
 
   @override
   Future<Response<T>> get<T>(
@@ -121,7 +120,6 @@ class ApiClientImpl implements ApiClient {
         final statusCode = e.response?.statusCode ?? 0;
         if (statusCode == 401 || statusCode == 403) {
           return AuthException(
-            message: 'Authentication failed',
             statusCode: statusCode,
           );
         }

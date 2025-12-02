@@ -2,18 +2,6 @@ import '../../domain/entities/series.dart';
 
 /// Series model for data layer
 class SeriesModel {
-  final String id;
-  final String name;
-  final String? posterUrl;
-  final String? backdropUrl;
-  final String? categoryId;
-  final String? description;
-  final String? releaseDate;
-  final double? rating;
-  final String? genre;
-  final List<SeasonModel>? seasons;
-  final Map<String, dynamic>? metadata;
-
   const SeriesModel({
     required this.id,
     required this.name,
@@ -50,6 +38,34 @@ class SeriesModel {
       metadata: json['metadata'] as Map<String, dynamic>?,
     );
   }
+
+  /// Create from domain entity
+  factory SeriesModel.fromEntity(Series entity) {
+    return SeriesModel(
+      id: entity.id,
+      name: entity.name,
+      posterUrl: entity.posterUrl,
+      backdropUrl: entity.backdropUrl,
+      categoryId: entity.categoryId,
+      description: entity.description,
+      releaseDate: entity.releaseDate,
+      rating: entity.rating,
+      genre: entity.genre,
+      seasons: entity.seasons?.map((s) => SeasonModel.fromEntity(s)).toList(),
+      metadata: entity.metadata,
+    );
+  }
+  final String id;
+  final String name;
+  final String? posterUrl;
+  final String? backdropUrl;
+  final String? categoryId;
+  final String? description;
+  final String? releaseDate;
+  final double? rating;
+  final String? genre;
+  final List<SeasonModel>? seasons;
+  final Map<String, dynamic>? metadata;
 
   /// Parse genre field that can be String, List, or null
   static String? _parseGenre(dynamic genre) {
@@ -92,33 +108,10 @@ class SeriesModel {
       metadata: metadata,
     );
   }
-
-  /// Create from domain entity
-  factory SeriesModel.fromEntity(Series entity) {
-    return SeriesModel(
-      id: entity.id,
-      name: entity.name,
-      posterUrl: entity.posterUrl,
-      backdropUrl: entity.backdropUrl,
-      categoryId: entity.categoryId,
-      description: entity.description,
-      releaseDate: entity.releaseDate,
-      rating: entity.rating,
-      genre: entity.genre,
-      seasons: entity.seasons?.map((s) => SeasonModel.fromEntity(s)).toList(),
-      metadata: entity.metadata,
-    );
-  }
 }
 
 /// Season model
 class SeasonModel {
-  final String id;
-  final int seasonNumber;
-  final String? name;
-  final String? posterUrl;
-  final List<EpisodeModel>? episodes;
-
   const SeasonModel({
     required this.id,
     required this.seasonNumber,
@@ -141,6 +134,22 @@ class SeasonModel {
     );
   }
 
+  factory SeasonModel.fromEntity(Season entity) {
+    return SeasonModel(
+      id: entity.id,
+      seasonNumber: entity.seasonNumber,
+      name: entity.name,
+      posterUrl: entity.posterUrl,
+      episodes:
+          entity.episodes?.map((e) => EpisodeModel.fromEntity(e)).toList(),
+    );
+  }
+  final String id;
+  final int seasonNumber;
+  final String? name;
+  final String? posterUrl;
+  final List<EpisodeModel>? episodes;
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -160,29 +169,10 @@ class SeasonModel {
       episodes: episodes?.map((e) => e.toEntity()).toList(),
     );
   }
-
-  factory SeasonModel.fromEntity(Season entity) {
-    return SeasonModel(
-      id: entity.id,
-      seasonNumber: entity.seasonNumber,
-      name: entity.name,
-      posterUrl: entity.posterUrl,
-      episodes:
-          entity.episodes?.map((e) => EpisodeModel.fromEntity(e)).toList(),
-    );
-  }
 }
 
 /// Episode model
 class EpisodeModel {
-  final String id;
-  final int episodeNumber;
-  final String name;
-  final String streamUrl;
-  final String? posterUrl;
-  final String? description;
-  final int? duration;
-
   const EpisodeModel({
     required this.id,
     required this.episodeNumber,
@@ -206,6 +196,25 @@ class EpisodeModel {
     );
   }
 
+  factory EpisodeModel.fromEntity(Episode entity) {
+    return EpisodeModel(
+      id: entity.id,
+      episodeNumber: entity.episodeNumber,
+      name: entity.name,
+      streamUrl: entity.streamUrl,
+      posterUrl: entity.posterUrl,
+      description: entity.description,
+      duration: entity.duration,
+    );
+  }
+  final String id;
+  final int episodeNumber;
+  final String name;
+  final String streamUrl;
+  final String? posterUrl;
+  final String? description;
+  final int? duration;
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -227,18 +236,6 @@ class EpisodeModel {
       posterUrl: posterUrl,
       description: description,
       duration: duration,
-    );
-  }
-
-  factory EpisodeModel.fromEntity(Episode entity) {
-    return EpisodeModel(
-      id: entity.id,
-      episodeNumber: entity.episodeNumber,
-      name: entity.name,
-      streamUrl: entity.streamUrl,
-      posterUrl: entity.posterUrl,
-      description: entity.description,
-      duration: entity.duration,
     );
   }
 }

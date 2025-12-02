@@ -7,27 +7,26 @@ import '../../core/logging/app_logger.dart';
 enum VpnStatus {
   /// VPN is detected as active
   active,
-  
+
   /// VPN is not detected
   inactive,
-  
+
   /// VPN status could not be determined
   unknown,
 }
 
 /// VPN detection result
 class VpnDetectionResult {
-  final VpnStatus status;
-  final String? detectionMethod;
-  final String? message;
-  final DateTime checkedAt;
-
   const VpnDetectionResult({
     required this.status,
     this.detectionMethod,
     this.message,
     required this.checkedAt,
   });
+  final VpnStatus status;
+  final String? detectionMethod;
+  final String? message;
+  final DateTime checkedAt;
 
   bool get isActive => status == VpnStatus.active;
   bool get isInactive => status == VpnStatus.inactive;
@@ -46,9 +45,8 @@ abstract class IVpnDetector {
 /// Default VPN detector implementation
 /// Note: Actual implementation depends on platform capabilities
 class VpnDetector implements IVpnDetector {
-  final VpnDetectionRepository? _repository;
-
   VpnDetector({VpnDetectionRepository? repository}) : _repository = repository;
+  final VpnDetectionRepository? _repository;
 
   @override
   bool get isSupported => _repository != null;
@@ -68,7 +66,7 @@ class VpnDetector implements IVpnDetector {
       }
 
       final result = await _repository.detectVpn();
-      
+
       moduleLogger.info(
         'VPN detection result: ${result.status.name}',
         tag: 'VpnDetector',

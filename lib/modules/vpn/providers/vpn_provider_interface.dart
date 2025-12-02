@@ -24,12 +24,6 @@ abstract class IVpnProvider {
 
 /// VPN provider status
 class VpnProviderStatus {
-  final bool isConnected;
-  final String? serverLocation;
-  final String? serverAddress;
-  final String? protocol;
-  final DateTime? connectedSince;
-
   const VpnProviderStatus({
     required this.isConnected,
     this.serverLocation,
@@ -37,6 +31,11 @@ class VpnProviderStatus {
     this.protocol,
     this.connectedSince,
   });
+  final bool isConnected;
+  final String? serverLocation;
+  final String? serverAddress;
+  final String? protocol;
+  final DateTime? connectedSince;
 
   Duration? get connectionDuration {
     if (!isConnected || connectedSince == null) return null;

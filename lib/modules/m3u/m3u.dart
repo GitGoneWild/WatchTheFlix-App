@@ -3,5 +3,5 @@
 // Provides M3U playlist import, parsing, and mapping to domain models.
 
 export 'import/import.dart';
-export 'parsing/parsing.dart';
 export 'mapping/mapping.dart';
+export 'parsing/parsing.dart';

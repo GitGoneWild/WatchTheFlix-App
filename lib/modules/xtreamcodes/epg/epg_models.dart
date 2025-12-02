@@ -5,18 +5,6 @@ import 'package:equatable/equatable.dart';
 
 /// EPG Channel model representing a channel from XMLTV data.
 class EpgChannel extends Equatable {
-  /// Unique channel identifier (XMLTV id).
-  final String id;
-
-  /// Display name of the channel.
-  final String name;
-
-  /// URL to the channel logo/icon.
-  final String? iconUrl;
-
-  /// Additional display names for the channel.
-  final List<String> displayNames;
-
   const EpgChannel({
     required this.id,
     required this.name,
@@ -38,12 +26,37 @@ class EpgChannel extends Equatable {
     );
   }
 
+  /// Unique channel identifier (XMLTV id).
+  final String id;
+
+  /// Display name of the channel.
+  final String name;
+
+  /// URL to the channel logo/icon.
+  final String? iconUrl;
+
+  /// Additional display names for the channel.
+  final List<String> displayNames;
+
   @override
   List<Object?> get props => [id, name, iconUrl, displayNames];
 }
 
 /// EPG Program model representing a single program/show.
 class EpgProgram extends Equatable {
+  const EpgProgram({
+    required this.channelId,
+    required this.title,
+    this.description,
+    required this.startTime,
+    required this.endTime,
+    this.category,
+    this.language,
+    this.episodeNumber,
+    this.iconUrl,
+    this.subtitle,
+  });
+
   /// Channel ID this program belongs to.
   final String channelId;
 
@@ -73,19 +86,6 @@ class EpgProgram extends Equatable {
 
   /// Subtitle or secondary title.
   final String? subtitle;
-
-  const EpgProgram({
-    required this.channelId,
-    required this.title,
-    this.description,
-    required this.startTime,
-    required this.endTime,
-    this.category,
-    this.language,
-    this.episodeNumber,
-    this.iconUrl,
-    this.subtitle,
-  });
 
   /// Check if this program is currently airing.
   bool get isCurrentlyAiring {
@@ -149,18 +149,6 @@ class EpgProgram extends Equatable {
 
 /// EPG data container for parsed XMLTV data.
 class EpgData extends Equatable {
-  /// Map of channel ID to channel info.
-  final Map<String, EpgChannel> channels;
-
-  /// Map of channel ID to list of programs (sorted by start time).
-  final Map<String, List<EpgProgram>> programs;
-
-  /// Timestamp when this EPG data was fetched.
-  final DateTime fetchedAt;
-
-  /// Source URL of the EPG data.
-  final String? sourceUrl;
-
   const EpgData({
     required this.channels,
     required this.programs,
@@ -176,6 +164,18 @@ class EpgData extends Equatable {
       fetchedAt: DateTime.now().toUtc(),
     );
   }
+
+  /// Map of channel ID to channel info.
+  final Map<String, EpgChannel> channels;
+
+  /// Map of channel ID to list of programs (sorted by start time).
+  final Map<String, List<EpgProgram>> programs;
+
+  /// Timestamp when this EPG data was fetched.
+  final DateTime fetchedAt;
+
+  /// Source URL of the EPG data.
+  final String? sourceUrl;
 
   /// Check if EPG data is empty.
   bool get isEmpty => channels.isEmpty && programs.isEmpty;
@@ -231,8 +231,7 @@ class EpgData extends Equatable {
       // Program overlaps with the range if:
       // - it starts before range ends AND
       // - it ends after range starts
-      return program.startTime.isBefore(end) &&
-          program.endTime.isAfter(start);
+      return program.startTime.isBefore(end) && program.endTime.isAfter(start);
     }).toList();
   }
 

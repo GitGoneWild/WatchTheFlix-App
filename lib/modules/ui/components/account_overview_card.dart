@@ -8,14 +8,6 @@ import '../../xtreamcodes/account/xtream_account_models.dart';
 
 /// Account overview card widget
 class AccountOverviewCard extends StatelessWidget {
-  final XtreamAccountOverview accountInfo;
-  final String profileName;
-  final VoidCallback? onRefresh;
-  final VoidCallback? onCopyM3uUrl;
-  final bool isLoading;
-  final String? error;
-  final VoidCallback? onRetry;
-
   const AccountOverviewCard({
     super.key,
     required this.accountInfo,
@@ -26,6 +18,13 @@ class AccountOverviewCard extends StatelessWidget {
     this.error,
     this.onRetry,
   });
+  final XtreamAccountOverview accountInfo;
+  final String profileName;
+  final VoidCallback? onRefresh;
+  final VoidCallback? onCopyM3uUrl;
+  final bool isLoading;
+  final String? error;
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -299,7 +298,8 @@ class AccountOverviewCard extends StatelessWidget {
   }) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
+        Icon(icon,
+            size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
         const SizedBox(width: 8),
         Expanded(
           child: Column(

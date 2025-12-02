@@ -4,7 +4,7 @@ import 'package:watchtheflix/modules/xtreamcodes/epg/epg_models.dart';
 void main() {
   group('EpgChannel', () {
     test('should create channel with required fields', () {
-      final channel = EpgChannel(
+      const channel = EpgChannel(
         id: 'ch1',
         name: 'Channel One',
       );
@@ -16,7 +16,7 @@ void main() {
     });
 
     test('should create channel with all fields', () {
-      final channel = EpgChannel(
+      const channel = EpgChannel(
         id: 'ch1',
         name: 'Channel One',
         iconUrl: 'https://example.com/logo.png',
@@ -32,7 +32,7 @@ void main() {
     test('fromXmlData should use first display name as name', () {
       final channel = EpgChannel.fromXmlData(
         id: 'ch1',
-        displayNames: ['First Name', 'Second Name'],
+        displayNames: const ['First Name', 'Second Name'],
         iconUrl: 'https://example.com/logo.png',
       );
 
@@ -43,7 +43,7 @@ void main() {
     test('fromXmlData should use id when no display names', () {
       final channel = EpgChannel.fromXmlData(
         id: 'ch1',
-        displayNames: [],
+        displayNames: const [],
       );
 
       expect(channel.name, equals('ch1'));
@@ -52,8 +52,8 @@ void main() {
 
   group('EpgProgram', () {
     test('should create program with required fields', () {
-      final start = DateTime.utc(2024, 1, 1, 10, 0);
-      final end = DateTime.utc(2024, 1, 1, 11, 0);
+      final start = DateTime.utc(2024, 1, 1, 10);
+      final end = DateTime.utc(2024, 1, 1, 11);
 
       final program = EpgProgram(
         channelId: 'ch1',
@@ -73,8 +73,8 @@ void main() {
       final program = EpgProgram(
         channelId: 'ch1',
         title: 'One Hour Show',
-        startTime: DateTime.utc(2024, 1, 1, 10, 0),
-        endTime: DateTime.utc(2024, 1, 1, 11, 0),
+        startTime: DateTime.utc(2024, 1, 1, 10),
+        endTime: DateTime.utc(2024, 1, 1, 11),
       );
 
       expect(program.duration, equals(const Duration(hours: 1)));
@@ -84,7 +84,7 @@ void main() {
       final program = EpgProgram(
         channelId: 'ch1',
         title: 'Half Hour Show',
-        startTime: DateTime.utc(2024, 1, 1, 10, 0),
+        startTime: DateTime.utc(2024, 1, 1, 10),
         endTime: DateTime.utc(2024, 1, 1, 10, 30),
       );
 
@@ -108,7 +108,8 @@ void main() {
     });
 
     test('hasEnded should return true for past programs', () {
-      final pastStart = DateTime.now().toUtc().subtract(const Duration(hours: 2));
+      final pastStart =
+          DateTime.now().toUtc().subtract(const Duration(hours: 2));
       final pastEnd = pastStart.add(const Duration(hours: 1));
 
       final program = EpgProgram(
@@ -123,7 +124,9 @@ void main() {
       expect(program.isUpcoming, isFalse);
     });
 
-    test('isCurrentlyAiring should return true when now is between start and end', () {
+    test(
+        'isCurrentlyAiring should return true when now is between start and end',
+        () {
       final now = DateTime.now().toUtc();
       final start = now.subtract(const Duration(minutes: 30));
       final end = now.add(const Duration(minutes: 30));
@@ -155,7 +158,8 @@ void main() {
     });
 
     test('progress should be 1 for ended programs', () {
-      final pastStart = DateTime.now().toUtc().subtract(const Duration(hours: 2));
+      final pastStart =
+          DateTime.now().toUtc().subtract(const Duration(hours: 2));
       final pastEnd = pastStart.add(const Duration(hours: 1));
 
       final program = EpgProgram(
@@ -186,7 +190,8 @@ void main() {
     });
 
     test('remainingTime should be zero for ended programs', () {
-      final pastStart = DateTime.now().toUtc().subtract(const Duration(hours: 2));
+      final pastStart =
+          DateTime.now().toUtc().subtract(const Duration(hours: 2));
       final pastEnd = pastStart.add(const Duration(hours: 1));
 
       final program = EpgProgram(

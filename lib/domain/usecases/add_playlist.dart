@@ -3,9 +3,8 @@ import '../repositories/playlist_repository.dart';
 
 /// Add playlist use case
 class AddPlaylist {
-  final PlaylistRepository _repository;
-
   AddPlaylist(this._repository);
+  final PlaylistRepository _repository;
 
   /// Execute the use case
   Future<PlaylistSource> call(PlaylistSource playlist) async {

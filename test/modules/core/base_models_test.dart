@@ -187,9 +187,9 @@ void main() {
 
   group('EpgInfo', () {
     test('should create with all fields', () {
-      final startTime = DateTime(2024, 1, 1, 10, 0);
-      final endTime = DateTime(2024, 1, 1, 11, 0);
-      
+      final startTime = DateTime(2024, 1, 1, 10);
+      final endTime = DateTime(2024, 1, 1, 11);
+
       final epgInfo = EpgInfo(
         currentProgram: 'News at 10',
         nextProgram: 'Weather',
@@ -208,7 +208,7 @@ void main() {
       final now = DateTime.now();
       final startTime = now.subtract(const Duration(minutes: 30));
       final endTime = now.add(const Duration(minutes: 30));
-      
+
       final epgInfo = EpgInfo(
         currentProgram: 'Current Show',
         startTime: startTime,
@@ -223,7 +223,7 @@ void main() {
       final now = DateTime.now();
       final startTime = now.add(const Duration(hours: 1));
       final endTime = now.add(const Duration(hours: 2));
-      
+
       final epgInfo = EpgInfo(
         currentProgram: 'Future Show',
         startTime: startTime,
@@ -237,7 +237,7 @@ void main() {
       final now = DateTime.now();
       final startTime = now.subtract(const Duration(hours: 2));
       final endTime = now.subtract(const Duration(hours: 1));
-      
+
       final epgInfo = EpgInfo(
         currentProgram: 'Past Show',
         startTime: startTime,
@@ -263,13 +263,13 @@ void main() {
         username: 'user',
         password: 'pass',
       );
-      
+
       final profile = Profile(
         id: '1',
         name: 'My Xtream',
         type: ProfileType.xtream,
         xtreamCredentials: credentials,
-        createdAt: DateTime(2024, 1, 1),
+        createdAt: DateTime(2024, 1),
       );
 
       expect(profile.isXtream, isTrue);
@@ -283,7 +283,7 @@ void main() {
         name: 'My M3U',
         type: ProfileType.m3uUrl,
         url: 'http://example.com/playlist.m3u',
-        createdAt: DateTime(2024, 1, 1),
+        createdAt: DateTime(2024, 1),
       );
 
       expect(profile.isXtream, isFalse);
@@ -297,7 +297,7 @@ void main() {
         name: 'Local M3U',
         type: ProfileType.m3uFile,
         url: '/path/to/file.m3u',
-        createdAt: DateTime(2024, 1, 1),
+        createdAt: DateTime(2024, 1),
       );
 
       expect(profile.isXtream, isFalse);

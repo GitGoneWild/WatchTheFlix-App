@@ -13,10 +13,11 @@ enum ContentSourceStrategy {
 
 /// Application configuration
 class AppConfig {
-  /// Singleton instance
-  static final AppConfig _instance = AppConfig._internal();
   factory AppConfig() => _instance;
   AppConfig._internal();
+
+  /// Singleton instance
+  static final AppConfig _instance = AppConfig._internal();
 
   /// Firebase configuration
   bool firebaseEnabled = false;
@@ -33,7 +34,7 @@ class AppConfig {
 
   /// Xtream Codes configuration
   bool xtreamEnabled = true;
-  
+
   /// TTL for Xtream Codes XMLTV EPG cache.
   /// This controls how often the full XMLTV file is re-downloaded from Xtream servers.
   /// Default: 6 hours. Separate from epgCacheExpiration which may be used for other EPG sources.
@@ -43,7 +44,7 @@ class AppConfig {
   /// Cache configuration
   /// General cache expiration for various app data (channels, categories, etc.)
   Duration cacheExpiration = const Duration(hours: 24);
-  
+
   /// General EPG cache expiration for URL-based or M3U EPG sources.
   /// For Xtream-specific EPG caching, see xtreamEpgTtl above.
   Duration epgCacheExpiration = const Duration(hours: 6);

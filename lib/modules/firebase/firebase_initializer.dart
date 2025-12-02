@@ -10,12 +10,6 @@ import 'remote_config/firebase_remote_config_service.dart';
 
 /// Firebase initialization result
 class FirebaseInitResult {
-  final bool isInitialized;
-  final IAnalyticsService analyticsService;
-  final IPushNotificationService messagingService;
-  final IRemoteConfigService remoteConfigService;
-  final String? error;
-
   const FirebaseInitResult({
     required this.isInitialized,
     required this.analyticsService,
@@ -23,13 +17,17 @@ class FirebaseInitResult {
     required this.remoteConfigService,
     this.error,
   });
+  final bool isInitialized;
+  final IAnalyticsService analyticsService;
+  final IPushNotificationService messagingService;
+  final IRemoteConfigService remoteConfigService;
+  final String? error;
 }
 
 /// Firebase initializer
 class FirebaseInitializer {
-  final AppConfig _config;
-
   FirebaseInitializer({AppConfig? config}) : _config = config ?? AppConfig();
+  final AppConfig _config;
 
   /// Initialize Firebase services
   /// Returns initialized services (or no-op implementations if Firebase is disabled)
@@ -55,7 +53,7 @@ class FirebaseInitializer {
       // await Firebase.initializeApp(
       //   options: DefaultFirebaseOptions.currentPlatform,
       // );
-      // 
+      //
       // See docs/firebase.md for setup instructions
 
       // Create service instances

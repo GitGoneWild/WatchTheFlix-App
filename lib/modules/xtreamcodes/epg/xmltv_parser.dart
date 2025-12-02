@@ -160,7 +160,8 @@ class XmltvParser {
     final descElement = programElement.findElements('desc').firstOrNull;
     final description = descElement?.innerText.trim();
 
-    final subTitleElement = programElement.findElements('sub-title').firstOrNull;
+    final subTitleElement =
+        programElement.findElements('sub-title').firstOrNull;
     final subtitle = subTitleElement?.innerText.trim();
 
     final categoryElement = programElement.findElements('category').firstOrNull;
@@ -256,7 +257,7 @@ class XmltvParser {
       if (tzStr.isEmpty) return Duration.zero;
 
       final isNegative = tzStr.startsWith('-');
-      tzStr = tzStr.replaceAll(RegExp(r'[+-]'), '');
+      tzStr = tzStr.replaceAll(RegExp('[+-]'), '');
 
       // Handle both HHMM and HH:MM formats
       tzStr = tzStr.replaceAll(':', '');

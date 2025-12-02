@@ -2,16 +2,6 @@ import '../../domain/entities/channel.dart';
 
 /// Channel model for data layer
 class ChannelModel {
-  final String id;
-  final String name;
-  final String streamUrl;
-  final String? logoUrl;
-  final String? groupTitle;
-  final String? categoryId;
-  final String type;
-  final Map<String, dynamic>? metadata;
-  final EpgInfoModel? epgInfo;
-
   const ChannelModel({
     required this.id,
     required this.name,
@@ -41,6 +31,32 @@ class ChannelModel {
           : null,
     );
   }
+
+  /// Create from domain entity
+  factory ChannelModel.fromEntity(Channel entity) {
+    return ChannelModel(
+      id: entity.id,
+      name: entity.name,
+      streamUrl: entity.streamUrl,
+      logoUrl: entity.logoUrl,
+      groupTitle: entity.groupTitle,
+      categoryId: entity.categoryId,
+      type: entity.type.name,
+      metadata: entity.metadata,
+      epgInfo: entity.epgInfo != null
+          ? EpgInfoModel.fromEntity(entity.epgInfo!)
+          : null,
+    );
+  }
+  final String id;
+  final String name;
+  final String streamUrl;
+  final String? logoUrl;
+  final String? groupTitle;
+  final String? categoryId;
+  final String type;
+  final Map<String, dynamic>? metadata;
+  final EpgInfoModel? epgInfo;
 
   /// Convert to JSON
   Map<String, dynamic> toJson() {
@@ -72,23 +88,6 @@ class ChannelModel {
     );
   }
 
-  /// Create from domain entity
-  factory ChannelModel.fromEntity(Channel entity) {
-    return ChannelModel(
-      id: entity.id,
-      name: entity.name,
-      streamUrl: entity.streamUrl,
-      logoUrl: entity.logoUrl,
-      groupTitle: entity.groupTitle,
-      categoryId: entity.categoryId,
-      type: entity.type.name,
-      metadata: entity.metadata,
-      epgInfo: entity.epgInfo != null
-          ? EpgInfoModel.fromEntity(entity.epgInfo!)
-          : null,
-    );
-  }
-
   ContentType _parseContentType(String type) {
     switch (type.toLowerCase()) {
       case 'movie':
@@ -103,12 +102,6 @@ class ChannelModel {
 
 /// EPG info model
 class EpgInfoModel {
-  final String? currentProgram;
-  final String? nextProgram;
-  final DateTime? startTime;
-  final DateTime? endTime;
-  final String? description;
-
   const EpgInfoModel({
     this.currentProgram,
     this.nextProgram,
@@ -131,6 +124,21 @@ class EpgInfoModel {
     );
   }
 
+  factory EpgInfoModel.fromEntity(EpgInfo entity) {
+    return EpgInfoModel(
+      currentProgram: entity.currentProgram,
+      nextProgram: entity.nextProgram,
+      startTime: entity.startTime,
+      endTime: entity.endTime,
+      description: entity.description,
+    );
+  }
+  final String? currentProgram;
+  final String? nextProgram;
+  final DateTime? startTime;
+  final DateTime? endTime;
+  final String? description;
+
   Map<String, dynamic> toJson() {
     return {
       'current_program': currentProgram,
@@ -148,16 +156,6 @@ class EpgInfoModel {
       startTime: startTime,
       endTime: endTime,
       description: description,
-    );
-  }
-
-  factory EpgInfoModel.fromEntity(EpgInfo entity) {
-    return EpgInfoModel(
-      currentProgram: entity.currentProgram,
-      nextProgram: entity.nextProgram,
-      startTime: entity.startTime,
-      endTime: entity.endTime,
-      description: entity.description,
     );
   }
 }

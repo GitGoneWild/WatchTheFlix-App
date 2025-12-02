@@ -16,9 +16,8 @@ abstract class ChannelEvent extends Equatable {
 }
 
 class LoadChannelsEvent extends ChannelEvent {
-  final String? categoryId;
-
   const LoadChannelsEvent({this.categoryId});
+  final String? categoryId;
 
   @override
   List<Object?> get props => [categoryId];
@@ -29,18 +28,16 @@ class LoadCategoriesEvent extends ChannelEvent {
 }
 
 class SelectCategoryEvent extends ChannelEvent {
-  final Category? category;
-
   const SelectCategoryEvent(this.category);
+  final Category? category;
 
   @override
   List<Object?> get props => [category];
 }
 
 class SearchChannelsEvent extends ChannelEvent {
-  final String query;
-
   const SearchChannelsEvent(this.query);
+  final String query;
 
   @override
   List<Object?> get props => [query];
@@ -67,17 +64,16 @@ class ChannelLoadingState extends ChannelState {
 }
 
 class ChannelLoadedState extends ChannelState {
-  final List<Channel> channels;
-  final List<Category> categories;
-  final Category? selectedCategory;
-  final String? searchQuery;
-
   const ChannelLoadedState({
     required this.channels,
     this.categories = const [],
     this.selectedCategory,
     this.searchQuery,
   });
+  final List<Channel> channels;
+  final List<Category> categories;
+  final Category? selectedCategory;
+  final String? searchQuery;
 
   List<Channel> get filteredChannels {
     if (searchQuery == null || searchQuery!.isEmpty) {
@@ -107,13 +103,13 @@ class ChannelLoadedState extends ChannelState {
   }
 
   @override
-  List<Object?> get props => [channels, categories, selectedCategory, searchQuery];
+  List<Object?> get props =>
+      [channels, categories, selectedCategory, searchQuery];
 }
 
 class ChannelErrorState extends ChannelState {
-  final String message;
-
   const ChannelErrorState(this.message);
+  final String message;
 
   @override
   List<Object?> get props => [message];
@@ -121,9 +117,6 @@ class ChannelErrorState extends ChannelState {
 
 // BLoC
 class ChannelBloc extends Bloc<ChannelEvent, ChannelState> {
-  final GetChannels _getChannels;
-  final GetCategories _getCategories;
-
   ChannelBloc({
     required GetChannels getChannels,
     required GetCategories getCategories,
@@ -136,6 +129,8 @@ class ChannelBloc extends Bloc<ChannelEvent, ChannelState> {
     on<SearchChannelsEvent>(_onSearchChannels);
     on<ClearSearchEvent>(_onClearSearch);
   }
+  final GetChannels _getChannels;
+  final GetCategories _getCategories;
 
   Future<void> _onLoadChannels(
     LoadChannelsEvent event,
@@ -145,10 +140,12 @@ class ChannelBloc extends Bloc<ChannelEvent, ChannelState> {
     try {
       final channels = await _getChannels(categoryId: event.categoryId);
       final categories = await _getCategories();
-      emit(ChannelLoadedState(
-        channels: channels,
-        categories: categories,
-      ));
+      emit(
+        ChannelLoadedState(
+          channels: channels,
+          categories: categories,
+        ),
+      );
     } catch (e) {
       AppLogger.error('Failed to load channels', e);
       emit(ChannelErrorState(e.toString()));
@@ -175,10 +172,12 @@ class ChannelBloc extends Bloc<ChannelEvent, ChannelState> {
   ) async {
     if (state is ChannelLoadedState) {
       final currentState = state as ChannelLoadedState;
-      emit(currentState.copyWith(
-        selectedCategory: event.category,
-        clearCategory: event.category == null,
-      ));
+      emit(
+        currentState.copyWith(
+          selectedCategory: event.category,
+          clearCategory: event.category == null,
+        ),
+      );
       add(LoadChannelsEvent(categoryId: event.category?.id));
     }
   }

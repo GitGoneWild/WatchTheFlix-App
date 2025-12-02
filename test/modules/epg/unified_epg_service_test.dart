@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:watchtheflix/modules/core/models/base_models.dart';
 import 'package:watchtheflix/modules/epg/epg_source.dart';
 import 'package:watchtheflix/modules/epg/unified_epg_service.dart';
-import 'package:watchtheflix/modules/core/models/base_models.dart';
 
 void main() {
   group('UnifiedEpgService', () {
@@ -33,7 +33,8 @@ void main() {
 
         expect(service.isConfigured, isTrue);
         expect(service.sourceConfig.type, equals(EpgSourceType.url));
-        expect(service.sourceConfig.epgUrl, equals('https://example.com/epg.xml'));
+        expect(
+            service.sourceConfig.epgUrl, equals('https://example.com/epg.xml'));
       });
 
       test('should accept custom refresh interval', () {
@@ -43,7 +44,8 @@ void main() {
           autoRefresh: false,
         );
 
-        expect(service.sourceConfig.refreshInterval, equals(const Duration(hours: 12)));
+        expect(service.sourceConfig.refreshInterval,
+            equals(const Duration(hours: 12)));
         expect(service.sourceConfig.autoRefreshEnabled, isFalse);
       });
 
@@ -93,7 +95,8 @@ void main() {
           autoRefresh: false,
         );
 
-        expect(service.sourceConfig.refreshInterval, equals(const Duration(hours: 3)));
+        expect(service.sourceConfig.refreshInterval,
+            equals(const Duration(hours: 3)));
         expect(service.sourceConfig.autoRefreshEnabled, isFalse);
       });
     });

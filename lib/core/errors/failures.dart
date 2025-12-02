@@ -2,13 +2,12 @@ import 'package:equatable/equatable.dart';
 
 /// Base failure class
 abstract class Failure extends Equatable {
-  final String message;
-  final int? code;
-
   const Failure({
     required this.message,
     this.code,
   });
+  final String message;
+  final int? code;
 
   @override
   List<Object?> get props => [message, code];

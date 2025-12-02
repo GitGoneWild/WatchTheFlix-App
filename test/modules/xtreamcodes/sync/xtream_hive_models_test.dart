@@ -13,7 +13,6 @@ void main() {
         logoUrl: 'http://example.com/logo.png',
         groupTitle: 'Sports',
         categoryId: 'cat1',
-        type: HiveContentType.live,
         metadata: {'quality': 'HD'},
       );
 
@@ -37,7 +36,6 @@ void main() {
         logoUrl: 'http://example.com/news.png',
         groupTitle: 'News',
         categoryId: 'cat2',
-        type: ContentType.live,
       );
 
       final hiveChannel = HiveChannel.fromDomain(domain);
@@ -178,8 +176,8 @@ void main() {
 
   group('HiveEpgProgram', () {
     test('should convert to domain model correctly', () {
-      final startTime = DateTime(2024, 1, 1, 20, 0);
-      final endTime = DateTime(2024, 1, 1, 21, 0);
+      final startTime = DateTime(2024, 1, 1, 20);
+      final endTime = DateTime(2024, 1, 1, 21);
 
       final hiveProgram = HiveEpgProgram(
         channelId: 'ch1',
@@ -203,8 +201,8 @@ void main() {
     });
 
     test('should create from domain model correctly', () {
-      final startTime = DateTime(2024, 1, 1, 22, 0);
-      final endTime = DateTime(2024, 1, 1, 23, 0);
+      final startTime = DateTime(2024, 1, 1, 22);
+      final endTime = DateTime(2024, 1, 1, 23);
 
       final domain = EpgProgram(
         channelId: 'ch2',
@@ -241,7 +239,6 @@ void main() {
     test('should correctly check if movie refresh is needed', () {
       final status = HiveSyncStatus(
         profileId: 'profile1',
-        lastMovieSync: null, // Never synced
       );
 
       // Should always need refresh if never synced
@@ -289,12 +286,18 @@ void main() {
     });
 
     test('should create from domain ContentType correctly', () {
-      expect(HiveContentTypeExtension.fromDomain(ContentType.live),
-          equals(HiveContentType.live));
-      expect(HiveContentTypeExtension.fromDomain(ContentType.movie),
-          equals(HiveContentType.movie));
-      expect(HiveContentTypeExtension.fromDomain(ContentType.series),
-          equals(HiveContentType.series));
+      expect(
+        HiveContentTypeExtension.fromDomain(ContentType.live),
+        equals(HiveContentType.live),
+      );
+      expect(
+        HiveContentTypeExtension.fromDomain(ContentType.movie),
+        equals(HiveContentType.movie),
+      );
+      expect(
+        HiveContentTypeExtension.fromDomain(ContentType.series),
+        equals(HiveContentType.series),
+      );
     });
   });
 }

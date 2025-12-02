@@ -56,15 +56,14 @@ abstract class ChannelRepository {
 
 /// Search result containing all content types
 class SearchResult {
-  final List<Channel> channels;
-  final List<Movie> movies;
-  final List<Series> series;
-
   const SearchResult({
     required this.channels,
     required this.movies,
     required this.series,
   });
+  final List<Channel> channels;
+  final List<Movie> movies;
+  final List<Series> series;
 
   bool get isEmpty => channels.isEmpty && movies.isEmpty && series.isEmpty;
 

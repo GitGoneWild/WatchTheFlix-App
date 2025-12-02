@@ -22,36 +22,32 @@ class LoadRecentEvent extends FavoritesEvent {
 }
 
 class AddFavoriteEvent extends FavoritesEvent {
-  final Channel channel;
-
   const AddFavoriteEvent(this.channel);
+  final Channel channel;
 
   @override
   List<Object?> get props => [channel];
 }
 
 class RemoveFavoriteEvent extends FavoritesEvent {
-  final String channelId;
-
   const RemoveFavoriteEvent(this.channelId);
+  final String channelId;
 
   @override
   List<Object?> get props => [channelId];
 }
 
 class ToggleFavoriteEvent extends FavoritesEvent {
-  final Channel channel;
-
   const ToggleFavoriteEvent(this.channel);
+  final Channel channel;
 
   @override
   List<Object?> get props => [channel];
 }
 
 class AddRecentEvent extends FavoritesEvent {
-  final Channel channel;
-
   const AddRecentEvent(this.channel);
+  final Channel channel;
 
   @override
   List<Object?> get props => [channel];
@@ -74,15 +70,14 @@ class FavoritesLoadingState extends FavoritesState {
 }
 
 class FavoritesLoadedState extends FavoritesState {
-  final List<Channel> favorites;
-  final List<Channel> recentlyWatched;
-  final Set<String> favoriteIds;
-
   const FavoritesLoadedState({
     required this.favorites,
     required this.recentlyWatched,
     required this.favoriteIds,
   });
+  final List<Channel> favorites;
+  final List<Channel> recentlyWatched;
+  final Set<String> favoriteIds;
 
   bool isFavorite(String channelId) => favoriteIds.contains(channelId);
 
@@ -103,9 +98,8 @@ class FavoritesLoadedState extends FavoritesState {
 }
 
 class FavoritesErrorState extends FavoritesState {
-  final String message;
-
   const FavoritesErrorState(this.message);
+  final String message;
 
   @override
   List<Object?> get props => [message];
@@ -113,8 +107,6 @@ class FavoritesErrorState extends FavoritesState {
 
 // BLoC
 class FavoritesBloc extends Bloc<FavoritesEvent, FavoritesState> {
-  final ChannelRepository _repository;
-
   FavoritesBloc({required ChannelRepository repository})
       : _repository = repository,
         super(const FavoritesInitialState()) {
@@ -125,6 +117,7 @@ class FavoritesBloc extends Bloc<FavoritesEvent, FavoritesState> {
     on<ToggleFavoriteEvent>(_onToggleFavorite);
     on<AddRecentEvent>(_onAddRecent);
   }
+  final ChannelRepository _repository;
 
   Future<void> _onLoadFavorites(
     LoadFavoritesEvent event,
@@ -136,11 +129,13 @@ class FavoritesBloc extends Bloc<FavoritesEvent, FavoritesState> {
       final recent = await _repository.getRecentChannels();
       final favoriteIds = favorites.map((c) => c.id).toSet();
 
-      emit(FavoritesLoadedState(
-        favorites: favorites,
-        recentlyWatched: recent,
-        favoriteIds: favoriteIds,
-      ));
+      emit(
+        FavoritesLoadedState(
+          favorites: favorites,
+          recentlyWatched: recent,
+          favoriteIds: favoriteIds,
+        ),
+      );
     } catch (e) {
       AppLogger.error('Failed to load favorites', e);
       emit(FavoritesErrorState(e.toString()));
@@ -158,11 +153,13 @@ class FavoritesBloc extends Bloc<FavoritesEvent, FavoritesState> {
       } else {
         final favorites = await _repository.getFavorites();
         final favoriteIds = favorites.map((c) => c.id).toSet();
-        emit(FavoritesLoadedState(
-          favorites: favorites,
-          recentlyWatched: recent,
-          favoriteIds: favoriteIds,
-        ));
+        emit(
+          FavoritesLoadedState(
+            favorites: favorites,
+            recentlyWatched: recent,
+            favoriteIds: favoriteIds,
+          ),
+        );
       }
     } catch (e) {
       AppLogger.error('Failed to load recent channels', e);
@@ -179,10 +176,12 @@ class FavoritesBloc extends Bloc<FavoritesEvent, FavoritesState> {
         final currentState = state as FavoritesLoadedState;
         final newFavorites = [...currentState.favorites, event.channel];
         final newIds = {...currentState.favoriteIds, event.channel.id};
-        emit(currentState.copyWith(
-          favorites: newFavorites,
-          favoriteIds: newIds,
-        ));
+        emit(
+          currentState.copyWith(
+            favorites: newFavorites,
+            favoriteIds: newIds,
+          ),
+        );
       }
     } catch (e) {
       AppLogger.error('Failed to add favorite', e);
@@ -203,10 +202,12 @@ class FavoritesBloc extends Bloc<FavoritesEvent, FavoritesState> {
         final newIds = currentState.favoriteIds
             .where((id) => id != event.channelId)
             .toSet();
-        emit(currentState.copyWith(
-          favorites: newFavorites,
-          favoriteIds: newIds,
-        ));
+        emit(
+          currentState.copyWith(
+            favorites: newFavorites,
+            favoriteIds: newIds,
+          ),
+        );
       }
     } catch (e) {
       AppLogger.error('Failed to remove favorite', e);
@@ -235,7 +236,7 @@ class FavoritesBloc extends Bloc<FavoritesEvent, FavoritesState> {
       await _repository.addToRecent(event.channel);
       if (state is FavoritesLoadedState) {
         final currentState = state as FavoritesLoadedState;
-        
+
         // Create a new list with the new channel first, then filter out duplicates
         final newList = <Channel>[event.channel];
         for (final channel in currentState.recentlyWatched) {
@@ -243,7 +244,7 @@ class FavoritesBloc extends Bloc<FavoritesEvent, FavoritesState> {
             newList.add(channel);
           }
         }
-        
+
         emit(currentState.copyWith(recentlyWatched: newList));
       }
     } catch (e) {

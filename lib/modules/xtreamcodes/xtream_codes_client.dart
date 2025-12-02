@@ -27,14 +27,6 @@ import 'storage/xtream_local_storage.dart';
 /// - Data is persisted via local storage for offline access
 /// - All components are injectable for testing
 class XtreamCodesClient {
-  final XtreamAuthService _authService;
-  final XtreamAccountService _accountService;
-  final LiveTvService _liveTvService;
-  final MoviesService _moviesService;
-  final SeriesService _seriesService;
-  final EpgService _epgService;
-  final XtreamLocalStorage? _localStorage;
-
   /// Factory constructor that creates all services with default implementations.
   ///
   /// [dio] Optional Dio instance for HTTP operations.
@@ -57,14 +49,14 @@ class XtreamCodesClient {
     // Create repositories with dependencies
     final authRepo = XtreamAuthRepositoryImpl(dio: httpClient);
     final accountRepo = XtreamAccountRepositoryImpl(dio: httpClient);
-    
+
     // EPG repository uses XMLTV only (no per-channel API calls)
     final epgRepo = EpgRepositoryImpl(
       dio: httpClient,
       localStorage: localStorage,
       config: config,
     );
-    
+
     final liveTvRepo = LiveTvRepositoryImpl(
       dio: httpClient,
       epgRepository: epgRepo,
@@ -106,6 +98,13 @@ class XtreamCodesClient {
         _seriesService = seriesService,
         _epgService = epgService,
         _localStorage = localStorage;
+  final XtreamAuthService _authService;
+  final XtreamAccountService _accountService;
+  final LiveTvService _liveTvService;
+  final MoviesService _moviesService;
+  final SeriesService _seriesService;
+  final EpgService _epgService;
+  final XtreamLocalStorage? _localStorage;
 
   // ============ Authentication ============
 
@@ -161,7 +160,8 @@ class XtreamCodesClient {
     XtreamCredentialsModel credentials, {
     String? categoryId,
   }) {
-    return _liveTvService.getChannelsWithEpg(credentials, categoryId: categoryId);
+    return _liveTvService.getChannelsWithEpg(credentials,
+        categoryId: categoryId);
   }
 
   /// Get stream URL for a live channel
@@ -211,7 +211,8 @@ class XtreamCodesClient {
     String streamId, {
     String extension = 'mp4',
   }) {
-    return _moviesService.getStreamUrl(credentials, streamId, extension: extension);
+    return _moviesService.getStreamUrl(credentials, streamId,
+        extension: extension);
   }
 
   /// Refresh movies data
@@ -252,7 +253,8 @@ class XtreamCodesClient {
     String streamId, {
     String extension = 'mp4',
   }) {
-    return _seriesService.getStreamUrl(credentials, streamId, extension: extension);
+    return _seriesService.getStreamUrl(credentials, streamId,
+        extension: extension);
   }
 
   /// Refresh series data

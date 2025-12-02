@@ -2,21 +2,6 @@ import 'package:equatable/equatable.dart';
 
 /// Movie entity
 class Movie extends Equatable {
-  final String id;
-  final String name;
-  final String streamUrl;
-  final String? posterUrl;
-  final String? backdropUrl;
-  final String? categoryId;
-  final String? description;
-  final String? releaseDate;
-  final double? rating;
-  final int? duration;
-  final String? genre;
-  final String? director;
-  final List<String>? cast;
-  final Map<String, dynamic>? metadata;
-
   const Movie({
     required this.id,
     required this.name,
@@ -33,6 +18,20 @@ class Movie extends Equatable {
     this.cast,
     this.metadata,
   });
+  final String id;
+  final String name;
+  final String streamUrl;
+  final String? posterUrl;
+  final String? backdropUrl;
+  final String? categoryId;
+  final String? description;
+  final String? releaseDate;
+  final double? rating;
+  final int? duration;
+  final String? genre;
+  final String? director;
+  final List<String>? cast;
+  final Map<String, dynamic>? metadata;
 
   Movie copyWith({
     String? id,

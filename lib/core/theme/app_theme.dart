@@ -133,7 +133,7 @@ class AppTheme {
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: AppColors.error, width: 1),
+          borderSide: const BorderSide(color: AppColors.error),
         ),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -291,13 +291,10 @@ class AppTheme {
       scaffoldBackgroundColor: const Color(0xFFF6F8FA),
       colorScheme: const ColorScheme.light(
         primary: AppColors.primary,
-        onPrimary: Colors.white,
         secondary: AppColors.secondary,
         onSecondary: Colors.white,
-        surface: Colors.white,
         onSurface: Color(0xFF24292F),
         error: AppColors.error,
-        onError: Colors.white,
       ),
     );
   }

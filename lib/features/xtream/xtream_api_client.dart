@@ -40,13 +40,6 @@ const int kEpgMaxConsecutiveFailures = 5;
 
 /// EPG (Electronic Program Guide) entry model
 class EpgEntry {
-  final String channelId;
-  final String title;
-  final String? description;
-  final DateTime startTime;
-  final DateTime endTime;
-  final String? language;
-
   const EpgEntry({
     required this.channelId,
     required this.title,
@@ -55,6 +48,27 @@ class EpgEntry {
     required this.endTime,
     this.language,
   });
+
+  factory EpgEntry.fromJson(Map<String, dynamic> json) {
+    final startTime = _parseDateTime(json['start'] ?? json['start_timestamp']);
+    final endTime = _parseDateTime(json['end'] ?? json['stop_timestamp']);
+
+    return EpgEntry(
+      channelId:
+          json['epg_id']?.toString() ?? json['channel_id']?.toString() ?? '',
+      title: (json['title'] ?? '').toString(),
+      description: json['description']?.toString() ?? json['desc']?.toString(),
+      startTime: startTime ?? DateTime.now(),
+      endTime: endTime ?? DateTime.now().add(const Duration(hours: 1)),
+      language: json['lang']?.toString(),
+    );
+  }
+  final String channelId;
+  final String title;
+  final String? description;
+  final DateTime startTime;
+  final DateTime endTime;
+  final String? language;
 
   /// Check if this program is currently airing
   bool get isCurrentlyAiring {
@@ -71,21 +85,6 @@ class EpgEntry {
     return elapsed / totalDuration;
   }
 
-  factory EpgEntry.fromJson(Map<String, dynamic> json) {
-    final startTime = _parseDateTime(json['start'] ?? json['start_timestamp']);
-    final endTime = _parseDateTime(json['end'] ?? json['stop_timestamp']);
-
-    return EpgEntry(
-      channelId:
-          json['epg_id']?.toString() ?? json['channel_id']?.toString() ?? '',
-      title: (json['title'] ?? '').toString(),
-      description: json['description']?.toString() ?? json['desc']?.toString(),
-      startTime: startTime ?? DateTime.now(),
-      endTime: endTime ?? DateTime.now().add(const Duration(hours: 1)),
-      language: json['lang']?.toString(),
-    );
-  }
-
   static DateTime? _parseDateTime(dynamic value) {
     if (value == null) return null;
     if (value is DateTime) return value;
@@ -96,8 +95,9 @@ class EpgEntry {
       if (parsed != null) return parsed;
       // Try Unix timestamp
       final timestamp = int.tryParse(value);
-      if (timestamp != null)
+      if (timestamp != null) {
         return DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
+      }
     }
     return null;
   }
@@ -105,18 +105,6 @@ class EpgEntry {
 
 /// Xtream API login response
 class XtreamLoginResponse {
-  final String username;
-  final String password;
-  final String message;
-  final int auth;
-  final String status;
-  final DateTime? expDate;
-  final bool isTrial;
-  final int activeConnections;
-  final int maxConnections;
-  final List<String> allowedOutputFormats;
-  final String serverUrl;
-
   XtreamLoginResponse({
     required this.username,
     required this.password,
@@ -130,8 +118,6 @@ class XtreamLoginResponse {
     this.allowedOutputFormats = const [],
     required this.serverUrl,
   });
-
-  bool get isAuthenticated => auth == 1;
 
   factory XtreamLoginResponse.fromJson(
     Map<String, dynamic> json,
@@ -163,6 +149,19 @@ class XtreamLoginResponse {
       serverUrl: serverUrl,
     );
   }
+  final String username;
+  final String password;
+  final String message;
+  final int auth;
+  final String status;
+  final DateTime? expDate;
+  final bool isTrial;
+  final int activeConnections;
+  final int maxConnections;
+  final List<String> allowedOutputFormats;
+  final String serverUrl;
+
+  bool get isAuthenticated => auth == 1;
 }
 
 /// Xtream API client interface
@@ -247,9 +246,8 @@ abstract class XtreamApiClient {
 
 /// Xtream API client implementation
 class XtreamApiClientImpl implements XtreamApiClient {
-  final ApiClient _apiClient;
-
   XtreamApiClientImpl({required ApiClient apiClient}) : _apiClient = apiClient;
+  final ApiClient _apiClient;
 
   String _buildUrl(XtreamCredentials credentials, String action) {
     final encodedUsername = Uri.encodeComponent(credentials.username);
@@ -262,8 +260,8 @@ class XtreamApiClientImpl implements XtreamApiClient {
   /// Wrap API call with timeout to prevent hanging
   Future<T> _withTimeout<T>(
     Future<T> Function() operation, {
-    Duration timeout = kXtreamDefaultTimeout,
     required String operationName,
+    Duration timeout = kXtreamDefaultTimeout,
   }) async {
     try {
       return await operation().timeout(timeout);
@@ -383,17 +381,18 @@ class XtreamApiClientImpl implements XtreamApiClient {
           final response = await _apiClient.get<dynamic>(url);
 
           return _safeParseList(response.data)
-              .map((json) =>
-                  CategoryModel.fromJson(json as Map<String, dynamic>))
+              .map(
+                (json) => CategoryModel.fromJson(json as Map<String, dynamic>),
+              )
               .toList();
         } catch (e) {
           AppLogger.error('Failed to fetch live categories', e);
           if (e is AppException) rethrow;
           throw ServerException(
-              message: 'Failed to fetch categories: ${_getErrorMessage(e)}');
+            message: 'Failed to fetch categories: ${_getErrorMessage(e)}',
+          );
         }
       },
-      timeout: kXtreamDefaultTimeout,
       operationName: 'Fetch live categories',
     );
   }
@@ -423,7 +422,8 @@ class XtreamApiClientImpl implements XtreamApiClient {
           AppLogger.error('Failed to fetch live channels', e);
           if (e is AppException) rethrow;
           throw ServerException(
-              message: 'Failed to fetch channels: ${_getErrorMessage(e)}');
+            message: 'Failed to fetch channels: ${_getErrorMessage(e)}',
+          );
         }
       },
       timeout: kXtreamExtendedTimeout,
@@ -442,18 +442,18 @@ class XtreamApiClientImpl implements XtreamApiClient {
           final response = await _apiClient.get<dynamic>(url);
 
           return _safeParseList(response.data)
-              .map((json) =>
-                  CategoryModel.fromJson(json as Map<String, dynamic>))
+              .map(
+                (json) => CategoryModel.fromJson(json as Map<String, dynamic>),
+              )
               .toList();
         } catch (e) {
           AppLogger.error('Failed to fetch movie categories', e);
           if (e is AppException) rethrow;
           throw ServerException(
-              message:
-                  'Failed to fetch movie categories: ${_getErrorMessage(e)}');
+            message: 'Failed to fetch movie categories: ${_getErrorMessage(e)}',
+          );
         }
       },
-      timeout: kXtreamDefaultTimeout,
       operationName: 'Fetch movie categories',
     );
   }
@@ -488,7 +488,8 @@ class XtreamApiClientImpl implements XtreamApiClient {
           AppLogger.error('Failed to fetch movies', e);
           if (e is AppException) rethrow;
           throw ServerException(
-              message: 'Failed to fetch movies: ${_getErrorMessage(e)}');
+            message: 'Failed to fetch movies: ${_getErrorMessage(e)}',
+          );
         }
       },
       timeout: kXtreamExtendedTimeout,
@@ -507,18 +508,19 @@ class XtreamApiClientImpl implements XtreamApiClient {
           final response = await _apiClient.get<dynamic>(url);
 
           return _safeParseList(response.data)
-              .map((json) =>
-                  CategoryModel.fromJson(json as Map<String, dynamic>))
+              .map(
+                (json) => CategoryModel.fromJson(json as Map<String, dynamic>),
+              )
               .toList();
         } catch (e) {
           AppLogger.error('Failed to fetch series categories', e);
           if (e is AppException) rethrow;
           throw ServerException(
-              message:
-                  'Failed to fetch series categories: ${_getErrorMessage(e)}');
+            message:
+                'Failed to fetch series categories: ${_getErrorMessage(e)}',
+          );
         }
       },
-      timeout: kXtreamDefaultTimeout,
       operationName: 'Fetch series categories',
     );
   }
@@ -544,7 +546,8 @@ class XtreamApiClientImpl implements XtreamApiClient {
           AppLogger.error('Failed to fetch series', e);
           if (e is AppException) rethrow;
           throw ServerException(
-              message: 'Failed to fetch series: ${_getErrorMessage(e)}');
+            message: 'Failed to fetch series: ${_getErrorMessage(e)}',
+          );
         }
       },
       timeout: kXtreamExtendedTimeout,
@@ -595,11 +598,13 @@ class XtreamApiClientImpl implements XtreamApiClient {
               });
             }).toList();
 
-            seasons.add(SeasonModel(
-              id: seasonNumber,
-              seasonNumber: int.tryParse(seasonNumber) ?? 1,
-              episodes: episodeModels,
-            ));
+            seasons.add(
+              SeasonModel(
+                id: seasonNumber,
+                seasonNumber: int.tryParse(seasonNumber) ?? 1,
+                episodes: episodeModels,
+              ),
+            );
           });
 
           return SeriesModel(
@@ -619,10 +624,10 @@ class XtreamApiClientImpl implements XtreamApiClient {
           AppLogger.error('Failed to fetch series info', e);
           if (e is AppException) rethrow;
           throw ServerException(
-              message: 'Failed to fetch series info: ${_getErrorMessage(e)}');
+            message: 'Failed to fetch series info: ${_getErrorMessage(e)}',
+          );
         }
       },
-      timeout: kXtreamDefaultTimeout,
       operationName: 'Fetch series info',
     );
   }
@@ -754,7 +759,7 @@ class XtreamApiClientImpl implements XtreamApiClient {
       () async {
         try {
           final result = <String, List<EpgEntry>>{};
-          
+
           // Determine which channel IDs to fetch EPG for
           List<String> idsToFetch;
           if (channelIds != null && channelIds.isNotEmpty) {
@@ -768,12 +773,12 @@ class XtreamApiClientImpl implements XtreamApiClient {
             }
             idsToFetch = channels.map((c) => c.id).toList();
           }
-          
+
           AppLogger.info('Fetching EPG for ${idsToFetch.length} channels');
           int successCount = 0;
           int failCount = 0;
           int consecutiveFailures = 0;
-          
+
           // Fetch EPG for each channel using short EPG endpoint
           // Process in batches to avoid overwhelming the server
           for (var i = 0; i < idsToFetch.length; i += kEpgBatchSize) {
@@ -785,10 +790,10 @@ class XtreamApiClientImpl implements XtreamApiClient {
               );
               break;
             }
-            
+
             final batch = idsToFetch.skip(i).take(kEpgBatchSize).toList();
             int batchSuccesses = 0;
-            
+
             // Process batch sequentially instead of in parallel
             // to reduce server load and improve reliability
             for (final channelId in batch) {
@@ -809,7 +814,7 @@ class XtreamApiClientImpl implements XtreamApiClient {
                 consecutiveFailures++;
               }
             }
-            
+
             // If entire batch failed, increase delay to reduce server load
             if (batchSuccesses == 0 && batch.isNotEmpty) {
               // Double the delay when server seems overloaded
@@ -819,12 +824,12 @@ class XtreamApiClientImpl implements XtreamApiClient {
               await Future<void>.delayed(kEpgBatchDelay);
             }
           }
-          
+
           AppLogger.info(
             'EPG fetch completed: $successCount channels with EPG, '
             '$failCount failures out of ${idsToFetch.length} channels',
           );
-          
+
           return result;
         } catch (e) {
           AppLogger.error('Failed to fetch all EPG', e);

@@ -7,12 +7,11 @@ import '../../widgets/video_player_widget.dart';
 
 /// Player screen for video playback
 class PlayerScreen extends StatelessWidget {
-  final Channel channel;
-
   const PlayerScreen({
     super.key,
     required this.channel,
   });
+  final Channel channel;
 
   @override
   Widget build(BuildContext context) {
@@ -23,9 +22,6 @@ class PlayerScreen extends StatelessWidget {
         body: VideoPlayerWidget(
           url: channel.streamUrl,
           title: channel.name,
-          allowPip: true,
-          autoRetry: true,
-          autoPlay: true,
           onBack: () => Navigator.pop(context),
         ),
       ),

@@ -37,10 +37,9 @@ abstract class ILiveTvService {
 
 /// Live TV service implementation
 class LiveTvService implements ILiveTvService {
-  final LiveTvRepository _repository;
-
   LiveTvService({required LiveTvRepository repository})
       : _repository = repository;
+  final LiveTvRepository _repository;
 
   @override
   Future<ApiResult<List<DomainCategory>>> getCategories(
@@ -70,7 +69,8 @@ class LiveTvService implements ILiveTvService {
         'Fetching live TV channels${categoryId != null ? ' for category $categoryId' : ''}',
         tag: 'LiveTV',
       );
-      return await _repository.fetchChannels(credentials, categoryId: categoryId);
+      return await _repository.fetchChannels(credentials,
+          categoryId: categoryId);
     } catch (e, stackTrace) {
       moduleLogger.error(
         'Failed to fetch live TV channels',

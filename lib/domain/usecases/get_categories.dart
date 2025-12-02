@@ -3,9 +3,8 @@ import '../repositories/channel_repository.dart';
 
 /// Get categories use case
 class GetCategories {
-  final ChannelRepository _repository;
-
   GetCategories(this._repository);
+  final ChannelRepository _repository;
 
   /// Execute the use case
   Future<List<Category>> call() async {

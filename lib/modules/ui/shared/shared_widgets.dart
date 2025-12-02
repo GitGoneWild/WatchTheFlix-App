@@ -5,10 +5,6 @@ import 'package:flutter/material.dart';
 
 /// Status badge widget
 class StatusBadge extends StatelessWidget {
-  final String text;
-  final Color backgroundColor;
-  final Color textColor;
-
   const StatusBadge({
     super.key,
     required this.text,
@@ -35,6 +31,9 @@ class StatusBadge extends StatelessWidget {
         text: 'Disabled',
         backgroundColor: Colors.grey,
       );
+  final String text;
+  final Color backgroundColor;
+  final Color textColor;
 
   @override
   Widget build(BuildContext context) {
@@ -58,16 +57,15 @@ class StatusBadge extends StatelessWidget {
 
 /// Loading overlay widget
 class LoadingOverlay extends StatelessWidget {
-  final bool isLoading;
-  final Widget child;
-  final String? message;
-
   const LoadingOverlay({
     super.key,
     required this.isLoading,
     required this.child,
     this.message,
   });
+  final bool isLoading;
+  final Widget child;
+  final String? message;
 
   @override
   Widget build(BuildContext context) {
@@ -75,7 +73,7 @@ class LoadingOverlay extends StatelessWidget {
       children: [
         child,
         if (isLoading)
-          Container(
+          ColoredBox(
             color: Colors.black45,
             child: Center(
               child: Column(
@@ -100,11 +98,6 @@ class LoadingOverlay extends StatelessWidget {
 
 /// Empty state widget
 class EmptyStateWidget extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String? message;
-  final Widget? action;
-
   const EmptyStateWidget({
     super.key,
     required this.icon,
@@ -112,6 +105,10 @@ class EmptyStateWidget extends StatelessWidget {
     this.message,
     this.action,
   });
+  final IconData icon;
+  final String title;
+  final String? message;
+  final Widget? action;
 
   @override
   Widget build(BuildContext context) {
@@ -155,16 +152,15 @@ class EmptyStateWidget extends StatelessWidget {
 
 /// Error widget with retry button
 class ErrorWidget extends StatelessWidget {
-  final String message;
-  final VoidCallback? onRetry;
-  final IconData icon;
-
   const ErrorWidget({
     super.key,
     required this.message,
     this.onRetry,
     this.icon = Icons.error_outline,
   });
+  final String message;
+  final VoidCallback? onRetry;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
@@ -210,11 +206,6 @@ class ErrorWidget extends StatelessWidget {
 
 /// Info row widget for displaying labeled values
 class InfoRow extends StatelessWidget {
-  final String label;
-  final String value;
-  final IconData? icon;
-  final Color? valueColor;
-
   const InfoRow({
     super.key,
     required this.label,
@@ -222,6 +213,10 @@ class InfoRow extends StatelessWidget {
     this.icon,
     this.valueColor,
   });
+  final String label;
+  final String value;
+  final IconData? icon;
+  final Color? valueColor;
 
   @override
   Widget build(BuildContext context) {

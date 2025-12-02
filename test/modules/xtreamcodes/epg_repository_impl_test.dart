@@ -24,8 +24,8 @@ void main() {
           channelId: 'ch1',
           title: 'Test Program',
           description: 'Test Description',
-          startTime: DateTime.utc(2024, 1, 1, 10, 0),
-          endTime: DateTime.utc(2024, 1, 1, 11, 0),
+          startTime: DateTime.utc(2024, 1, 1, 10),
+          endTime: DateTime.utc(2024, 1, 1, 11),
           language: 'en',
           category: 'News',
         );
@@ -46,22 +46,22 @@ void main() {
             EpgProgram(
               channelId: 'ch1',
               title: 'Program 1',
-              startTime: DateTime.utc(2024, 1, 1, 10, 0),
-              endTime: DateTime.utc(2024, 1, 1, 11, 0),
+              startTime: DateTime.utc(2024, 1, 1, 10),
+              endTime: DateTime.utc(2024, 1, 1, 11),
             ),
             EpgProgram(
               channelId: 'ch1',
               title: 'Program 2',
-              startTime: DateTime.utc(2024, 1, 1, 11, 0),
-              endTime: DateTime.utc(2024, 1, 1, 12, 0),
+              startTime: DateTime.utc(2024, 1, 1, 11),
+              endTime: DateTime.utc(2024, 1, 1, 12),
             ),
           ],
           'ch2': [
             EpgProgram(
               channelId: 'ch2',
               title: 'Program on Ch2',
-              startTime: DateTime.utc(2024, 1, 1, 10, 0),
-              endTime: DateTime.utc(2024, 1, 1, 11, 0),
+              startTime: DateTime.utc(2024, 1, 1, 10),
+              endTime: DateTime.utc(2024, 1, 1, 11),
             ),
           ],
         };
@@ -107,7 +107,8 @@ void main() {
       });
 
       test('should generate correct profile ID from credentials', () {
-        final profileId = '${testCredentials.username}@${Uri.parse(testCredentials.baseUrl).host}';
+        final profileId =
+            '${testCredentials.username}@${Uri.parse(testCredentials.baseUrl).host}';
         expect(profileId, equals('testuser@test-server.example.com'));
       });
     });
@@ -158,10 +159,12 @@ void main() {
         // 1. Check in-memory cache first
         // 2. If cache miss, check local storage
         // 3. Only if both miss, make HTTP request
-        
+
         // Creating valid EpgData simulates cached data
         final cachedData = EpgData(
-          channels: const {'ch1': EpgChannel(id: 'ch1', name: 'Cached Channel')},
+          channels: const {
+            'ch1': EpgChannel(id: 'ch1', name: 'Cached Channel')
+          },
           programs: {
             'ch1': [
               EpgProgram(
@@ -186,12 +189,12 @@ void main() {
         // 1. Get full XMLTV data (single request)
         // 2. Filter by channel ID from the cached data
         // 3. NOT make separate API calls per channel
-        
+
         final fullEpgData = EpgData(
-          channels: {
-            'ch1': const EpgChannel(id: 'ch1', name: 'Channel 1'),
-            'ch2': const EpgChannel(id: 'ch2', name: 'Channel 2'),
-            'ch3': const EpgChannel(id: 'ch3', name: 'Channel 3'),
+          channels: const {
+            'ch1': EpgChannel(id: 'ch1', name: 'Channel 1'),
+            'ch2': EpgChannel(id: 'ch2', name: 'Channel 2'),
+            'ch3': EpgChannel(id: 'ch3', name: 'Channel 3'),
           },
           programs: {
             'ch1': [
@@ -260,7 +263,8 @@ void main() {
         );
 
         // Filter to current and future programs
-        final currentAndFuture = epgData.getChannelPrograms('ch1')
+        final currentAndFuture = epgData
+            .getChannelPrograms('ch1')
             .where((p) => p.endTime.isAfter(now))
             .map((p) => EpgEntry.fromEpgProgram(p))
             .toList();
@@ -274,7 +278,7 @@ void main() {
       test('should return empty data on parse failure', () {
         // When XMLTV parsing fails, should return empty data
         final emptyData = EpgData.empty();
-        
+
         expect(emptyData.isEmpty, isTrue);
         expect(emptyData.channels, isEmpty);
         expect(emptyData.programs, isEmpty);
@@ -299,15 +303,17 @@ void main() {
 
         // Cached data should still be usable
         expect(cachedData.isNotEmpty, isTrue);
-        expect(cachedData.getChannelPrograms('ch1').first.title, equals('Cached Program'));
+        expect(cachedData.getChannelPrograms('ch1').first.title,
+            equals('Cached Program'));
       });
     });
 
     group('Local Storage Integration', () {
       test('should generate correct profile ID for storage', () {
         // Profile ID format: username@host
-        final profileId = '${testCredentials.username}@${Uri.parse(testCredentials.baseUrl).host}';
-        
+        final profileId =
+            '${testCredentials.username}@${Uri.parse(testCredentials.baseUrl).host}';
+
         expect(profileId.contains('@'), isTrue);
         expect(profileId.startsWith('testuser'), isTrue);
         expect(profileId.endsWith('test-server.example.com'), isTrue);
@@ -319,16 +325,16 @@ void main() {
             EpgProgram(
               channelId: 'ch1',
               title: 'Program 1',
-              startTime: DateTime.utc(2024, 1, 1, 10, 0),
-              endTime: DateTime.utc(2024, 1, 1, 11, 0),
+              startTime: DateTime.utc(2024, 1, 1, 10),
+              endTime: DateTime.utc(2024, 1, 1, 11),
             ),
           ],
           'ch2': [
             EpgProgram(
               channelId: 'ch2',
               title: 'Program 2',
-              startTime: DateTime.utc(2024, 1, 1, 10, 0),
-              endTime: DateTime.utc(2024, 1, 1, 11, 0),
+              startTime: DateTime.utc(2024, 1, 1, 10),
+              endTime: DateTime.utc(2024, 1, 1, 11),
             ),
           ],
         };
@@ -348,13 +354,13 @@ void main() {
         // The EpgRepository is an abstract class (interface)
         // This validates the data/domain separation
         // The interface is defined in epg_service.dart
-        
+
         // EpgRepository methods:
         // - fetchChannelEpg
         // - fetchAllEpg
         // - fetchFullXmltvEpg
         // - refresh
-        
+
         // This is a compile-time check - if tests run, the interface exists
         expect(true, isTrue); // Placeholder for compile-time validation
       });
@@ -362,7 +368,7 @@ void main() {
       test('should not expose HTTP implementation details', () {
         // The public interface uses domain models (EpgData, EpgEntry, EpgProgram)
         // HTTP details (Dio, Response) are internal to the implementation
-        
+
         // Domain models are in epg_models.dart
         final program = EpgProgram(
           channelId: 'ch1',
@@ -370,7 +376,7 @@ void main() {
           startTime: DateTime.now(),
           endTime: DateTime.now().add(const Duration(hours: 1)),
         );
-        
+
         // Domain model has no HTTP-related properties
         expect(program.channelId, isNotEmpty);
         expect(program.title, isNotEmpty);

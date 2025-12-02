@@ -13,6 +13,11 @@ import 'xtream_api_client.dart';
 
 /// Xtream Codes service for managing data with caching and auto-refresh
 class XtreamService {
+  XtreamService({
+    required XtreamApiClient apiClient,
+    required LocalStorage localStorage,
+  })  : _apiClient = apiClient,
+        _localStorage = localStorage;
   final XtreamApiClient _apiClient;
   final LocalStorage _localStorage;
 
@@ -28,15 +33,9 @@ class XtreamService {
   // Auto-refresh timer
   Timer? _autoRefreshTimer;
   Duration _refreshInterval = const Duration(hours: 24);
-  
+
   // Last refresh timestamp per playlist
   final Map<String, DateTime> _lastRefreshTimes = {};
-
-  XtreamService({
-    required XtreamApiClient apiClient,
-    required LocalStorage localStorage,
-  })  : _apiClient = apiClient,
-        _localStorage = localStorage;
 
   /// Get or set refresh interval (default 24 hours)
   Duration get refreshInterval => _refreshInterval;
@@ -109,27 +108,29 @@ class XtreamService {
   bool needsRefresh(String playlistId) {
     final lastRefresh = _lastRefreshTimes[playlistId];
     if (lastRefresh == null) return true;
-    return DateTime.now().difference(lastRefresh) > AppConstants.cacheExpiration;
+    return DateTime.now().difference(lastRefresh) >
+        AppConstants.cacheExpiration;
   }
 
   /// Refresh all live data (channels and categories)
   Future<void> refreshLiveData(XtreamCredentials credentials) async {
     final cacheKey = _getCacheKey(credentials);
-    
+
     final categories = await _apiClient.fetchLiveCategories(credentials);
     final channels = await _apiClient.fetchLiveChannels(credentials);
-    
+
     _categoryCache[cacheKey] = _CacheEntry(categories);
     _channelCache[cacheKey] = _CacheEntry(channels);
     _lastRefreshTimes[credentials.baseUrl] = DateTime.now();
-    
+
     // Cache to local storage
     await _localStorage.cacheChannels(
       credentials.baseUrl,
       channels,
     );
-    
-    AppLogger.info('Refreshed live data: ${channels.length} channels, ${categories.length} categories');
+
+    AppLogger.info(
+        'Refreshed live data: ${channels.length} channels, ${categories.length} categories');
   }
 
   /// Refresh movie data
@@ -151,14 +152,14 @@ class XtreamService {
   /// Refresh EPG data
   Future<void> refreshEpg(XtreamCredentials credentials) async {
     final cacheKey = _getCacheKey(credentials);
-    
+
     // Try to use cached channel IDs to avoid fetching channels again
     List<String>? channelIds;
     final cachedChannels = _channelCache[cacheKey];
     if (cachedChannels != null && !cachedChannels.isExpired) {
       channelIds = cachedChannels.data.map((c) => c.id).toList();
     }
-    
+
     final epg = await _apiClient.fetchAllEpg(
       credentials,
       channelIds: channelIds,
@@ -174,18 +175,18 @@ class XtreamService {
   }) async {
     final cacheKey = _getCacheKey(credentials);
     final cached = _epgCache[cacheKey];
-    
+
     if (!forceRefresh && cached != null && !cached.isExpired) {
       return cached.data;
     }
-    
+
     // Try to use cached channel IDs to avoid fetching channels again
     List<String>? channelIds;
     final cachedChannels = _channelCache[cacheKey];
     if (cachedChannels != null && !cachedChannels.isExpired) {
       channelIds = cachedChannels.data.map((c) => c.id).toList();
     }
-    
+
     final epg = await _apiClient.fetchAllEpg(
       credentials,
       channelIds: channelIds,
@@ -211,11 +212,11 @@ class XtreamService {
   }) async {
     final cacheKey = _getCacheKey(credentials);
     final cached = _categoryCache[cacheKey];
-    
+
     if (!forceRefresh && cached != null && !cached.isExpired) {
       return cached.data;
     }
-    
+
     final categories = await _apiClient.fetchLiveCategories(credentials);
     _categoryCache[cacheKey] = _CacheEntry(categories);
     return categories;
@@ -228,11 +229,11 @@ class XtreamService {
   }) async {
     final cacheKey = _getCacheKey(credentials);
     final cached = _movieCategoryCache[cacheKey];
-    
+
     if (!forceRefresh && cached != null && !cached.isExpired) {
       return cached.data;
     }
-    
+
     final categories = await _apiClient.fetchMovieCategories(credentials);
     _movieCategoryCache[cacheKey] = _CacheEntry(categories);
     return categories;
@@ -245,11 +246,11 @@ class XtreamService {
   }) async {
     final cacheKey = _getCacheKey(credentials);
     final cached = _seriesCategoryCache[cacheKey];
-    
+
     if (!forceRefresh && cached != null && !cached.isExpired) {
       return cached.data;
     }
-    
+
     final categories = await _apiClient.fetchSeriesCategories(credentials);
     _seriesCategoryCache[cacheKey] = _CacheEntry(categories);
     return categories;
@@ -263,7 +264,7 @@ class XtreamService {
   }) async {
     final cacheKey = _getCacheKey(credentials);
     final cached = _channelCache[cacheKey];
-    
+
     List<ChannelModel> channels;
     if (!forceRefresh && cached != null && !cached.isExpired) {
       channels = cached.data;
@@ -271,7 +272,7 @@ class XtreamService {
       channels = await _apiClient.fetchLiveChannels(credentials);
       _channelCache[cacheKey] = _CacheEntry(channels);
     }
-    
+
     if (categoryId != null) {
       return channels.where((c) => c.categoryId == categoryId).toList();
     }
@@ -289,10 +290,10 @@ class XtreamService {
       categoryId: categoryId,
       forceRefresh: forceRefresh,
     );
-    
+
     final cacheKey = _getCacheKey(credentials);
     Map<String, List<EpgEntry>> epgData;
-    
+
     final cachedEpg = _epgCache[cacheKey];
     if (cachedEpg != null && !cachedEpg.isExpired) {
       epgData = cachedEpg.data;
@@ -305,19 +306,19 @@ class XtreamService {
       );
       _epgCache[cacheKey] = _CacheEntry(epgData);
     }
-    
+
     // Attach EPG info to channels
     return channels.map((channel) {
       final epgList = epgData[channel.id] ?? [];
       EpgEntry? currentProgram;
       EpgEntry? nextProgram;
-      
+
       for (final epg in epgList) {
         if (epg.isCurrentlyAiring) {
           currentProgram = epg;
         }
       }
-      
+
       if (currentProgram != null) {
         for (final epg in epgList) {
           if (epg.startTime.isAfter(currentProgram.endTime)) {
@@ -326,7 +327,7 @@ class XtreamService {
           }
         }
       }
-      
+
       if (currentProgram != null) {
         return ChannelModel(
           id: channel.id,
@@ -358,7 +359,7 @@ class XtreamService {
   }) async {
     final cacheKey = _getCacheKey(credentials);
     final cached = _movieCache[cacheKey];
-    
+
     List<MovieModel> movies;
     if (!forceRefresh && cached != null && !cached.isExpired) {
       movies = cached.data;
@@ -366,7 +367,7 @@ class XtreamService {
       movies = await _apiClient.fetchMovies(credentials);
       _movieCache[cacheKey] = _CacheEntry(movies);
     }
-    
+
     if (categoryId != null) {
       return movies.where((m) => m.categoryId == categoryId).toList();
     }
@@ -381,7 +382,7 @@ class XtreamService {
   }) async {
     final cacheKey = _getCacheKey(credentials);
     final cached = _seriesCache[cacheKey];
-    
+
     List<SeriesModel> series;
     if (!forceRefresh && cached != null && !cached.isExpired) {
       series = cached.data;
@@ -389,7 +390,7 @@ class XtreamService {
       series = await _apiClient.fetchSeries(credentials);
       _seriesCache[cacheKey] = _CacheEntry(series);
     }
-    
+
     if (categoryId != null) {
       return series.where((s) => s.categoryId == categoryId).toList();
     }
@@ -438,15 +439,14 @@ class XtreamService {
 
 /// Cache entry with expiration
 class _CacheEntry<T> {
-  final T data;
-  final DateTime createdAt;
-  final Duration expiration;
-
   _CacheEntry(
     this.data, {
     Duration? expiration,
   })  : createdAt = DateTime.now(),
         expiration = expiration ?? AppConstants.cacheExpiration;
+  final T data;
+  final DateTime createdAt;
+  final Duration expiration;
 
   bool get isExpired => DateTime.now().difference(createdAt) > expiration;
 }

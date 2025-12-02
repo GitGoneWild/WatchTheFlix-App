@@ -22,7 +22,7 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
   final ScrollController _gridScrollController = ScrollController();
   final ScrollController _categoryScrollController = ScrollController();
   Channel? _focusedChannel;
-  bool _showMiniPlayer = false;
+  final bool _showMiniPlayer = false;
 
   @override
   void dispose() {
@@ -107,7 +107,7 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
           // Continue Watching section
           if (recentlyWatched.isNotEmpty) ...[
             const SliverToBoxAdapter(child: SizedBox(height: 16)),
-            SliverToBoxAdapter(
+            const SliverToBoxAdapter(
               child: _SectionHeader(
                 title: 'Continue Watching',
                 icon: Icons.play_circle_outline,
@@ -126,7 +126,7 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
                     final channel = recentlyWatched[index];
                     // Calculate progress based on EPG data if available
                     double progress = 0.0;
-                    if (channel.epgInfo?.startTime != null && 
+                    if (channel.epgInfo?.startTime != null &&
                         channel.epgInfo?.endTime != null) {
                       final now = DateTime.now();
                       final start = channel.epgInfo!.startTime!;
@@ -208,7 +208,7 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
               iconColor: AppColors.accent,
               trailing: Text(
                 '${channelState.filteredChannels.length} channels',
-                style: TextStyle(
+                style: const TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 13,
                 ),
@@ -254,7 +254,6 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
   SliverAppBar _buildAppBar(ChannelLoadedState state) {
     return SliverAppBar(
       floating: true,
-      pinned: false,
       expandedHeight: 60,
       backgroundColor: AppColors.background.withOpacity(0.95),
       title: Row(
@@ -364,13 +363,12 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
 
 /// Featured channel card at the top
 class _FeaturedChannelCard extends StatelessWidget {
-  final Channel channel;
-  final VoidCallback onPlay;
-
   const _FeaturedChannelCard({
     required this.channel,
     required this.onPlay,
   });
+  final Channel channel;
+  final VoidCallback onPlay;
 
   @override
   Widget build(BuildContext context) {
@@ -504,7 +502,8 @@ class _FeaturedChannelCard extends StatelessWidget {
                         ),
                         child: Text(
                           channel.groupTitle!,
-                          style: const TextStyle(color: AppColors.textSecondary),
+                          style:
+                              const TextStyle(color: AppColors.textSecondary),
                         ),
                       ),
                   ],
@@ -520,12 +519,6 @@ class _FeaturedChannelCard extends StatelessWidget {
 
 /// Section header widget
 class _SectionHeader extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final Color iconColor;
-  final VoidCallback? onSeeAll;
-  final Widget? trailing;
-
   const _SectionHeader({
     required this.title,
     required this.icon,
@@ -533,6 +526,11 @@ class _SectionHeader extends StatelessWidget {
     this.onSeeAll,
     this.trailing,
   });
+  final String title;
+  final IconData icon;
+  final Color iconColor;
+  final VoidCallback? onSeeAll;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -553,14 +551,14 @@ class _SectionHeader extends StatelessWidget {
           if (onSeeAll != null)
             TextButton(
               onPressed: onSeeAll,
-              child: Row(
+              child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     'See All',
                     style: TextStyle(color: AppColors.textLink, fontSize: 13),
                   ),
-                  const SizedBox(width: 4),
+                  SizedBox(width: 4),
                   Icon(
                     Icons.arrow_forward_ios,
                     size: 12,
@@ -577,13 +575,6 @@ class _SectionHeader extends StatelessWidget {
 
 /// Quick access card for favorites and recent
 class _QuickAccessCard extends StatelessWidget {
-  final Channel channel;
-  final bool isFavorite;
-  final bool showProgress;
-  final double progress;
-  final VoidCallback? onTap;
-  final VoidCallback? onFavoriteToggle;
-
   const _QuickAccessCard({
     required this.channel,
     this.isFavorite = false,
@@ -592,6 +583,12 @@ class _QuickAccessCard extends StatelessWidget {
     this.onTap,
     this.onFavoriteToggle,
   });
+  final Channel channel;
+  final bool isFavorite;
+  final bool showProgress;
+  final double progress;
+  final VoidCallback? onTap;
+  final VoidCallback? onFavoriteToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -638,7 +635,8 @@ class _QuickAccessCard extends StatelessWidget {
                           ),
                           child: Icon(
                             isFavorite ? Icons.favorite : Icons.favorite_border,
-                            color: isFavorite ? AppColors.primary : Colors.white,
+                            color:
+                                isFavorite ? AppColors.primary : Colors.white,
                             size: 16,
                           ),
                         ),
@@ -694,7 +692,7 @@ class _QuickAccessCard extends StatelessWidget {
   }
 
   Widget _buildPlaceholder() {
-    return Container(
+    return ColoredBox(
       color: AppColors.surface,
       child: const Center(
         child: Icon(Icons.live_tv, size: 32, color: AppColors.textSecondary),
@@ -705,17 +703,16 @@ class _QuickAccessCard extends StatelessWidget {
 
 /// Category bar for filtering
 class _CategoryBar extends StatelessWidget {
-  final List<Category> categories;
-  final Category? selectedCategory;
-  final ScrollController scrollController;
-  final void Function(Category?) onCategorySelected;
-
   const _CategoryBar({
     required this.categories,
     this.selectedCategory,
     required this.scrollController,
     required this.onCategorySelected,
   });
+  final List<Category> categories;
+  final Category? selectedCategory;
+  final ScrollController scrollController;
+  final void Function(Category?) onCategorySelected;
 
   @override
   Widget build(BuildContext context) {
@@ -749,12 +746,6 @@ class _CategoryBar extends StatelessWidget {
 
 /// Channel grid item with EPG info
 class _ChannelGridItem extends StatelessWidget {
-  final Channel channel;
-  final bool isFavorite;
-  final VoidCallback? onTap;
-  final VoidCallback? onFocus;
-  final VoidCallback? onFavoriteToggle;
-
   const _ChannelGridItem({
     required this.channel,
     this.isFavorite = false,
@@ -762,6 +753,11 @@ class _ChannelGridItem extends StatelessWidget {
     this.onFocus,
     this.onFavoriteToggle,
   });
+  final Channel channel;
+  final bool isFavorite;
+  final VoidCallback? onTap;
+  final VoidCallback? onFocus;
+  final VoidCallback? onFavoriteToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -769,7 +765,7 @@ class _ChannelGridItem extends StatelessWidget {
       onEnter: (_) => onFocus?.call(),
       child: GestureDetector(
         onTap: onTap,
-        child: Container(
+        child: DecoratedBox(
           decoration: BoxDecoration(
             color: AppColors.backgroundCard,
             borderRadius: BorderRadius.circular(12),
@@ -845,7 +841,8 @@ class _ChannelGridItem extends StatelessWidget {
                           ),
                           child: Icon(
                             isFavorite ? Icons.favorite : Icons.favorite_border,
-                            color: isFavorite ? AppColors.primary : Colors.white,
+                            color:
+                                isFavorite ? AppColors.primary : Colors.white,
                             size: 16,
                           ),
                         ),
@@ -891,18 +888,20 @@ class _ChannelGridItem extends StatelessWidget {
                       if (channel.epgInfo?.currentProgram != null)
                         Text(
                           channel.epgInfo!.currentProgram!,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: AppColors.textSecondary,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: AppColors.textSecondary,
+                                  ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         )
                       else if (channel.groupTitle != null)
                         Text(
                           channel.groupTitle!,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: AppColors.textSecondary,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: AppColors.textSecondary,
+                                  ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -919,7 +918,10 @@ class _ChannelGridItem extends StatelessWidget {
                             Expanded(
                               child: Text(
                                 'Next: ${channel.epgInfo!.nextProgram}',
-                                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .labelSmall
+                                    ?.copyWith(
                                       color: AppColors.textTertiary,
                                       fontSize: 9,
                                     ),
@@ -954,7 +956,7 @@ class _ChannelGridItem extends StatelessWidget {
   }
 
   Widget _buildPlaceholder() {
-    return Container(
+    return ColoredBox(
       color: AppColors.surface,
       child: const Center(
         child: Icon(Icons.live_tv, size: 40, color: AppColors.textSecondary),
@@ -986,9 +988,8 @@ class _LoadingView extends StatelessWidget {
 
 /// Error view
 class _ErrorView extends StatelessWidget {
-  final String message;
-
   const _ErrorView({required this.message});
+  final String message;
 
   @override
   Widget build(BuildContext context) {
@@ -1010,7 +1011,7 @@ class _ErrorView extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               message,
-              style: TextStyle(color: AppColors.textSecondary),
+              style: const TextStyle(color: AppColors.textSecondary),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
@@ -1050,7 +1051,7 @@ class _EmptyView extends StatelessWidget {
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 8),
-            Text(
+            const Text(
               'Add a playlist to start watching',
               style: TextStyle(color: AppColors.textSecondary),
             ),

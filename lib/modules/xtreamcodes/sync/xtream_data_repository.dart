@@ -20,10 +20,6 @@ import '../xtream_codes_client.dart';
 /// 3. Fetch from API in background if needed and update local storage
 /// 4. Return cached data on API failure (graceful degradation)
 class XtreamDataRepository {
-  final XtreamCodesClient _client;
-  final XtreamLocalStorage _storage;
-  final XtreamSyncService _syncService;
-
   XtreamDataRepository({
     required XtreamCodesClient client,
     required XtreamLocalStorage storage,
@@ -31,6 +27,9 @@ class XtreamDataRepository {
   })  : _client = client,
         _storage = storage,
         _syncService = syncService;
+  final XtreamCodesClient _client;
+  final XtreamLocalStorage _storage;
+  final XtreamSyncService _syncService;
 
   /// Get sync service for progress tracking
   XtreamSyncService get syncService => _syncService;
@@ -56,7 +55,7 @@ class XtreamDataRepository {
     XtreamCredentialsModel credentials,
   ) async {
     if (needsInitialSync(profileId)) {
-      return await _syncService.performInitialSync(profileId, credentials);
+      return _syncService.performInitialSync(profileId, credentials);
     }
     return null;
   }
@@ -71,7 +70,7 @@ class XtreamDataRepository {
   }) async {
     try {
       // Get from local storage first
-      var categories = _storage.getLiveCategories(profileId);
+      final categories = _storage.getLiveCategories(profileId);
 
       // Check if we need to refresh
       final syncStatus = _storage.getSyncStatus(profileId);
@@ -125,7 +124,7 @@ class XtreamDataRepository {
   }) async {
     try {
       // Get from local storage first
-      var channels = _storage.getChannels(profileId, categoryId: categoryId);
+      final channels = _storage.getChannels(profileId, categoryId: categoryId);
 
       // Check if we need to refresh
       final syncStatus = _storage.getSyncStatus(profileId);
@@ -194,7 +193,7 @@ class XtreamDataRepository {
     bool forceRefresh = false,
   }) async {
     try {
-      var categories = _storage.getMovieCategories(profileId);
+      final categories = _storage.getMovieCategories(profileId);
 
       final syncStatus = _storage.getSyncStatus(profileId);
       final needsRefresh = forceRefresh ||
@@ -237,7 +236,7 @@ class XtreamDataRepository {
     bool forceRefresh = false,
   }) async {
     try {
-      var movies = _storage.getMovies(profileId, categoryId: categoryId);
+      final movies = _storage.getMovies(profileId, categoryId: categoryId);
 
       final syncStatus = _storage.getSyncStatus(profileId);
       final needsRefresh = forceRefresh ||
@@ -311,7 +310,8 @@ class XtreamDataRepository {
     String streamId, {
     String extension = 'mp4',
   }) {
-    return _client.getMovieStreamUrl(credentials, streamId, extension: extension);
+    return _client.getMovieStreamUrl(credentials, streamId,
+        extension: extension);
   }
 
   // ============ Series ============
@@ -323,7 +323,7 @@ class XtreamDataRepository {
     bool forceRefresh = false,
   }) async {
     try {
-      var categories = _storage.getSeriesCategories(profileId);
+      final categories = _storage.getSeriesCategories(profileId);
 
       final syncStatus = _storage.getSyncStatus(profileId);
       final needsRefresh = forceRefresh ||
@@ -366,7 +366,7 @@ class XtreamDataRepository {
     bool forceRefresh = false,
   }) async {
     try {
-      var series = _storage.getSeries(profileId, categoryId: categoryId);
+      final series = _storage.getSeries(profileId, categoryId: categoryId);
 
       final syncStatus = _storage.getSyncStatus(profileId);
       final needsRefresh = forceRefresh ||
@@ -444,7 +444,8 @@ class XtreamDataRepository {
     String streamId, {
     String extension = 'mp4',
   }) {
-    return _client.getSeriesStreamUrl(credentials, streamId, extension: extension);
+    return _client.getSeriesStreamUrl(credentials, streamId,
+        extension: extension);
   }
 
   // ============ EPG ============
@@ -471,14 +472,18 @@ class XtreamDataRepository {
       final result = await _client.getChannelEpg(credentials, channelId);
       if (result.isSuccess) {
         // Convert EpgEntry to EpgProgram
-        final epgPrograms = result.data.map((e) => EpgProgram(
-          channelId: e.channelId,
-          title: e.title,
-          description: e.description,
-          startTime: e.startTime,
-          endTime: e.endTime,
-          language: e.language,
-        )).toList();
+        final epgPrograms = result.data
+            .map(
+              (e) => EpgProgram(
+                channelId: e.channelId,
+                title: e.title,
+                description: e.description,
+                startTime: e.startTime,
+                endTime: e.endTime,
+                language: e.language,
+              ),
+            )
+            .toList();
         return ApiResult.success(epgPrograms);
       }
 
@@ -558,7 +563,8 @@ class XtreamDataRepository {
         await _storage.saveLiveCategories(profileId, result.data);
       }
     } catch (e) {
-      moduleLogger.debug('Background live categories refresh failed: $e', tag: 'DataRepo');
+      moduleLogger.debug('Background live categories refresh failed: $e',
+          tag: 'DataRepo');
     }
   }
 
@@ -575,7 +581,8 @@ class XtreamDataRepository {
         await _storage.saveSyncStatus(status);
       }
     } catch (e) {
-      moduleLogger.debug('Background channels refresh failed: $e', tag: 'DataRepo');
+      moduleLogger.debug('Background channels refresh failed: $e',
+          tag: 'DataRepo');
     }
   }
 
@@ -589,7 +596,8 @@ class XtreamDataRepository {
         await _storage.saveMovieCategories(profileId, result.data);
       }
     } catch (e) {
-      moduleLogger.debug('Background movie categories refresh failed: $e', tag: 'DataRepo');
+      moduleLogger.debug('Background movie categories refresh failed: $e',
+          tag: 'DataRepo');
     }
   }
 
@@ -606,7 +614,8 @@ class XtreamDataRepository {
         await _storage.saveSyncStatus(status);
       }
     } catch (e) {
-      moduleLogger.debug('Background movies refresh failed: $e', tag: 'DataRepo');
+      moduleLogger.debug('Background movies refresh failed: $e',
+          tag: 'DataRepo');
     }
   }
 
@@ -620,7 +629,8 @@ class XtreamDataRepository {
         await _storage.saveSeriesCategories(profileId, result.data);
       }
     } catch (e) {
-      moduleLogger.debug('Background series categories refresh failed: $e', tag: 'DataRepo');
+      moduleLogger.debug('Background series categories refresh failed: $e',
+          tag: 'DataRepo');
     }
   }
 
@@ -637,7 +647,8 @@ class XtreamDataRepository {
         await _storage.saveSyncStatus(status);
       }
     } catch (e) {
-      moduleLogger.debug('Background series refresh failed: $e', tag: 'DataRepo');
+      moduleLogger.debug('Background series refresh failed: $e',
+          tag: 'DataRepo');
     }
   }
 

@@ -55,7 +55,8 @@ void main() {
       });
 
       test('should clear cache', () {
-        repository.configure(EpgSourceConfig.fromUrl('https://example.com/epg.xml'));
+        repository
+            .configure(EpgSourceConfig.fromUrl('https://example.com/epg.xml'));
         repository.clearCache();
 
         expect(repository.hasCachedData(), isFalse);
@@ -124,12 +125,12 @@ void main() {
       // time-relative behavior (isCurrentlyAiring, isUpcoming, etc.)
       final now = DateTime.now().toUtc();
       testEpgData = EpgData(
-        channels: {
-          'ch1': const EpgChannel(
+        channels: const {
+          'ch1': EpgChannel(
             id: 'ch1',
             name: 'Channel 1',
           ),
-          'ch2': const EpgChannel(
+          'ch2': EpgChannel(
             id: 'ch2',
             name: 'Channel 2',
           ),

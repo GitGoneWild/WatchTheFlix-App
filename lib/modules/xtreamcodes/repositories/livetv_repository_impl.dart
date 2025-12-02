@@ -22,17 +22,6 @@ const Duration _extendedTimeout = Duration(seconds: 60);
 /// Live TV repository implementation
 class LiveTvRepositoryImpl extends XtreamRepositoryBase
     implements LiveTvRepository {
-  final Dio _dio;
-  final EpgRepository? _epgRepository;
-
-  // Cache for categories and channels
-  final Map<String, List<DomainCategory>> _categoryCache = {};
-  final Map<String, List<DomainChannel>> _channelCache = {};
-  final Map<String, DateTime> _cacheTimestamps = {};
-
-  /// Default cache duration (1 hour)
-  static const Duration _cacheDuration = Duration(hours: 1);
-
   LiveTvRepositoryImpl({Dio? dio, EpgRepository? epgRepository})
       : _dio = dio ??
             Dio(BaseOptions(
@@ -44,6 +33,16 @@ class LiveTvRepositoryImpl extends XtreamRepositoryBase
               },
             )),
         _epgRepository = epgRepository;
+  final Dio _dio;
+  final EpgRepository? _epgRepository;
+
+  // Cache for categories and channels
+  final Map<String, List<DomainCategory>> _categoryCache = {};
+  final Map<String, List<DomainChannel>> _channelCache = {};
+  final Map<String, DateTime> _cacheTimestamps = {};
+
+  /// Default cache duration (1 hour)
+  static const Duration _cacheDuration = Duration(hours: 1);
 
   String _getCacheKey(XtreamCredentialsModel credentials) =>
       '${credentials.baseUrl}_${credentials.username}';
@@ -87,7 +86,8 @@ class LiveTvRepositoryImpl extends XtreamRepositoryBase
 
       return ApiResult.success(categories);
     } on DioException catch (e) {
-      moduleLogger.error('Failed to fetch live categories', tag: 'LiveTV', error: e);
+      moduleLogger.error('Failed to fetch live categories',
+          tag: 'LiveTV', error: e);
       return ApiResult.failure(handleApiError(e, 'Fetch live categories'));
     } on TimeoutException catch (_) {
       return ApiResult.failure(
@@ -148,7 +148,8 @@ class LiveTvRepositoryImpl extends XtreamRepositoryBase
 
       return ApiResult.success(channels);
     } on DioException catch (e) {
-      moduleLogger.error('Failed to fetch live channels', tag: 'LiveTV', error: e);
+      moduleLogger.error('Failed to fetch live channels',
+          tag: 'LiveTV', error: e);
       return ApiResult.failure(handleApiError(e, 'Fetch live channels'));
     } on TimeoutException catch (_) {
       return ApiResult.failure(

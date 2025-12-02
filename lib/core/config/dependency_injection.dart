@@ -49,14 +49,16 @@ Future<void> initDependencies() async {
   getIt.registerLazySingleton<Dio>(
     () {
       final config = getIt<AppConfig>();
-      return Dio(BaseOptions(
-        connectTimeout: config.defaultTimeout,
-        receiveTimeout: config.extendedTimeout,
-        headers: {
-          'Accept': '*/*',
-          'User-Agent': 'WatchTheFlix/1.0',
-        },
-      ));
+      return Dio(
+        BaseOptions(
+          connectTimeout: config.defaultTimeout,
+          receiveTimeout: config.extendedTimeout,
+          headers: {
+            'Accept': '*/*',
+            'User-Agent': 'WatchTheFlix/1.0',
+          },
+        ),
+      );
     },
     instanceName: 'xtreamDio',
   );
@@ -79,7 +81,7 @@ Future<void> initDependencies() async {
   );
 
   // ============ Xtream Codes Module (Clean Architecture) ============
-  
+
   // Xtream Local Storage for persistence
   getIt.registerLazySingleton<XtreamLocalStorage>(
     () => XtreamLocalStorage(),

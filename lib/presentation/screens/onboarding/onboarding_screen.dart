@@ -130,16 +130,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 }
 
 class OnboardingPage extends StatelessWidget {
-  final String title;
-  final String description;
-  final IconData icon;
-
   const OnboardingPage({
     super.key,
     required this.title,
     required this.description,
     required this.icon,
   });
+  final String title;
+  final String description;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
@@ -239,7 +238,6 @@ class _AddPlaylistScreenState extends State<AddPlaylistScreen>
       url: _m3uUrlController.text,
       type: PlaylistSourceType.m3uUrl,
       addedAt: DateTime.now(),
-      isActive: true,
     );
 
     context.read<PlaylistBloc>().add(AddPlaylistEvent(playlist));
@@ -274,7 +272,6 @@ class _AddPlaylistScreenState extends State<AddPlaylistScreen>
       type: PlaylistSourceType.xtream,
       addedAt: DateTime.now(),
       xtreamCredentials: credentials,
-      isActive: true,
     );
 
     // Add the playlist first
@@ -324,7 +321,7 @@ class _AddPlaylistScreenState extends State<AddPlaylistScreen>
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(
+                const Text(
                   'Enter the URL of your M3U playlist file',
                   style: TextStyle(color: AppColors.textSecondary),
                 ),
@@ -376,7 +373,7 @@ class _AddPlaylistScreenState extends State<AddPlaylistScreen>
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(
+                const Text(
                   'Enter your Xtream Codes API credentials',
                   style: TextStyle(color: AppColors.textSecondary),
                 ),

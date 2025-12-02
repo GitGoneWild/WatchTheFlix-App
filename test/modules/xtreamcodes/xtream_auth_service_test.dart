@@ -45,7 +45,7 @@ void main() {
 
     group('XtreamAuthResult', () {
       test('should create success result', () {
-        final accountInfo = XtreamAccountOverview(
+        const accountInfo = XtreamAccountOverview(
           userInfo: XtreamUserInfo(
             username: 'test',
             password: 'pass',
@@ -80,7 +80,8 @@ void main() {
         expect(result.isAuthenticated, isFalse);
         expect(result.accountInfo, isNull);
         expect(result.error, isNotNull);
-        expect(result.error!.authErrorType, equals(AuthErrorType.invalidCredentials));
+        expect(result.error!.authErrorType,
+            equals(AuthErrorType.invalidCredentials));
       });
     });
   });

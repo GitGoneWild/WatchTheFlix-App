@@ -33,20 +33,6 @@ enum ThemeMode {
 
 /// App settings model
 class AppSettings extends Equatable {
-  final ThemeMode themeMode;
-  final VideoQuality videoQuality;
-  final bool autoPlay;
-  final bool subtitlesEnabled;
-  final String subtitleLanguage;
-  final bool pipEnabled;
-  final bool backgroundPlayEnabled;
-  final double bufferDuration;
-  final bool showEpg;
-  final bool autoRetry;
-  final int maxRetries;
-  final int refreshIntervalHours;
-  final DateTime? lastRefresh;
-
   const AppSettings({
     this.themeMode = ThemeMode.dark,
     this.videoQuality = VideoQuality.auto,
@@ -62,6 +48,50 @@ class AppSettings extends Equatable {
     this.refreshIntervalHours = 24,
     this.lastRefresh,
   });
+
+  factory AppSettings.fromJson(Map<String, dynamic> json) {
+    DateTime? lastRefresh;
+    final lastRefreshValue = json['lastRefresh'];
+    if (lastRefreshValue != null && lastRefreshValue is String) {
+      lastRefresh = DateTime.tryParse(lastRefreshValue);
+      // If parsing fails, we simply use null (no last refresh)
+    }
+
+    return AppSettings(
+      themeMode: ThemeMode.values.firstWhere(
+        (e) => e.value == json['themeMode'],
+        orElse: () => ThemeMode.dark,
+      ),
+      videoQuality: VideoQuality.values.firstWhere(
+        (e) => e.value == json['videoQuality'],
+        orElse: () => VideoQuality.auto,
+      ),
+      autoPlay: (json['autoPlay'] as bool?) ?? true,
+      subtitlesEnabled: (json['subtitlesEnabled'] as bool?) ?? false,
+      subtitleLanguage: (json['subtitleLanguage'] as String?) ?? 'en',
+      pipEnabled: (json['pipEnabled'] as bool?) ?? true,
+      backgroundPlayEnabled: (json['backgroundPlayEnabled'] as bool?) ?? false,
+      bufferDuration: ((json['bufferDuration'] as num?) ?? 10.0).toDouble(),
+      showEpg: (json['showEpg'] as bool?) ?? true,
+      autoRetry: (json['autoRetry'] as bool?) ?? true,
+      maxRetries: (json['maxRetries'] as int?) ?? 3,
+      refreshIntervalHours: (json['refreshIntervalHours'] as int?) ?? 24,
+      lastRefresh: lastRefresh,
+    );
+  }
+  final ThemeMode themeMode;
+  final VideoQuality videoQuality;
+  final bool autoPlay;
+  final bool subtitlesEnabled;
+  final String subtitleLanguage;
+  final bool pipEnabled;
+  final bool backgroundPlayEnabled;
+  final double bufferDuration;
+  final bool showEpg;
+  final bool autoRetry;
+  final int maxRetries;
+  final int refreshIntervalHours;
+  final DateTime? lastRefresh;
 
   AppSettings copyWith({
     ThemeMode? themeMode,
@@ -121,37 +151,6 @@ class AppSettings extends Equatable {
     };
   }
 
-  factory AppSettings.fromJson(Map<String, dynamic> json) {
-    DateTime? lastRefresh;
-    final lastRefreshValue = json['lastRefresh'];
-    if (lastRefreshValue != null && lastRefreshValue is String) {
-      lastRefresh = DateTime.tryParse(lastRefreshValue);
-      // If parsing fails, we simply use null (no last refresh)
-    }
-
-    return AppSettings(
-      themeMode: ThemeMode.values.firstWhere(
-        (e) => e.value == json['themeMode'],
-        orElse: () => ThemeMode.dark,
-      ),
-      videoQuality: VideoQuality.values.firstWhere(
-        (e) => e.value == json['videoQuality'],
-        orElse: () => VideoQuality.auto,
-      ),
-      autoPlay: (json['autoPlay'] as bool?) ?? true,
-      subtitlesEnabled: (json['subtitlesEnabled'] as bool?) ?? false,
-      subtitleLanguage: (json['subtitleLanguage'] as String?) ?? 'en',
-      pipEnabled: (json['pipEnabled'] as bool?) ?? true,
-      backgroundPlayEnabled: (json['backgroundPlayEnabled'] as bool?) ?? false,
-      bufferDuration: ((json['bufferDuration'] as num?) ?? 10.0).toDouble(),
-      showEpg: (json['showEpg'] as bool?) ?? true,
-      autoRetry: (json['autoRetry'] as bool?) ?? true,
-      maxRetries: (json['maxRetries'] as int?) ?? 3,
-      refreshIntervalHours: (json['refreshIntervalHours'] as int?) ?? 24,
-      lastRefresh: lastRefresh,
-    );
-  }
-
   @override
   List<Object?> get props => [
         themeMode,
@@ -183,27 +182,24 @@ class LoadSettingsEvent extends SettingsEvent {
 }
 
 class UpdateSettingsEvent extends SettingsEvent {
-  final AppSettings settings;
-
   const UpdateSettingsEvent(this.settings);
+  final AppSettings settings;
 
   @override
   List<Object?> get props => [settings];
 }
 
 class UpdateThemeModeEvent extends SettingsEvent {
-  final ThemeMode themeMode;
-
   const UpdateThemeModeEvent(this.themeMode);
+  final ThemeMode themeMode;
 
   @override
   List<Object?> get props => [themeMode];
 }
 
 class UpdateVideoQualityEvent extends SettingsEvent {
-  final VideoQuality quality;
-
   const UpdateVideoQualityEvent(this.quality);
+  final VideoQuality quality;
 
   @override
   List<Object?> get props => [quality];
@@ -218,9 +214,8 @@ class ToggleSubtitlesEvent extends SettingsEvent {
 }
 
 class UpdateSubtitleLanguageEvent extends SettingsEvent {
-  final String language;
-
   const UpdateSubtitleLanguageEvent(this.language);
+  final String language;
 
   @override
   List<Object?> get props => [language];
@@ -251,9 +246,8 @@ class RefreshPlaylistDataEvent extends SettingsEvent {
 }
 
 class UpdateRefreshIntervalEvent extends SettingsEvent {
-  final int hours;
-
   const UpdateRefreshIntervalEvent(this.hours);
+  final int hours;
 
   @override
   List<Object?> get props => [hours];
@@ -276,15 +270,14 @@ class SettingsLoadingState extends SettingsState {
 }
 
 class SettingsLoadedState extends SettingsState {
-  final AppSettings settings;
-  final bool isRefreshing;
-  final String? refreshError;
-
   const SettingsLoadedState(
     this.settings, {
     this.isRefreshing = false,
     this.refreshError,
   });
+  final AppSettings settings;
+  final bool isRefreshing;
+  final String? refreshError;
 
   SettingsLoadedState copyWith({
     AppSettings? settings,
@@ -304,9 +297,8 @@ class SettingsLoadedState extends SettingsState {
 }
 
 class SettingsErrorState extends SettingsState {
-  final String message;
-
   const SettingsErrorState(this.message);
+  final String message;
 
   @override
   List<Object?> get props => [message];
@@ -314,8 +306,6 @@ class SettingsErrorState extends SettingsState {
 
 // BLoC
 class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
-  final LocalStorage _localStorage;
-
   SettingsBloc({required LocalStorage localStorage})
       : _localStorage = localStorage,
         super(const SettingsInitialState()) {
@@ -334,6 +324,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     on<RefreshPlaylistDataEvent>(_onRefreshPlaylistData);
     on<UpdateRefreshIntervalEvent>(_onUpdateRefreshInterval);
   }
+  final LocalStorage _localStorage;
 
   Future<void> _onLoadSettings(
     LoadSettingsEvent event,
@@ -347,7 +338,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       emit(SettingsLoadedState(settings));
     } catch (e) {
       AppLogger.error('Failed to load settings', e);
-      emit(SettingsLoadedState(const AppSettings()));
+      emit(const SettingsLoadedState(AppSettings()));
     }
   }
 
@@ -511,14 +502,16 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
         // Wait a moment to simulate refresh (actual refresh is done by other blocs)
         await Future<void>.delayed(const Duration(milliseconds: 500));
 
-        emit(SettingsLoadedState(newSettings, isRefreshing: false));
+        emit(SettingsLoadedState(newSettings));
         AppLogger.info('Playlist data refresh completed');
       } catch (e) {
         AppLogger.error('Failed to refresh playlist data', e);
-        emit(currentState.copyWith(
-          isRefreshing: false,
-          refreshError: 'Failed to refresh: $e',
-        ));
+        emit(
+          currentState.copyWith(
+            isRefreshing: false,
+            refreshError: 'Failed to refresh: $e',
+          ),
+        );
       }
     }
   }

@@ -98,7 +98,6 @@ void main() {
         epgTtl: Duration(hours: 3),
         syncEpgOnInitial: false,
         syncMoviesOnInitial: false,
-        syncSeriesOnInitial: true,
       );
 
       expect(config.channelTtl, equals(const Duration(minutes: 30)));

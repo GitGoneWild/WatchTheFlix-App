@@ -10,9 +10,8 @@ abstract class NavigationEvent extends Equatable {
 }
 
 class ChangeTabEvent extends NavigationEvent {
-  final int index;
-
   const ChangeTabEvent(this.index);
+  final int index;
 
   @override
   List<Object?> get props => [index];
@@ -20,9 +19,8 @@ class ChangeTabEvent extends NavigationEvent {
 
 // States
 class NavigationState extends Equatable {
-  final int currentIndex;
-
   const NavigationState({this.currentIndex = 0});
+  final int currentIndex;
 
   NavigationState copyWith({int? currentIndex}) {
     return NavigationState(

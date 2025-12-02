@@ -5,12 +5,6 @@ import '../../core/theme/app_theme.dart';
 
 /// Hero banner widget for featured content
 class HeroBanner extends StatelessWidget {
-  final String title;
-  final String? description;
-  final String? imageUrl;
-  final VoidCallback? onPlay;
-  final VoidCallback? onInfo;
-
   const HeroBanner({
     super.key,
     required this.title,
@@ -19,6 +13,11 @@ class HeroBanner extends StatelessWidget {
     this.onPlay,
     this.onInfo,
   });
+  final String title;
+  final String? description;
+  final String? imageUrl;
+  final VoidCallback? onPlay;
+  final VoidCallback? onInfo;
 
   @override
   Widget build(BuildContext context) {
@@ -129,13 +128,6 @@ class HeroBanner extends StatelessWidget {
 
 /// Content carousel for horizontal lists
 class ContentCarousel extends StatelessWidget {
-  final String title;
-  final List<Widget> children;
-  final VoidCallback? onSeeAll;
-  final double itemWidth;
-  final double itemHeight;
-  final EdgeInsets? padding;
-
   const ContentCarousel({
     super.key,
     required this.title,
@@ -145,6 +137,12 @@ class ContentCarousel extends StatelessWidget {
     this.itemHeight = 200,
     this.padding,
   });
+  final String title;
+  final List<Widget> children;
+  final VoidCallback? onSeeAll;
+  final double itemWidth;
+  final double itemHeight;
+  final EdgeInsets? padding;
 
   @override
   Widget build(BuildContext context) {
@@ -163,14 +161,14 @@ class ContentCarousel extends StatelessWidget {
               if (onSeeAll != null)
                 TextButton(
                   onPressed: onSeeAll,
-                  child: Row(
+                  child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         'See All',
                         style: TextStyle(color: AppColors.textSecondary),
                       ),
-                      const SizedBox(width: 4),
+                      SizedBox(width: 4),
                       Icon(
                         Icons.arrow_forward_ios,
                         size: 14,
@@ -203,16 +201,15 @@ class ContentCarousel extends StatelessWidget {
 
 /// Loading shimmer widget
 class LoadingShimmer extends StatelessWidget {
-  final double width;
-  final double height;
-  final BorderRadius? borderRadius;
-
   const LoadingShimmer({
     super.key,
     required this.width,
     required this.height,
     this.borderRadius,
   });
+  final double width;
+  final double height;
+  final BorderRadius? borderRadius;
 
   @override
   Widget build(BuildContext context) {
@@ -229,16 +226,15 @@ class LoadingShimmer extends StatelessWidget {
 
 /// Category chip widget
 class CategoryChip extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final VoidCallback? onTap;
-
   const CategoryChip({
     super.key,
     required this.label,
     this.isSelected = false,
     this.onTap,
   });
+  final String label;
+  final bool isSelected;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -249,9 +245,7 @@ class CategoryChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected ? AppColors.primary : AppColors.surface,
           borderRadius: BorderRadius.circular(20),
-          border: isSelected
-              ? null
-              : Border.all(color: AppColors.divider),
+          border: isSelected ? null : Border.all(color: AppColors.divider),
         ),
         child: Text(
           label,

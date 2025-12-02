@@ -12,14 +12,6 @@ import '../models/playlist_source_model.dart';
 
 /// Playlist repository implementation
 class PlaylistRepositoryImpl implements PlaylistRepository {
-  final LocalStorage _localStorage;
-  final ApiClient _apiClient;
-  final M3UParser _m3uParser;
-
-  // In-memory cache
-  final Map<String, List<ChannelModel>> _channelCache = {};
-  final Map<String, List<CategoryModel>> _categoryCache = {};
-
   PlaylistRepositoryImpl({
     required LocalStorage localStorage,
     required ApiClient apiClient,
@@ -27,6 +19,13 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
   })  : _localStorage = localStorage,
         _apiClient = apiClient,
         _m3uParser = m3uParser;
+  final LocalStorage _localStorage;
+  final ApiClient _apiClient;
+  final M3UParser _m3uParser;
+
+  // In-memory cache
+  final Map<String, List<ChannelModel>> _channelCache = {};
+  final Map<String, List<CategoryModel>> _categoryCache = {};
 
   @override
   Future<List<PlaylistSource>> getPlaylists() async {

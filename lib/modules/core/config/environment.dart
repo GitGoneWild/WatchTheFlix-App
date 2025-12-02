@@ -10,12 +10,6 @@ enum Environment {
 
 /// Environment configuration
 class EnvironmentConfig {
-  final Environment environment;
-  final String apiBaseUrl;
-  final bool enableLogging;
-  final bool enableAnalytics;
-  final bool enableCrashReporting;
-
   const EnvironmentConfig({
     required this.environment,
     this.apiBaseUrl = '',
@@ -23,19 +17,20 @@ class EnvironmentConfig {
     this.enableAnalytics = false,
     this.enableCrashReporting = false,
   });
+  final Environment environment;
+  final String apiBaseUrl;
+  final bool enableLogging;
+  final bool enableAnalytics;
+  final bool enableCrashReporting;
 
   /// Development environment configuration
   static const EnvironmentConfig development = EnvironmentConfig(
     environment: Environment.development,
-    enableLogging: true,
-    enableAnalytics: false,
-    enableCrashReporting: false,
   );
 
   /// Staging environment configuration
   static const EnvironmentConfig staging = EnvironmentConfig(
     environment: Environment.staging,
-    enableLogging: true,
     enableAnalytics: true,
     enableCrashReporting: true,
   );

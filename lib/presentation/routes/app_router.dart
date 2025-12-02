@@ -16,15 +16,14 @@ import '../screens/playback/player_screen.dart';
 
 /// Arguments for Xtream onboarding route
 class XtreamOnboardingArguments {
-  final XtreamCredentials credentials;
-  final String playlistName;
-  final PlaylistSource playlist;
-
   const XtreamOnboardingArguments({
     required this.credentials,
     required this.playlistName,
     required this.playlist,
   });
+  final XtreamCredentials credentials;
+  final String playlistName;
+  final PlaylistSource playlist;
 }
 
 /// App router configuration
@@ -75,10 +74,12 @@ class AppRouter {
       create: (_) => XtreamOnboardingBloc(
         apiClient: getIt<XtreamApiClient>(),
         xtreamService: getIt<XtreamService>(),
-      )..add(StartOnboardingEvent(
-          credentials: args.credentials,
-          playlistName: args.playlistName,
-        )),
+      )..add(
+          StartOnboardingEvent(
+            credentials: args.credentials,
+            playlistName: args.playlistName,
+          ),
+        ),
       child: const XtreamOnboardingScreen(),
     );
   }

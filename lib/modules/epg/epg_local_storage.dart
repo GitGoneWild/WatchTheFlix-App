@@ -23,6 +23,31 @@ const String _epgMetadataPrefix = '${_epgStoragePrefix}meta_';
 
 /// EPG metadata for tracking cache state.
 class EpgStorageMetadata {
+  const EpgStorageMetadata({
+    required this.sourceId,
+    this.lastFetchedAt,
+    this.channelCount = 0,
+    this.programCount = 0,
+    this.sourceUrl,
+    this.sourceType = EpgSourceType.none,
+  });
+
+  factory EpgStorageMetadata.fromJson(Map<String, dynamic> json) {
+    return EpgStorageMetadata(
+      sourceId: json['sourceId'] as String? ?? '',
+      lastFetchedAt: json['lastFetchedAt'] != null
+          ? DateTime.tryParse(json['lastFetchedAt'] as String)
+          : null,
+      channelCount: json['channelCount'] as int? ?? 0,
+      programCount: json['programCount'] as int? ?? 0,
+      sourceUrl: json['sourceUrl'] as String?,
+      sourceType: EpgSourceType.values.firstWhere(
+        (e) => e.name == json['sourceType'],
+        orElse: () => EpgSourceType.none,
+      ),
+    );
+  }
+
   /// Profile or source identifier.
   final String sourceId;
 
@@ -41,15 +66,6 @@ class EpgStorageMetadata {
   /// Source type.
   final EpgSourceType sourceType;
 
-  const EpgStorageMetadata({
-    required this.sourceId,
-    this.lastFetchedAt,
-    this.channelCount = 0,
-    this.programCount = 0,
-    this.sourceUrl,
-    this.sourceType = EpgSourceType.none,
-  });
-
   Map<String, dynamic> toJson() => {
         'sourceId': sourceId,
         'lastFetchedAt': lastFetchedAt?.toIso8601String(),
@@ -58,22 +74,6 @@ class EpgStorageMetadata {
         'sourceUrl': sourceUrl,
         'sourceType': sourceType.name,
       };
-
-  factory EpgStorageMetadata.fromJson(Map<String, dynamic> json) {
-    return EpgStorageMetadata(
-      sourceId: json['sourceId'] as String? ?? '',
-      lastFetchedAt: json['lastFetchedAt'] != null
-          ? DateTime.tryParse(json['lastFetchedAt'] as String)
-          : null,
-      channelCount: json['channelCount'] as int? ?? 0,
-      programCount: json['programCount'] as int? ?? 0,
-      sourceUrl: json['sourceUrl'] as String?,
-      sourceType: EpgSourceType.values.firstWhere(
-        (e) => e.name == json['sourceType'],
-        orElse: () => EpgSourceType.none,
-      ),
-    );
-  }
 }
 
 /// Local storage service for EPG data.
@@ -107,7 +107,8 @@ class EpgLocalStorage {
   /// Ensure storage is initialized.
   void _ensureInitialized() {
     if (_prefs == null) {
-      throw StateError('EpgLocalStorage not initialized. Call initialize() first.');
+      throw StateError(
+          'EpgLocalStorage not initialized. Call initialize() first.');
     }
   }
 
@@ -166,11 +167,13 @@ class EpgLocalStorage {
     try {
       // Save channels
       final channelsJson = _serializeChannels(data.channels);
-      await _prefs!.setString('${_epgDataPrefix}channels_$sourceId', channelsJson);
+      await _prefs!
+          .setString('${_epgDataPrefix}channels_$sourceId', channelsJson);
 
       // Save programs
       final programsJson = _serializePrograms(data.programs);
-      await _prefs!.setString('${_epgDataPrefix}programs_$sourceId', programsJson);
+      await _prefs!
+          .setString('${_epgDataPrefix}programs_$sourceId', programsJson);
 
       // Save metadata
       final metadata = EpgStorageMetadata(
@@ -205,18 +208,21 @@ class EpgLocalStorage {
     _ensureInitialized();
     try {
       // Load channels
-      final channelsJson = _prefs!.getString('${_epgDataPrefix}channels_$sourceId');
+      final channelsJson =
+          _prefs!.getString('${_epgDataPrefix}channels_$sourceId');
       if (channelsJson == null) return null;
 
       // Load programs
-      final programsJson = _prefs!.getString('${_epgDataPrefix}programs_$sourceId');
+      final programsJson =
+          _prefs!.getString('${_epgDataPrefix}programs_$sourceId');
       if (programsJson == null) return null;
 
       // Load metadata
       final metadataJson = _prefs!.getString('$_epgMetadataPrefix$sourceId');
       final metadata = metadataJson != null
           ? EpgStorageMetadata.fromJson(
-              jsonDecode(metadataJson) as Map<String, dynamic>)
+              jsonDecode(metadataJson) as Map<String, dynamic>,
+            )
           : null;
 
       // Deserialize
@@ -271,7 +277,8 @@ class EpgLocalStorage {
   /// Clear all EPG data.
   Future<void> clearAll() async {
     _ensureInitialized();
-    final keys = _prefs!.getKeys().where((k) => k.startsWith(_epgStoragePrefix));
+    final keys =
+        _prefs!.getKeys().where((k) => k.startsWith(_epgStoragePrefix));
     for (final key in keys) {
       await _prefs!.remove(key);
     }
@@ -295,12 +302,16 @@ class EpgLocalStorage {
   // ============ Serialization Helpers ============
 
   String _serializeChannels(Map<String, EpgChannel> channels) {
-    final list = channels.values.map((c) => {
-          'id': c.id,
-          'name': c.name,
-          'iconUrl': c.iconUrl,
-          'displayNames': c.displayNames,
-        }).toList();
+    final list = channels.values
+        .map(
+          (c) => {
+            'id': c.id,
+            'name': c.name,
+            'iconUrl': c.iconUrl,
+            'displayNames': c.displayNames,
+          },
+        )
+        .toList();
     return jsonEncode(list);
   }
 
@@ -328,18 +339,22 @@ class EpgLocalStorage {
     final result = <String, List<Map<String, dynamic>>>{};
 
     for (final entry in programs.entries) {
-      result[entry.key] = entry.value.map((p) => {
-            'channelId': p.channelId,
-            'title': p.title,
-            'description': p.description,
-            'startTime': p.startTime.toIso8601String(),
-            'endTime': p.endTime.toIso8601String(),
-            'category': p.category,
-            'language': p.language,
-            'episodeNumber': p.episodeNumber,
-            'iconUrl': p.iconUrl,
-            'subtitle': p.subtitle,
-          }).toList();
+      result[entry.key] = entry.value
+          .map(
+            (p) => {
+              'channelId': p.channelId,
+              'title': p.title,
+              'description': p.description,
+              'startTime': p.startTime.toIso8601String(),
+              'endTime': p.endTime.toIso8601String(),
+              'category': p.category,
+              'language': p.language,
+              'episodeNumber': p.episodeNumber,
+              'iconUrl': p.iconUrl,
+              'subtitle': p.subtitle,
+            },
+          )
+          .toList();
     }
 
     return jsonEncode(result);

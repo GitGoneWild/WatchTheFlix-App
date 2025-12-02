@@ -60,10 +60,9 @@ abstract class LocalStorage {
 
 /// Local storage implementation using SharedPreferences
 class LocalStorageImpl implements LocalStorage {
-  final SharedPreferences _sharedPreferences;
-
   LocalStorageImpl({required SharedPreferences sharedPreferences})
       : _sharedPreferences = sharedPreferences;
+  final SharedPreferences _sharedPreferences;
 
   @override
   Future<List<PlaylistSourceModel>> getPlaylists() async {
@@ -74,8 +73,10 @@ class LocalStorageImpl implements LocalStorage {
 
       final List<dynamic> jsonList = json.decode(jsonString) as List<dynamic>;
       return jsonList
-          .map((json) =>
-              PlaylistSourceModel.fromJson(json as Map<String, dynamic>))
+          .map(
+            (json) =>
+                PlaylistSourceModel.fromJson(json as Map<String, dynamic>),
+          )
           .toList();
     } catch (e) {
       throw CacheException(message: 'Failed to get playlists: $e');

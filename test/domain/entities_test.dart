@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:watchtheflix/domain/entities/channel.dart';
 import 'package:watchtheflix/domain/entities/category.dart';
+import 'package:watchtheflix/domain/entities/channel.dart';
 import 'package:watchtheflix/domain/entities/playlist_source.dart';
 
 void main() {
@@ -14,7 +14,8 @@ void main() {
 
       expect(channel.id, equals('1'));
       expect(channel.name, equals('Test Channel'));
-      expect(channel.streamUrl, equals('http://stream.example.com/channel.m3u8'));
+      expect(
+          channel.streamUrl, equals('http://stream.example.com/channel.m3u8'));
       expect(channel.type, equals(ContentType.live));
     });
 
@@ -125,7 +126,8 @@ void main() {
         password: 'testpass',
       );
 
-      expect(credentials.authParams, equals('username=testuser&password=testpass'));
+      expect(credentials.authParams,
+          equals('username=testuser&password=testpass'));
     });
   });
 }

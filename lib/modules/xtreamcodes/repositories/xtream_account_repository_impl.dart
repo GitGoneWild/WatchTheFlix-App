@@ -18,8 +18,6 @@ const Duration _accountTimeout = Duration(seconds: 15);
 /// Xtream account repository implementation
 class XtreamAccountRepositoryImpl extends XtreamRepositoryBase
     implements XtreamAccountRepository {
-  final Dio _dio;
-
   XtreamAccountRepositoryImpl({Dio? dio})
       : _dio = dio ??
             Dio(BaseOptions(
@@ -30,6 +28,7 @@ class XtreamAccountRepositoryImpl extends XtreamRepositoryBase
                 'User-Agent': 'WatchTheFlix/1.0',
               },
             ));
+  final Dio _dio;
 
   @override
   Future<ApiResult<XtreamAccountOverview>> fetchAccountInfo(

@@ -8,6 +8,7 @@ import 'package:watchtheflix/features/xtream/xtream_service.dart';
 import 'package:watchtheflix/domain/entities/playlist_source.dart';
 
 class MockXtreamApiClient extends Mock implements XtreamApiClient {}
+
 class MockLocalStorage extends Mock implements LocalStorage {}
 
 void main() {
@@ -43,7 +44,7 @@ void main() {
           const ChannelModel(id: '2', name: 'Channel 2', streamUrl: 'url2'),
         ];
 
-        when(() => mockApiClient.fetchLiveChannels(credentials, categoryId: null))
+        when(() => mockApiClient.fetchLiveChannels(credentials))
             .thenAnswer((_) async => channels);
 
         // Act
@@ -51,7 +52,7 @@ void main() {
 
         // Assert
         expect(result.length, equals(2));
-        verify(() => mockApiClient.fetchLiveChannels(credentials, categoryId: null)).called(1);
+        verify(() => mockApiClient.fetchLiveChannels(credentials)).called(1);
       });
 
       test('should return cached channels when available', () async {
@@ -60,7 +61,7 @@ void main() {
           const ChannelModel(id: '1', name: 'Channel 1', streamUrl: 'url1'),
         ];
 
-        when(() => mockApiClient.fetchLiveChannels(credentials, categoryId: null))
+        when(() => mockApiClient.fetchLiveChannels(credentials))
             .thenAnswer((_) async => channels);
 
         // First call to populate cache
@@ -72,7 +73,7 @@ void main() {
         // Assert
         expect(result.length, equals(1));
         // API should only be called once
-        verify(() => mockApiClient.fetchLiveChannels(credentials, categoryId: null)).called(1);
+        verify(() => mockApiClient.fetchLiveChannels(credentials)).called(1);
       });
 
       test('should force refresh when requested', () async {
@@ -81,17 +82,17 @@ void main() {
           const ChannelModel(id: '1', name: 'Channel 1', streamUrl: 'url1'),
         ];
 
-        when(() => mockApiClient.fetchLiveChannels(credentials, categoryId: null))
+        when(() => mockApiClient.fetchLiveChannels(credentials))
             .thenAnswer((_) async => channels);
 
         // First call
         await service.getLiveChannels(credentials);
-        
+
         // Force refresh
         await service.getLiveChannels(credentials, forceRefresh: true);
 
         // Assert - API should be called twice
-        verify(() => mockApiClient.fetchLiveChannels(credentials, categoryId: null)).called(2);
+        verify(() => mockApiClient.fetchLiveChannels(credentials)).called(2);
       });
     });
 
@@ -189,7 +190,8 @@ void main() {
         // Assert
         expect(result.length, equals(1));
         // API should only be called once
-        verify(() => mockApiClient.fetchSeriesCategories(credentials)).called(1);
+        verify(() => mockApiClient.fetchSeriesCategories(credentials))
+            .called(1);
       });
     });
 
@@ -201,7 +203,8 @@ void main() {
           'channel2': [],
         };
 
-        when(() => mockApiClient.fetchAllEpg(credentials, channelIds: any(named: 'channelIds')))
+        when(() => mockApiClient.fetchAllEpg(credentials,
+                channelIds: any(named: 'channelIds')))
             .thenAnswer((_) async => epgData);
 
         // Act
@@ -209,7 +212,8 @@ void main() {
 
         // Assert
         expect(result.length, equals(2));
-        verify(() => mockApiClient.fetchAllEpg(credentials, channelIds: any(named: 'channelIds'))).called(1);
+        verify(() => mockApiClient.fetchAllEpg(credentials,
+            channelIds: any(named: 'channelIds'))).called(1);
       });
 
       test('should cache EPG data', () async {
@@ -218,7 +222,8 @@ void main() {
           'channel1': [],
         };
 
-        when(() => mockApiClient.fetchAllEpg(credentials, channelIds: any(named: 'channelIds')))
+        when(() => mockApiClient.fetchAllEpg(credentials,
+                channelIds: any(named: 'channelIds')))
             .thenAnswer((_) async => epgData);
 
         // First call to populate cache
@@ -230,7 +235,8 @@ void main() {
         // Assert
         expect(result.length, equals(1));
         // API should only be called once
-        verify(() => mockApiClient.fetchAllEpg(credentials, channelIds: any(named: 'channelIds'))).called(1);
+        verify(() => mockApiClient.fetchAllEpg(credentials,
+            channelIds: any(named: 'channelIds'))).called(1);
       });
 
       test('should force refresh EPG when requested', () async {
@@ -239,17 +245,19 @@ void main() {
           'channel1': [],
         };
 
-        when(() => mockApiClient.fetchAllEpg(credentials, channelIds: any(named: 'channelIds')))
+        when(() => mockApiClient.fetchAllEpg(credentials,
+                channelIds: any(named: 'channelIds')))
             .thenAnswer((_) async => epgData);
 
         // First call
         await service.getEpg(credentials);
-        
+
         // Force refresh
         await service.getEpg(credentials, forceRefresh: true);
 
         // Assert - API should be called twice
-        verify(() => mockApiClient.fetchAllEpg(credentials, channelIds: any(named: 'channelIds'))).called(2);
+        verify(() => mockApiClient.fetchAllEpg(credentials,
+            channelIds: any(named: 'channelIds'))).called(2);
       });
     });
 
@@ -258,14 +266,14 @@ void main() {
         // Arrange
         when(() => mockApiClient.fetchLiveCategories(credentials))
             .thenAnswer((_) async => []);
-        when(() => mockApiClient.fetchLiveChannels(credentials, categoryId: null))
+        when(() => mockApiClient.fetchLiveChannels(credentials))
             .thenAnswer((_) async => []);
-        when(() => mockApiClient.fetchMovies(credentials, categoryId: null))
+        when(() => mockApiClient.fetchMovies(credentials))
             .thenAnswer((_) async => []);
-        when(() => mockApiClient.fetchSeries(credentials, categoryId: null))
+        when(() => mockApiClient.fetchSeries(credentials))
             .thenAnswer((_) async => []);
-        when(() => mockApiClient.fetchAllEpg(credentials, channelIds: any(named: 'channelIds')))
-            .thenAnswer((_) async => {});
+        when(() => mockApiClient.fetchAllEpg(credentials,
+            channelIds: any(named: 'channelIds'))).thenAnswer((_) async => {});
         when(() => mockLocalStorage.cacheChannels(any(), any()))
             .thenAnswer((_) async {});
 
@@ -274,10 +282,11 @@ void main() {
 
         // Assert
         verify(() => mockApiClient.fetchLiveCategories(credentials)).called(1);
-        verify(() => mockApiClient.fetchLiveChannels(credentials, categoryId: null)).called(1);
-        verify(() => mockApiClient.fetchMovies(credentials, categoryId: null)).called(1);
-        verify(() => mockApiClient.fetchSeries(credentials, categoryId: null)).called(1);
-        verify(() => mockApiClient.fetchAllEpg(credentials, channelIds: any(named: 'channelIds'))).called(1);
+        verify(() => mockApiClient.fetchLiveChannels(credentials)).called(1);
+        verify(() => mockApiClient.fetchMovies(credentials)).called(1);
+        verify(() => mockApiClient.fetchSeries(credentials)).called(1);
+        verify(() => mockApiClient.fetchAllEpg(credentials,
+            channelIds: any(named: 'channelIds'))).called(1);
       });
     });
 
@@ -288,7 +297,7 @@ void main() {
           const ChannelModel(id: '1', name: 'Channel 1', streamUrl: 'url1'),
         ];
 
-        when(() => mockApiClient.fetchLiveChannels(credentials, categoryId: null))
+        when(() => mockApiClient.fetchLiveChannels(credentials))
             .thenAnswer((_) async => channels);
 
         // Populate cache
@@ -301,7 +310,7 @@ void main() {
         await service.getLiveChannels(credentials);
 
         // Assert - API should be called twice (before and after clear)
-        verify(() => mockApiClient.fetchLiveChannels(credentials, categoryId: null)).called(2);
+        verify(() => mockApiClient.fetchLiveChannels(credentials)).called(2);
       });
 
       test('should clear cache for specific playlist', () async {
@@ -310,7 +319,7 @@ void main() {
           const ChannelModel(id: '1', name: 'Channel 1', streamUrl: 'url1'),
         ];
 
-        when(() => mockApiClient.fetchLiveChannels(credentials, categoryId: null))
+        when(() => mockApiClient.fetchLiveChannels(credentials))
             .thenAnswer((_) async => channels);
 
         // Populate cache
@@ -323,7 +332,7 @@ void main() {
         await service.getLiveChannels(credentials);
 
         // Assert - API should be called twice
-        verify(() => mockApiClient.fetchLiveChannels(credentials, categoryId: null)).called(2);
+        verify(() => mockApiClient.fetchLiveChannels(credentials)).called(2);
       });
     });
 
@@ -344,7 +353,7 @@ void main() {
 
         when(() => mockApiClient.fetchLiveCategories(credentials))
             .thenAnswer((_) async => []);
-        when(() => mockApiClient.fetchLiveChannels(credentials, categoryId: null))
+        when(() => mockApiClient.fetchLiveChannels(credentials))
             .thenAnswer((_) async => channels);
         when(() => mockLocalStorage.cacheChannels(any(), any()))
             .thenAnswer((_) async {});

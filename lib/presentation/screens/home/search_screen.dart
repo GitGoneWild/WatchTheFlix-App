@@ -25,7 +25,7 @@ class _SearchScreenState extends State<SearchScreen> {
   bool _showSuggestions = false;
 
   final List<String> _filters = ['All', 'Live TV', 'Movies', 'Series'];
-  List<String> _recentSearches = [];
+  final List<String> _recentSearches = [];
 
   @override
   void initState() {
@@ -53,7 +53,7 @@ class _SearchScreenState extends State<SearchScreen> {
     setState(() {
       _showSuggestions = query.isEmpty && _focusNode.hasFocus;
     });
-    
+
     _debounceTimer = Timer(AppConstants.searchDebounce, () {
       if (query.length >= AppConstants.minSearchLength) {
         context.read<ChannelBloc>().add(SearchChannelsEvent(query));
@@ -92,7 +92,7 @@ class _SearchScreenState extends State<SearchScreen> {
             // Search header
             Container(
               padding: const EdgeInsets.fromLTRB(8, 8, 16, 8),
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: AppColors.background,
                 border: Border(
                   bottom: BorderSide(color: AppColors.border, width: 0.5),
@@ -105,13 +105,13 @@ class _SearchScreenState extends State<SearchScreen> {
                     onPressed: () => Navigator.pop(context),
                   ),
                   Expanded(
-                    child: Container(
+                    child: DecoratedBox(
                       decoration: BoxDecoration(
                         color: AppColors.surface,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: _focusNode.hasFocus 
-                              ? AppColors.primary 
+                          color: _focusNode.hasFocus
+                              ? AppColors.primary
                               : AppColors.border,
                         ),
                       ),
@@ -122,8 +122,10 @@ class _SearchScreenState extends State<SearchScreen> {
                         decoration: InputDecoration(
                           hintText: 'Search channels, movies, series...',
                           border: InputBorder.none,
-                          hintStyle: TextStyle(color: AppColors.textTertiary),
-                          prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary),
+                          hintStyle:
+                              const TextStyle(color: AppColors.textTertiary),
+                          prefixIcon: const Icon(Icons.search,
+                              color: AppColors.textSecondary),
                           suffixIcon: _searchController.text.isNotEmpty
                               ? IconButton(
                                   icon: const Icon(Icons.clear, size: 20),
@@ -157,7 +159,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 separatorBuilder: (_, __) => const SizedBox(width: 8),
                 itemBuilder: (context, index) {
                   final filter = _filters[index];
-                  final isSelected = _selectedFilter == filter || 
+                  final isSelected = _selectedFilter == filter ||
                       (_selectedFilter == null && filter == 'All');
                   return FilterChip(
                     label: Text(filter),
@@ -170,8 +172,11 @@ class _SearchScreenState extends State<SearchScreen> {
                     selectedColor: AppColors.primary.withOpacity(0.2),
                     checkmarkColor: AppColors.primary,
                     labelStyle: TextStyle(
-                      color: isSelected ? AppColors.primary : AppColors.textSecondary,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      color: isSelected
+                          ? AppColors.primary
+                          : AppColors.textSecondary,
+                      fontWeight:
+                          isSelected ? FontWeight.w600 : FontWeight.normal,
                     ),
                     backgroundColor: AppColors.surface,
                     side: BorderSide(
@@ -217,7 +222,7 @@ class _SearchScreenState extends State<SearchScreen> {
                         _recentSearches.clear();
                       });
                     },
-                    child: Text(
+                    child: const Text(
                       'Clear',
                       style: TextStyle(color: AppColors.textLink, fontSize: 13),
                     ),
@@ -228,7 +233,8 @@ class _SearchScreenState extends State<SearchScreen> {
               ...List.generate(_recentSearches.length, (index) {
                 final search = _recentSearches[index];
                 return ListTile(
-                  leading: const Icon(Icons.history, color: AppColors.textSecondary),
+                  leading:
+                      const Icon(Icons.history, color: AppColors.textSecondary),
                   title: Text(search),
                   trailing: IconButton(
                     icon: const Icon(Icons.close, size: 18),
@@ -269,8 +275,11 @@ class _SearchScreenState extends State<SearchScreen> {
                     final channel = favoritesState.favorites[index];
                     return GestureDetector(
                       onTap: () {
-                        context.read<FavoritesBloc>().add(AddRecentEvent(channel));
-                        Navigator.pushNamed(context, AppRoutes.player, arguments: channel);
+                        context
+                            .read<FavoritesBloc>()
+                            .add(AddRecentEvent(channel));
+                        Navigator.pushNamed(context, AppRoutes.player,
+                            arguments: channel);
                       },
                       child: Column(
                         children: [
@@ -403,7 +412,8 @@ class _SearchScreenState extends State<SearchScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: Text(
                       '${results.length} results found',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -414,7 +424,8 @@ class _SearchScreenState extends State<SearchScreen> {
                   Expanded(
                     child: GridView.builder(
                       padding: const EdgeInsets.all(16),
-                      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                      gridDelegate:
+                          const SliverGridDelegateWithMaxCrossAxisExtent(
                         maxCrossAxisExtent: 180,
                         mainAxisSpacing: 12,
                         crossAxisSpacing: 12,
@@ -423,13 +434,16 @@ class _SearchScreenState extends State<SearchScreen> {
                       itemCount: results.length,
                       itemBuilder: (context, index) {
                         final channel = results[index];
-                        final isFavorite = favoritesState is FavoritesLoadedState
-                            ? favoritesState.isFavorite(channel.id)
-                            : false;
+                        final isFavorite =
+                            favoritesState is FavoritesLoadedState
+                                ? favoritesState.isFavorite(channel.id)
+                                : false;
                         return ChannelCard(
                           channel: channel,
                           onTap: () {
-                            context.read<FavoritesBloc>().add(AddRecentEvent(channel));
+                            context
+                                .read<FavoritesBloc>()
+                                .add(AddRecentEvent(channel));
                             Navigator.pushNamed(
                               context,
                               AppRoutes.player,

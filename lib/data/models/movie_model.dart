@@ -2,21 +2,6 @@ import '../../domain/entities/movie.dart';
 
 /// Movie model for data layer
 class MovieModel {
-  final String id;
-  final String name;
-  final String streamUrl;
-  final String? posterUrl;
-  final String? backdropUrl;
-  final String? categoryId;
-  final String? description;
-  final String? releaseDate;
-  final double? rating;
-  final int? duration;
-  final String? genre;
-  final String? director;
-  final List<String>? cast;
-  final Map<String, dynamic>? metadata;
-
   const MovieModel({
     required this.id,
     required this.name,
@@ -59,6 +44,40 @@ class MovieModel {
       metadata: json['metadata'] as Map<String, dynamic>?,
     );
   }
+
+  /// Create from domain entity
+  factory MovieModel.fromEntity(Movie entity) {
+    return MovieModel(
+      id: entity.id,
+      name: entity.name,
+      streamUrl: entity.streamUrl,
+      posterUrl: entity.posterUrl,
+      backdropUrl: entity.backdropUrl,
+      categoryId: entity.categoryId,
+      description: entity.description,
+      releaseDate: entity.releaseDate,
+      rating: entity.rating,
+      duration: entity.duration,
+      genre: entity.genre,
+      director: entity.director,
+      cast: entity.cast,
+      metadata: entity.metadata,
+    );
+  }
+  final String id;
+  final String name;
+  final String streamUrl;
+  final String? posterUrl;
+  final String? backdropUrl;
+  final String? categoryId;
+  final String? description;
+  final String? releaseDate;
+  final double? rating;
+  final int? duration;
+  final String? genre;
+  final String? director;
+  final List<String>? cast;
+  final Map<String, dynamic>? metadata;
 
   /// Parse genre field that can be String, List, or null
   static String? _parseGenre(dynamic genre) {
@@ -117,26 +136,6 @@ class MovieModel {
       director: director,
       cast: cast,
       metadata: metadata,
-    );
-  }
-
-  /// Create from domain entity
-  factory MovieModel.fromEntity(Movie entity) {
-    return MovieModel(
-      id: entity.id,
-      name: entity.name,
-      streamUrl: entity.streamUrl,
-      posterUrl: entity.posterUrl,
-      backdropUrl: entity.backdropUrl,
-      categoryId: entity.categoryId,
-      description: entity.description,
-      releaseDate: entity.releaseDate,
-      rating: entity.rating,
-      duration: entity.duration,
-      genre: entity.genre,
-      director: entity.director,
-      cast: entity.cast,
-      metadata: entity.metadata,
     );
   }
 }

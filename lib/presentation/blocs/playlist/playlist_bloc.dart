@@ -19,36 +19,32 @@ class LoadPlaylistsEvent extends PlaylistEvent {
 }
 
 class AddPlaylistEvent extends PlaylistEvent {
-  final PlaylistSource playlist;
-
   const AddPlaylistEvent(this.playlist);
+  final PlaylistSource playlist;
 
   @override
   List<Object?> get props => [playlist];
 }
 
 class SelectPlaylistEvent extends PlaylistEvent {
-  final String playlistId;
-
   const SelectPlaylistEvent(this.playlistId);
+  final String playlistId;
 
   @override
   List<Object?> get props => [playlistId];
 }
 
 class DeletePlaylistEvent extends PlaylistEvent {
-  final String playlistId;
-
   const DeletePlaylistEvent(this.playlistId);
+  final String playlistId;
 
   @override
   List<Object?> get props => [playlistId];
 }
 
 class RefreshPlaylistEvent extends PlaylistEvent {
-  final String playlistId;
-
   const RefreshPlaylistEvent(this.playlistId);
+  final String playlistId;
 
   @override
   List<Object?> get props => [playlistId];
@@ -71,22 +67,20 @@ class PlaylistLoadingState extends PlaylistState {
 }
 
 class PlaylistLoadedState extends PlaylistState {
-  final List<PlaylistSource> playlists;
-  final PlaylistSource? activePlaylist;
-
   const PlaylistLoadedState({
     required this.playlists,
     this.activePlaylist,
   });
+  final List<PlaylistSource> playlists;
+  final PlaylistSource? activePlaylist;
 
   @override
   List<Object?> get props => [playlists, activePlaylist];
 }
 
 class PlaylistErrorState extends PlaylistState {
-  final String message;
-
   const PlaylistErrorState(this.message);
+  final String message;
 
   @override
   List<Object?> get props => [message];
@@ -94,9 +88,6 @@ class PlaylistErrorState extends PlaylistState {
 
 // BLoC
 class PlaylistBloc extends Bloc<PlaylistEvent, PlaylistState> {
-  final GetPlaylists _getPlaylists;
-  final AddPlaylist _addPlaylist;
-
   PlaylistBloc({
     required GetPlaylists getPlaylists,
     required AddPlaylist addPlaylist,
@@ -109,6 +100,8 @@ class PlaylistBloc extends Bloc<PlaylistEvent, PlaylistState> {
     on<DeletePlaylistEvent>(_onDeletePlaylist);
     on<RefreshPlaylistEvent>(_onRefreshPlaylist);
   }
+  final GetPlaylists _getPlaylists;
+  final AddPlaylist _addPlaylist;
 
   Future<void> _onLoadPlaylists(
     LoadPlaylistsEvent event,
@@ -117,12 +110,14 @@ class PlaylistBloc extends Bloc<PlaylistEvent, PlaylistState> {
     emit(const PlaylistLoadingState());
     try {
       final playlists = await _getPlaylists();
-      final activePlaylist =
-          playlists.where((p) => p.isActive).firstOrNull ?? playlists.firstOrNull;
-      emit(PlaylistLoadedState(
-        playlists: playlists,
-        activePlaylist: activePlaylist,
-      ));
+      final activePlaylist = playlists.where((p) => p.isActive).firstOrNull ??
+          playlists.firstOrNull;
+      emit(
+        PlaylistLoadedState(
+          playlists: playlists,
+          activePlaylist: activePlaylist,
+        ),
+      );
     } catch (e) {
       AppLogger.error('Failed to load playlists', e);
       emit(PlaylistErrorState(e.toString()));
@@ -148,12 +143,15 @@ class PlaylistBloc extends Bloc<PlaylistEvent, PlaylistState> {
   ) async {
     if (state is PlaylistLoadedState) {
       final currentState = state as PlaylistLoadedState;
-      final selected =
-          currentState.playlists.where((p) => p.id == event.playlistId).firstOrNull;
-      emit(PlaylistLoadedState(
-        playlists: currentState.playlists,
-        activePlaylist: selected,
-      ));
+      final selected = currentState.playlists
+          .where((p) => p.id == event.playlistId)
+          .firstOrNull;
+      emit(
+        PlaylistLoadedState(
+          playlists: currentState.playlists,
+          activePlaylist: selected,
+        ),
+      );
     }
   }
 

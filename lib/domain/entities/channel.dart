@@ -9,16 +9,6 @@ enum ContentType {
 
 /// Channel entity
 class Channel extends Equatable {
-  final String id;
-  final String name;
-  final String streamUrl;
-  final String? logoUrl;
-  final String? groupTitle;
-  final String? categoryId;
-  final ContentType type;
-  final Map<String, dynamic>? metadata;
-  final EpgInfo? epgInfo;
-
   const Channel({
     required this.id,
     required this.name,
@@ -30,6 +20,15 @@ class Channel extends Equatable {
     this.metadata,
     this.epgInfo,
   });
+  final String id;
+  final String name;
+  final String streamUrl;
+  final String? logoUrl;
+  final String? groupTitle;
+  final String? categoryId;
+  final ContentType type;
+  final Map<String, dynamic>? metadata;
+  final EpgInfo? epgInfo;
 
   Channel copyWith({
     String? id,
@@ -71,12 +70,6 @@ class Channel extends Equatable {
 
 /// EPG (Electronic Program Guide) info
 class EpgInfo extends Equatable {
-  final String? currentProgram;
-  final String? nextProgram;
-  final DateTime? startTime;
-  final DateTime? endTime;
-  final String? description;
-
   const EpgInfo({
     this.currentProgram,
     this.nextProgram,
@@ -84,6 +77,11 @@ class EpgInfo extends Equatable {
     this.endTime,
     this.description,
   });
+  final String? currentProgram;
+  final String? nextProgram;
+  final DateTime? startTime;
+  final DateTime? endTime;
+  final String? description;
 
   @override
   List<Object?> get props => [

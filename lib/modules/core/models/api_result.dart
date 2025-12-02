@@ -3,9 +3,6 @@
 
 /// API result wrapper for handling success and failure cases
 class ApiResult<T> {
-  final T? _data;
-  final ApiError? _error;
-
   const ApiResult._({T? data, ApiError? error})
       : _data = data,
         _error = error;
@@ -15,6 +12,8 @@ class ApiResult<T> {
 
   /// Create a failure result
   factory ApiResult.failure(ApiError error) => ApiResult._(error: error);
+  final T? _data;
+  final ApiError? _error;
 
   /// Check if this is a success result
   bool get isSuccess => _error == null && _data != null;
@@ -92,11 +91,6 @@ enum ApiErrorType {
 
 /// API error model
 class ApiError {
-  final ApiErrorType type;
-  final String message;
-  final int? statusCode;
-  final dynamic originalError;
-
   const ApiError({
     required this.type,
     required this.message,
@@ -139,6 +133,10 @@ class ApiError {
         type: ApiErrorType.timeout,
         message: message ?? 'Request timed out',
       );
+  final ApiErrorType type;
+  final String message;
+  final int? statusCode;
+  final dynamic originalError;
 
   @override
   String toString() => 'ApiError($type): $message';

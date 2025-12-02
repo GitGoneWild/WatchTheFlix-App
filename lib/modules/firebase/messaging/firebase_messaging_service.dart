@@ -30,11 +30,11 @@ abstract class IPushNotificationService {
 
 /// Firebase messaging service implementation
 class FirebaseMessagingService implements IPushNotificationService {
+  FirebaseMessagingService({AppConfig? config})
+      : _config = config ?? AppConfig();
   final AppConfig _config;
   void Function(Map<String, dynamic>)? _onMessageHandler;
   void Function(Map<String, dynamic>)? _onMessageOpenedAppHandler;
-
-  FirebaseMessagingService({AppConfig? config}) : _config = config ?? AppConfig();
 
   bool get _isEnabled => _config.firebaseEnabled;
 
@@ -170,5 +170,6 @@ class NoOpMessagingService implements IPushNotificationService {
   void onMessage(void Function(Map<String, dynamic> message) handler) {}
 
   @override
-  void onMessageOpenedApp(void Function(Map<String, dynamic> message) handler) {}
+  void onMessageOpenedApp(
+      void Function(Map<String, dynamic> message) handler) {}
 }

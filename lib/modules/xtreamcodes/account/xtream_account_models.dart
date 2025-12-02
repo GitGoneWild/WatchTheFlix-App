@@ -6,18 +6,6 @@ import 'package:equatable/equatable.dart';
 
 /// Xtream user information model
 class XtreamUserInfo extends Equatable {
-  final String username;
-  final String password;
-  final String message;
-  final int auth;
-  final String status;
-  final DateTime? expDate;
-  final bool isTrial;
-  final int activeConnections;
-  final DateTime? createdAt;
-  final int maxConnections;
-  final List<String> allowedOutputFormats;
-
   const XtreamUserInfo({
     required this.username,
     required this.password,
@@ -31,6 +19,33 @@ class XtreamUserInfo extends Equatable {
     this.maxConnections = 1,
     this.allowedOutputFormats = const [],
   });
+
+  factory XtreamUserInfo.fromJson(Map<String, dynamic> json) {
+    return XtreamUserInfo(
+      username: json['username']?.toString() ?? '',
+      password: json['password']?.toString() ?? '',
+      message: json['message']?.toString() ?? '',
+      auth: _parseInt(json['auth']),
+      status: json['status']?.toString() ?? '',
+      expDate: _parseDateTime(json['exp_date']),
+      isTrial: json['is_trial'] == '1' || json['is_trial'] == true,
+      activeConnections: _parseInt(json['active_cons']),
+      createdAt: _parseDateTime(json['created_at']),
+      maxConnections: _parseInt(json['max_connections'], defaultValue: 1),
+      allowedOutputFormats: _parseStringList(json['allowed_output_formats']),
+    );
+  }
+  final String username;
+  final String password;
+  final String message;
+  final int auth;
+  final String status;
+  final DateTime? expDate;
+  final bool isTrial;
+  final int activeConnections;
+  final DateTime? createdAt;
+  final int maxConnections;
+  final List<String> allowedOutputFormats;
 
   /// Check if user is authenticated
   bool get isAuthenticated => auth == 1;
@@ -57,22 +72,6 @@ class XtreamUserInfo extends Equatable {
     if (isTrial) return AccountStatus.trial;
     if (isActive) return AccountStatus.active;
     return AccountStatus.disabled;
-  }
-
-  factory XtreamUserInfo.fromJson(Map<String, dynamic> json) {
-    return XtreamUserInfo(
-      username: json['username']?.toString() ?? '',
-      password: json['password']?.toString() ?? '',
-      message: json['message']?.toString() ?? '',
-      auth: _parseInt(json['auth']),
-      status: json['status']?.toString() ?? '',
-      expDate: _parseDateTime(json['exp_date']),
-      isTrial: json['is_trial'] == '1' || json['is_trial'] == true,
-      activeConnections: _parseInt(json['active_cons']),
-      createdAt: _parseDateTime(json['created_at']),
-      maxConnections: _parseInt(json['max_connections'], defaultValue: 1),
-      allowedOutputFormats: _parseStringList(json['allowed_output_formats']),
-    );
   }
 
   Map<String, dynamic> toJson() {
@@ -109,16 +108,6 @@ class XtreamUserInfo extends Equatable {
 
 /// Xtream server information model
 class XtreamServerInfo extends Equatable {
-  final String url;
-  final String port;
-  final String httpsPort;
-  final String serverProtocol;
-  final String rtmpPort;
-  final String timezone;
-  final DateTime? timestampNow;
-  final String timeNow;
-  final bool process;
-
   const XtreamServerInfo({
     required this.url,
     required this.port,
@@ -130,6 +119,29 @@ class XtreamServerInfo extends Equatable {
     required this.timeNow,
     this.process = true,
   });
+
+  factory XtreamServerInfo.fromJson(Map<String, dynamic> json) {
+    return XtreamServerInfo(
+      url: json['url']?.toString() ?? '',
+      port: json['port']?.toString() ?? '80',
+      httpsPort: json['https_port']?.toString() ?? '443',
+      serverProtocol: json['server_protocol']?.toString() ?? 'http',
+      rtmpPort: json['rtmp_port']?.toString() ?? '',
+      timezone: json['timezone']?.toString() ?? 'UTC',
+      timestampNow: _parseDateTime(json['timestamp_now']),
+      timeNow: json['time_now']?.toString() ?? '',
+      process: json['process'] == true || json['process'] == 1,
+    );
+  }
+  final String url;
+  final String port;
+  final String httpsPort;
+  final String serverProtocol;
+  final String rtmpPort;
+  final String timezone;
+  final DateTime? timestampNow;
+  final String timeNow;
+  final bool process;
 
   /// Get full server URL with protocol
   String get fullUrl {
@@ -148,20 +160,6 @@ class XtreamServerInfo extends Equatable {
 
   /// Check if RTMP is available
   bool get hasRtmp => rtmpPort.isNotEmpty && rtmpPort != '0';
-
-  factory XtreamServerInfo.fromJson(Map<String, dynamic> json) {
-    return XtreamServerInfo(
-      url: json['url']?.toString() ?? '',
-      port: json['port']?.toString() ?? '80',
-      httpsPort: json['https_port']?.toString() ?? '443',
-      serverProtocol: json['server_protocol']?.toString() ?? 'http',
-      rtmpPort: json['rtmp_port']?.toString() ?? '',
-      timezone: json['timezone']?.toString() ?? 'UTC',
-      timestampNow: _parseDateTime(json['timestamp_now']),
-      timeNow: json['time_now']?.toString() ?? '',
-      process: json['process'] == true || json['process'] == 1,
-    );
-  }
 
   Map<String, dynamic> toJson() {
     return {
@@ -193,19 +191,10 @@ class XtreamServerInfo extends Equatable {
 
 /// Xtream account overview combining user and server info
 class XtreamAccountOverview extends Equatable {
-  final XtreamUserInfo userInfo;
-  final XtreamServerInfo serverInfo;
-
   const XtreamAccountOverview({
     required this.userInfo,
     required this.serverInfo,
   });
-
-  /// Convenience getter for authentication status
-  bool get isAuthenticated => userInfo.isAuthenticated;
-
-  /// Convenience getter for account status
-  AccountStatus get status => userInfo.accountStatus;
 
   factory XtreamAccountOverview.fromJson(Map<String, dynamic> json) {
     return XtreamAccountOverview(
@@ -215,6 +204,14 @@ class XtreamAccountOverview extends Equatable {
           json['server_info'] as Map<String, dynamic>? ?? {}),
     );
   }
+  final XtreamUserInfo userInfo;
+  final XtreamServerInfo serverInfo;
+
+  /// Convenience getter for authentication status
+  bool get isAuthenticated => userInfo.isAuthenticated;
+
+  /// Convenience getter for account status
+  AccountStatus get status => userInfo.accountStatus;
 
   Map<String, dynamic> toJson() {
     return {

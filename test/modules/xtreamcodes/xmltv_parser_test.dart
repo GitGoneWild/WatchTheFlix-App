@@ -61,7 +61,8 @@ void main() {
       expect(result.channels.length, equals(2));
       expect(result.channels['channel1'], isNotNull);
       expect(result.channels['channel1']!.name, equals('Channel One'));
-      expect(result.channels['channel1']!.iconUrl, equals('https://example.com/logo.png'));
+      expect(result.channels['channel1']!.iconUrl,
+          equals('https://example.com/logo.png'));
       expect(result.channels['channel1']!.displayNames.length, equals(2));
       expect(result.channels['channel2']!.name, equals('Channel Two'));
       expect(result.channels['channel2']!.iconUrl, isNull);
@@ -125,8 +126,8 @@ void main() {
       final result = parser.parse(xmlContent);
 
       final program = result.programs['channel1']!.first;
-      expect(program.startTime, equals(DateTime.utc(2024, 1, 15, 12, 0, 0)));
-      expect(program.endTime, equals(DateTime.utc(2024, 1, 15, 13, 0, 0)));
+      expect(program.startTime, equals(DateTime.utc(2024, 1, 15, 12, 0)));
+      expect(program.endTime, equals(DateTime.utc(2024, 1, 15, 13, 0)));
     });
 
     test('should handle timezone offset in program times', () {
@@ -142,8 +143,8 @@ void main() {
 
       final program = result.programs['channel1']!.first;
       // 12:00 -0500 = 17:00 UTC
-      expect(program.startTime, equals(DateTime.utc(2024, 1, 15, 17, 0, 0)));
-      expect(program.endTime, equals(DateTime.utc(2024, 1, 15, 18, 0, 0)));
+      expect(program.startTime, equals(DateTime.utc(2024, 1, 15, 17, 0)));
+      expect(program.endTime, equals(DateTime.utc(2024, 1, 15, 18, 0)));
     });
 
     test('should handle positive timezone offset', () {
@@ -159,8 +160,8 @@ void main() {
 
       final program = result.programs['channel1']!.first;
       // 12:00 +0530 = 06:30 UTC
-      expect(program.startTime, equals(DateTime.utc(2024, 1, 15, 6, 30, 0)));
-      expect(program.endTime, equals(DateTime.utc(2024, 1, 15, 7, 30, 0)));
+      expect(program.startTime, equals(DateTime.utc(2024, 1, 15, 6, 30)));
+      expect(program.endTime, equals(DateTime.utc(2024, 1, 15, 7, 30)));
     });
 
     test('should parse optional program fields', () {
@@ -303,11 +304,17 @@ void main() {
 <tv></tv>
 ''';
       final beforeParse = DateTime.now().toUtc();
-      final result = parser.parse(xmlContent, sourceUrl: 'https://example.com/epg.xml');
+      final result =
+          parser.parse(xmlContent, sourceUrl: 'https://example.com/epg.xml');
       final afterParse = DateTime.now().toUtc();
 
-      expect(result.fetchedAt.isAfter(beforeParse.subtract(const Duration(seconds: 1))), isTrue);
-      expect(result.fetchedAt.isBefore(afterParse.add(const Duration(seconds: 1))), isTrue);
+      expect(
+          result.fetchedAt
+              .isAfter(beforeParse.subtract(const Duration(seconds: 1))),
+          isTrue);
+      expect(
+          result.fetchedAt.isBefore(afterParse.add(const Duration(seconds: 1))),
+          isTrue);
       expect(result.sourceUrl, equals('https://example.com/epg.xml'));
     });
 

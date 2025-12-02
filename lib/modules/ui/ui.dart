@@ -3,5 +3,5 @@
 // Provides shared widgets, components, and icons.
 
 export 'components/components.dart';
-export 'shared/shared.dart';
 export 'icons/icons.dart';
+export 'shared/shared.dart';

@@ -37,10 +37,9 @@ abstract class IMoviesService {
 
 /// Movies service implementation
 class MoviesService implements IMoviesService {
-  final MoviesRepository _repository;
-
   MoviesService({required MoviesRepository repository})
       : _repository = repository;
+  final MoviesRepository _repository;
 
   @override
   Future<ApiResult<List<DomainCategory>>> getCategories(

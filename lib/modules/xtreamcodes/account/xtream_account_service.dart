@@ -20,25 +20,27 @@ abstract class IXtreamAccountService {
 
 /// Xtream account service implementation
 class XtreamAccountService implements IXtreamAccountService {
-  final XtreamAccountRepository _repository;
-
   XtreamAccountService({required XtreamAccountRepository repository})
       : _repository = repository;
+  final XtreamAccountRepository _repository;
 
   @override
   Future<ApiResult<XtreamAccountOverview>> getAccountOverview(
     XtreamCredentialsModel credentials,
   ) async {
     try {
-      moduleLogger.info('Fetching account overview for ${credentials.username}',
-          tag: 'XtreamAccount');
+      moduleLogger.info(
+        'Fetching account overview for ${credentials.username}',
+        tag: 'XtreamAccount',
+      );
 
       final result = await _repository.fetchAccountInfo(credentials);
 
       if (result.isSuccess) {
         moduleLogger.info(
-            'Account overview fetched successfully: ${result.data.status.displayName}',
-            tag: 'XtreamAccount');
+          'Account overview fetched successfully: ${result.data.status.displayName}',
+          tag: 'XtreamAccount',
+        );
       }
 
       return result;

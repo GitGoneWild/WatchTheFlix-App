@@ -32,15 +32,6 @@ const Duration _xmlEpgTimeout = Duration(minutes: 5);
 /// - Data is persisted to Hive storage for offline access
 /// - Respects `xtreamEpgTtl` configuration for cache expiration
 class EpgRepositoryImpl extends XtreamRepositoryBase implements EpgRepository {
-  final Dio _dio;
-  final XmltvParser _xmltvParser;
-  final XtreamLocalStorage? _localStorage;
-  final AppConfig _config;
-
-  // Cache for full XMLTV EpgData (in-memory)
-  final Map<String, EpgData> _fullEpgCache = {};
-  final Map<String, DateTime> _fullEpgCacheTimestamps = {};
-
   EpgRepositoryImpl({
     Dio? dio,
     XmltvParser? xmltvParser,
@@ -58,6 +49,14 @@ class EpgRepositoryImpl extends XtreamRepositoryBase implements EpgRepository {
         _xmltvParser = xmltvParser ?? XmltvParser(),
         _localStorage = localStorage,
         _config = config ?? AppConfig();
+  final Dio _dio;
+  final XmltvParser _xmltvParser;
+  final XtreamLocalStorage? _localStorage;
+  final AppConfig _config;
+
+  // Cache for full XMLTV EpgData (in-memory)
+  final Map<String, EpgData> _fullEpgCache = {};
+  final Map<String, DateTime> _fullEpgCacheTimestamps = {};
 
   /// Get cache TTL from config
   Duration get _cacheDuration => _config.xtreamEpgTtl;
@@ -93,8 +92,7 @@ class EpgRepositoryImpl extends XtreamRepositoryBase implements EpgRepository {
     final profileId = _getProfileId(credentials);
 
     // Check in-memory cache first
-    if (_fullEpgCache.containsKey(cacheKey) &&
-        _isFullEpgCacheValid(cacheKey)) {
+    if (_fullEpgCache.containsKey(cacheKey) && _isFullEpgCacheValid(cacheKey)) {
       moduleLogger.debug('Returning cached full EPG data', tag: 'EPG');
       return ApiResult.success(_fullEpgCache[cacheKey]!);
     }
@@ -108,7 +106,8 @@ class EpgRepositoryImpl extends XtreamRepositoryBase implements EpgRepository {
         if (syncStatus != null && !syncStatus.needsEpgRefresh(_cacheDuration)) {
           moduleLogger.debug('Returning EPG from local storage', tag: 'EPG');
           _fullEpgCache[cacheKey] = localEpgData;
-          _fullEpgCacheTimestamps[cacheKey] = syncStatus.lastEpgSync ?? DateTime.now();
+          _fullEpgCacheTimestamps[cacheKey] =
+              syncStatus.lastEpgSync ?? DateTime.now();
           return ApiResult.success(localEpgData);
         }
       }
@@ -179,7 +178,8 @@ class EpgRepositoryImpl extends XtreamRepositoryBase implements EpgRepository {
 
       // Return cached/local data if available
       if (localEpgData != null && localEpgData.isNotEmpty) {
-        moduleLogger.info('Returning cached EPG due to download failure', tag: 'EPG');
+        moduleLogger.info('Returning cached EPG due to download failure',
+            tag: 'EPG');
         return ApiResult.success(localEpgData);
       }
 
@@ -403,7 +403,8 @@ class EpgRepositoryImpl extends XtreamRepositoryBase implements EpgRepository {
           // Clear EPG from local storage by re-initializing with empty data
           await _localStorage.saveEpgPrograms(profileId, []);
         } catch (e) {
-          moduleLogger.warning('Failed to clear local EPG storage: $e', tag: 'EPG');
+          moduleLogger.warning('Failed to clear local EPG storage: $e',
+              tag: 'EPG');
         }
       }
 

@@ -20,6 +20,13 @@ import 'url_epg_provider.dart';
 /// - Providing fallback to cached data on fetch failure
 /// - Managing refresh policies
 class UnifiedEpgRepository {
+  UnifiedEpgRepository({
+    UrlEpgProvider? urlProvider,
+    EpgRepositoryImpl? xtreamRepository,
+    EpgLocalStorage? localStorage,
+  })  : _urlProvider = urlProvider ?? UrlEpgProvider(),
+        _xtreamRepository = xtreamRepository,
+        _localStorage = localStorage;
   final UrlEpgProvider _urlProvider;
   final EpgRepositoryImpl? _xtreamRepository;
   final EpgLocalStorage? _localStorage;
@@ -30,14 +37,6 @@ class UnifiedEpgRepository {
 
   /// Current source configuration.
   EpgSourceConfig? _currentConfig;
-
-  UnifiedEpgRepository({
-    UrlEpgProvider? urlProvider,
-    EpgRepositoryImpl? xtreamRepository,
-    EpgLocalStorage? localStorage,
-  })  : _urlProvider = urlProvider ?? UrlEpgProvider(),
-        _xtreamRepository = xtreamRepository,
-        _localStorage = localStorage;
 
   /// Get the current source configuration.
   EpgSourceConfig? get currentConfig => _currentConfig;
@@ -66,10 +65,12 @@ class UnifiedEpgRepository {
         'EPG source not configured',
         tag: 'UnifiedEpg',
       );
-      return ApiResult.failure(ApiError(
-        type: ApiErrorType.validation,
-        message: 'EPG source not configured',
-      ));
+      return ApiResult.failure(
+        const ApiError(
+          type: ApiErrorType.validation,
+          message: 'EPG source not configured',
+        ),
+      );
     }
 
     // Check cache first (unless force refresh)
@@ -99,7 +100,8 @@ class UnifiedEpgRepository {
     }
 
     // Fetch based on source type
-    return _fetchFromSource(config, credentials: credentials, cacheKey: cacheKey);
+    return _fetchFromSource(config,
+        credentials: credentials, cacheKey: cacheKey);
   }
 
   /// Fetch EPG from URL source.
@@ -113,15 +115,18 @@ class UnifiedEpgRepository {
     XtreamCredentialsModel credentials,
   ) async {
     if (_xtreamRepository == null) {
-      return ApiResult.failure(ApiError(
-        type: ApiErrorType.validation,
-        message: 'Xtream Codes repository not configured',
-      ));
+      return ApiResult.failure(
+        const ApiError(
+          type: ApiErrorType.validation,
+          message: 'Xtream Codes repository not configured',
+        ),
+      );
     }
 
     final cacheKey = EpgLocalStorage.generateXtreamSourceId(
-        '${credentials.baseUrl}_${credentials.username}');
-    return _xtreamRepository!.fetchFullXmltvEpg(credentials).then((result) {
+      '${credentials.baseUrl}_${credentials.username}',
+    );
+    return _xtreamRepository.fetchFullXmltvEpg(credentials).then((result) {
       if (result.isSuccess) {
         _updateCache(cacheKey, result.data);
         _saveToStorage(cacheKey, result.data);
@@ -242,8 +247,8 @@ class UnifiedEpgRepository {
   /// Fetch EPG from the configured source.
   Future<ApiResult<EpgData>> _fetchFromSource(
     EpgSourceConfig config, {
-    XtreamCredentialsModel? credentials,
     required String cacheKey,
+    XtreamCredentialsModel? credentials,
   }) async {
     try {
       switch (config.type) {
@@ -252,10 +257,12 @@ class UnifiedEpgRepository {
 
         case EpgSourceType.xtreamCodes:
           if (credentials == null) {
-            return ApiResult.failure(ApiError(
-              type: ApiErrorType.validation,
-              message: 'Xtream credentials required',
-            ));
+            return ApiResult.failure(
+              const ApiError(
+                type: ApiErrorType.validation,
+                message: 'Xtream credentials required',
+              ),
+            );
           }
           return _fetchFromXtreamSource(credentials, cacheKey);
 
@@ -337,15 +344,17 @@ class UnifiedEpgRepository {
     String cacheKey,
   ) async {
     if (_xtreamRepository == null) {
-      return ApiResult.failure(ApiError(
-        type: ApiErrorType.validation,
-        message: 'Xtream Codes repository not available',
-      ));
+      return ApiResult.failure(
+        const ApiError(
+          type: ApiErrorType.validation,
+          message: 'Xtream Codes repository not available',
+        ),
+      );
     }
 
     moduleLogger.info('Fetching EPG from Xtream source', tag: 'UnifiedEpg');
 
-    final result = await _xtreamRepository!.fetchFullXmltvEpg(credentials);
+    final result = await _xtreamRepository.fetchFullXmltvEpg(credentials);
 
     if (result.isSuccess) {
       _updateCache(cacheKey, result.data);
@@ -406,10 +415,10 @@ class UnifiedEpgRepository {
 
   /// Save EPG data to local storage.
   void _saveToStorage(String cacheKey, EpgData data) {
-    if (_localStorage == null || !_localStorage!.isInitialized) return;
+    if (_localStorage == null || !_localStorage.isInitialized) return;
 
     try {
-      _localStorage!.saveEpgData(cacheKey, data);
+      _localStorage.saveEpgData(cacheKey, data);
     } catch (e) {
       moduleLogger.warning(
         'Failed to save EPG to storage: $e',
@@ -420,10 +429,10 @@ class UnifiedEpgRepository {
 
   /// Load EPG data from local storage.
   EpgData? _loadFromStorage(String cacheKey) {
-    if (_localStorage == null || !_localStorage!.isInitialized) return null;
+    if (_localStorage == null || !_localStorage.isInitialized) return null;
 
     try {
-      return _localStorage!.loadEpgData(cacheKey);
+      return _localStorage.loadEpgData(cacheKey);
     } catch (e) {
       moduleLogger.warning(
         'Failed to load EPG from storage: $e',

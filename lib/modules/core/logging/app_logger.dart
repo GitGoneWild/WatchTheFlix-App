@@ -14,13 +14,6 @@ enum LogLevel {
 
 /// Log entry model
 class LogEntry {
-  final DateTime timestamp;
-  final LogLevel level;
-  final String message;
-  final dynamic error;
-  final StackTrace? stackTrace;
-  final String? tag;
-
   const LogEntry({
     required this.timestamp,
     required this.level,
@@ -29,6 +22,12 @@ class LogEntry {
     this.stackTrace,
     this.tag,
   });
+  final DateTime timestamp;
+  final LogLevel level;
+  final String message;
+  final dynamic error;
+  final StackTrace? stackTrace;
+  final String? tag;
 
   @override
   String toString() {
@@ -49,9 +48,9 @@ abstract class LoggerListener {
 
 /// Centralized application logger
 class ModuleLogger {
-  static final ModuleLogger _instance = ModuleLogger._internal();
   factory ModuleLogger() => _instance;
   ModuleLogger._internal();
+  static final ModuleLogger _instance = ModuleLogger._internal();
 
   final List<LoggerListener> _listeners = [];
   LogLevel _minLevel = LogLevel.debug;
@@ -70,23 +69,31 @@ class ModuleLogger {
   }
 
   /// Log a debug message
-  void debug(String message, {String? tag, dynamic error, StackTrace? stackTrace}) {
-    _log(LogLevel.debug, message, tag: tag, error: error, stackTrace: stackTrace);
+  void debug(String message,
+      {String? tag, dynamic error, StackTrace? stackTrace}) {
+    _log(LogLevel.debug, message,
+        tag: tag, error: error, stackTrace: stackTrace);
   }
 
   /// Log an info message
-  void info(String message, {String? tag, dynamic error, StackTrace? stackTrace}) {
-    _log(LogLevel.info, message, tag: tag, error: error, stackTrace: stackTrace);
+  void info(String message,
+      {String? tag, dynamic error, StackTrace? stackTrace}) {
+    _log(LogLevel.info, message,
+        tag: tag, error: error, stackTrace: stackTrace);
   }
 
   /// Log a warning message
-  void warning(String message, {String? tag, dynamic error, StackTrace? stackTrace}) {
-    _log(LogLevel.warning, message, tag: tag, error: error, stackTrace: stackTrace);
+  void warning(String message,
+      {String? tag, dynamic error, StackTrace? stackTrace}) {
+    _log(LogLevel.warning, message,
+        tag: tag, error: error, stackTrace: stackTrace);
   }
 
   /// Log an error message
-  void error(String message, {String? tag, dynamic error, StackTrace? stackTrace}) {
-    _log(LogLevel.error, message, tag: tag, error: error, stackTrace: stackTrace);
+  void error(String message,
+      {String? tag, dynamic error, StackTrace? stackTrace}) {
+    _log(LogLevel.error, message,
+        tag: tag, error: error, stackTrace: stackTrace);
   }
 
   void _log(

@@ -7,17 +7,16 @@ import '../parsing/m3u_parser.dart';
 
 /// M3U import result
 class M3uImportResult {
-  final List<M3uEntry> entries;
-  final int totalParsed;
-  final int errors;
-  final String? source;
-
   const M3uImportResult({
     required this.entries,
     required this.totalParsed,
     this.errors = 0,
     this.source,
   });
+  final List<M3uEntry> entries;
+  final int totalParsed;
+  final int errors;
+  final String? source;
 }
 
 /// M3U import service interface
@@ -29,7 +28,8 @@ abstract class IM3uImportService {
   Future<ApiResult<M3uImportResult>> importFromUrl(String url);
 
   /// Import M3U from raw content
-  ApiResult<M3uImportResult> importFromContent(String content, {String? source});
+  ApiResult<M3uImportResult> importFromContent(String content,
+      {String? source});
 
   /// Validate M3U content
   bool validate(String content);
@@ -37,14 +37,13 @@ abstract class IM3uImportService {
 
 /// M3U import service implementation
 class M3uImportService implements IM3uImportService {
-  final IM3uParser _parser;
-  final M3uImportRepository _repository;
-
   M3uImportService({
     required IM3uParser parser,
     required M3uImportRepository repository,
   })  : _parser = parser,
         _repository = repository;
+  final IM3uParser _parser;
+  final M3uImportRepository _repository;
 
   @override
   Future<ApiResult<M3uImportResult>> importFromFile(String path) async {
@@ -91,13 +90,16 @@ class M3uImportService implements IM3uImportService {
   }
 
   @override
-  ApiResult<M3uImportResult> importFromContent(String content, {String? source}) {
+  ApiResult<M3uImportResult> importFromContent(String content,
+      {String? source}) {
     try {
       if (!_parser.isValid(content)) {
-        return ApiResult.failure(ApiError(
-          type: ApiErrorType.validation,
-          message: 'Invalid M3U content',
-        ));
+        return ApiResult.failure(
+          const ApiError(
+            type: ApiErrorType.validation,
+            message: 'Invalid M3U content',
+          ),
+        );
       }
 
       final entries = _parser.parse(content);
@@ -107,11 +109,13 @@ class M3uImportService implements IM3uImportService {
         tag: 'M3uImport',
       );
 
-      return ApiResult.success(M3uImportResult(
-        entries: entries,
-        totalParsed: entries.length,
-        source: source,
-      ));
+      return ApiResult.success(
+        M3uImportResult(
+          entries: entries,
+          totalParsed: entries.length,
+          source: source,
+        ),
+      );
     } catch (e, stackTrace) {
       moduleLogger.error(
         'Failed to parse M3U content',

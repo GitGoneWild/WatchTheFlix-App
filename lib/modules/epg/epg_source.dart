@@ -25,25 +25,6 @@ enum EpgSourceType {
 /// Encapsulates the configuration needed to fetch EPG data from
 /// either a URL or Xtream Codes provider.
 class EpgSourceConfig extends Equatable {
-  /// The type of EPG source.
-  final EpgSourceType type;
-
-  /// EPG URL (required when type is [EpgSourceType.url]).
-  final String? epgUrl;
-
-  /// Profile ID for Xtream Codes (required when type is [EpgSourceType.xtreamCodes]).
-  final String? profileId;
-
-  /// Refresh interval for automatic EPG updates.
-  /// Defaults to 6 hours.
-  final Duration refreshInterval;
-
-  /// Whether to enable automatic refresh.
-  final bool autoRefreshEnabled;
-
-  /// Last successful fetch timestamp.
-  final DateTime? lastFetchedAt;
-
   const EpgSourceConfig({
     required this.type,
     this.epgUrl,
@@ -88,6 +69,47 @@ class EpgSourceConfig extends Equatable {
       autoRefreshEnabled: false,
     );
   }
+
+  /// Create from JSON.
+  factory EpgSourceConfig.fromJson(Map<String, dynamic> json) {
+    final typeStr = json['type'] as String?;
+    final type = EpgSourceType.values.firstWhere(
+      (e) => e.name == typeStr,
+      orElse: () => EpgSourceType.none,
+    );
+
+    return EpgSourceConfig(
+      type: type,
+      epgUrl: json['epgUrl'] as String?,
+      profileId: json['profileId'] as String?,
+      refreshInterval: Duration(
+        minutes: (json['refreshIntervalMinutes'] as int?) ?? 360,
+      ),
+      autoRefreshEnabled: (json['autoRefreshEnabled'] as bool?) ?? true,
+      lastFetchedAt: json['lastFetchedAt'] != null
+          ? DateTime.tryParse(json['lastFetchedAt'] as String)
+          : null,
+    );
+  }
+
+  /// The type of EPG source.
+  final EpgSourceType type;
+
+  /// EPG URL (required when type is [EpgSourceType.url]).
+  final String? epgUrl;
+
+  /// Profile ID for Xtream Codes (required when type is [EpgSourceType.xtreamCodes]).
+  final String? profileId;
+
+  /// Refresh interval for automatic EPG updates.
+  /// Defaults to 6 hours.
+  final Duration refreshInterval;
+
+  /// Whether to enable automatic refresh.
+  final bool autoRefreshEnabled;
+
+  /// Last successful fetch timestamp.
+  final DateTime? lastFetchedAt;
 
   /// Check if EPG is properly configured.
   bool get isConfigured {
@@ -149,28 +171,6 @@ class EpgSourceConfig extends Equatable {
       'autoRefreshEnabled': autoRefreshEnabled,
       'lastFetchedAt': lastFetchedAt?.toIso8601String(),
     };
-  }
-
-  /// Create from JSON.
-  factory EpgSourceConfig.fromJson(Map<String, dynamic> json) {
-    final typeStr = json['type'] as String?;
-    final type = EpgSourceType.values.firstWhere(
-      (e) => e.name == typeStr,
-      orElse: () => EpgSourceType.none,
-    );
-
-    return EpgSourceConfig(
-      type: type,
-      epgUrl: json['epgUrl'] as String?,
-      profileId: json['profileId'] as String?,
-      refreshInterval: Duration(
-        minutes: (json['refreshIntervalMinutes'] as int?) ?? 360,
-      ),
-      autoRefreshEnabled: (json['autoRefreshEnabled'] as bool?) ?? true,
-      lastFetchedAt: json['lastFetchedAt'] != null
-          ? DateTime.tryParse(json['lastFetchedAt'] as String)
-          : null,
-    );
   }
 
   @override

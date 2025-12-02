@@ -2,18 +2,6 @@ import 'package:equatable/equatable.dart';
 
 /// Series entity
 class Series extends Equatable {
-  final String id;
-  final String name;
-  final String? posterUrl;
-  final String? backdropUrl;
-  final String? categoryId;
-  final String? description;
-  final String? releaseDate;
-  final double? rating;
-  final String? genre;
-  final List<Season>? seasons;
-  final Map<String, dynamic>? metadata;
-
   const Series({
     required this.id,
     required this.name,
@@ -27,11 +15,23 @@ class Series extends Equatable {
     this.seasons,
     this.metadata,
   });
+  final String id;
+  final String name;
+  final String? posterUrl;
+  final String? backdropUrl;
+  final String? categoryId;
+  final String? description;
+  final String? releaseDate;
+  final double? rating;
+  final String? genre;
+  final List<Season>? seasons;
+  final Map<String, dynamic>? metadata;
 
   /// Get total episode count
   int get totalEpisodes {
     if (seasons == null) return 0;
-    return seasons!.fold(0, (sum, season) => sum + (season.episodes?.length ?? 0));
+    return seasons!
+        .fold(0, (sum, season) => sum + (season.episodes?.length ?? 0));
   }
 
   Series copyWith({
@@ -80,12 +80,6 @@ class Series extends Equatable {
 
 /// Season entity
 class Season extends Equatable {
-  final String id;
-  final int seasonNumber;
-  final String? name;
-  final String? posterUrl;
-  final List<Episode>? episodes;
-
   const Season({
     required this.id,
     required this.seasonNumber,
@@ -93,6 +87,11 @@ class Season extends Equatable {
     this.posterUrl,
     this.episodes,
   });
+  final String id;
+  final int seasonNumber;
+  final String? name;
+  final String? posterUrl;
+  final List<Episode>? episodes;
 
   @override
   List<Object?> get props => [id, seasonNumber, name, posterUrl, episodes];
@@ -100,14 +99,6 @@ class Season extends Equatable {
 
 /// Episode entity
 class Episode extends Equatable {
-  final String id;
-  final int episodeNumber;
-  final String name;
-  final String streamUrl;
-  final String? posterUrl;
-  final String? description;
-  final int? duration;
-
   const Episode({
     required this.id,
     required this.episodeNumber,
@@ -117,6 +108,13 @@ class Episode extends Equatable {
     this.description,
     this.duration,
   });
+  final String id;
+  final int episodeNumber;
+  final String name;
+  final String streamUrl;
+  final String? posterUrl;
+  final String? description;
+  final int? duration;
 
   @override
   List<Object?> get props => [

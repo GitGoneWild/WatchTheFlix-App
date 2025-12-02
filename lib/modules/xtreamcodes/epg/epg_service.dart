@@ -9,13 +9,6 @@ import 'epg_models.dart';
 
 /// EPG entry model for program listings (legacy format from short EPG API).
 class EpgEntry {
-  final String channelId;
-  final String title;
-  final String? description;
-  final DateTime startTime;
-  final DateTime endTime;
-  final String? language;
-
   const EpgEntry({
     required this.channelId,
     required this.title,
@@ -25,30 +18,13 @@ class EpgEntry {
     this.language,
   });
 
-  /// Check if this program is currently airing.
-  bool get isCurrentlyAiring {
-    final now = DateTime.now();
-    return now.isAfter(startTime) && now.isBefore(endTime);
-  }
-
-  /// Calculate progress percentage (0.0 to 1.0).
-  double get progress {
-    if (!isCurrentlyAiring) return 0.0;
-    final now = DateTime.now();
-    final totalDuration = endTime.difference(startTime).inSeconds;
-    final elapsed = now.difference(startTime).inSeconds;
-    return totalDuration > 0 ? elapsed / totalDuration : 0.0;
-  }
-
-  /// Duration of the program.
-  Duration get duration => endTime.difference(startTime);
-
   factory EpgEntry.fromJson(Map<String, dynamic> json) {
     final startTime = _parseDateTime(json['start'] ?? json['start_timestamp']);
     final endTime = _parseDateTime(json['end'] ?? json['stop_timestamp']);
 
     return EpgEntry(
-      channelId: json['epg_id']?.toString() ?? json['channel_id']?.toString() ?? '',
+      channelId:
+          json['epg_id']?.toString() ?? json['channel_id']?.toString() ?? '',
       title: json['title']?.toString() ?? '',
       description: json['description']?.toString() ?? json['desc']?.toString(),
       startTime: startTime ?? DateTime.now(),
@@ -68,6 +44,30 @@ class EpgEntry {
       language: program.language,
     );
   }
+  final String channelId;
+  final String title;
+  final String? description;
+  final DateTime startTime;
+  final DateTime endTime;
+  final String? language;
+
+  /// Check if this program is currently airing.
+  bool get isCurrentlyAiring {
+    final now = DateTime.now();
+    return now.isAfter(startTime) && now.isBefore(endTime);
+  }
+
+  /// Calculate progress percentage (0.0 to 1.0).
+  double get progress {
+    if (!isCurrentlyAiring) return 0.0;
+    final now = DateTime.now();
+    final totalDuration = endTime.difference(startTime).inSeconds;
+    final elapsed = now.difference(startTime).inSeconds;
+    return totalDuration > 0 ? elapsed / totalDuration : 0.0;
+  }
+
+  /// Duration of the program.
+  Duration get duration => endTime.difference(startTime);
 
   Map<String, dynamic> toJson() {
     return {
@@ -142,9 +142,8 @@ abstract class IEpgService {
 
 /// EPG service implementation.
 class EpgService implements IEpgService {
-  final EpgRepository _repository;
-
   EpgService({required EpgRepository repository}) : _repository = repository;
+  final EpgRepository _repository;
 
   @override
   Future<ApiResult<List<EpgEntry>>> getChannelEpg(
@@ -315,13 +314,15 @@ class EpgService implements IEpgService {
       final current = result.data.getCurrentProgram(channelId);
       final next = result.data.getNextProgram(channelId);
 
-      return ApiResult.success(EpgInfo(
-        currentProgram: current?.title,
-        nextProgram: next?.title,
-        startTime: current?.startTime,
-        endTime: current?.endTime,
-        description: current?.description,
-      ));
+      return ApiResult.success(
+        EpgInfo(
+          currentProgram: current?.title,
+          nextProgram: next?.title,
+          startTime: current?.startTime,
+          endTime: current?.endTime,
+          description: current?.description,
+        ),
+      );
     } catch (e) {
       return ApiResult.failure(ApiError.fromException(e));
     }

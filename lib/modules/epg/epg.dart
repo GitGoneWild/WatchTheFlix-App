@@ -28,8 +28,8 @@
 // final result = await service.fetchEpg();
 // ```
 
-export 'epg_source.dart';
 export 'epg_local_storage.dart';
-export 'url_epg_provider.dart';
+export 'epg_source.dart';
 export 'unified_epg_repository.dart';
 export 'unified_epg_service.dart';
+export 'url_epg_provider.dart';

@@ -15,18 +15,6 @@ const Duration _urlEpgTimeout = Duration(minutes: 3);
 
 /// EPG fetch result containing data and metadata.
 class EpgFetchResult {
-  /// The parsed EPG data.
-  final EpgData data;
-
-  /// Whether the fetch was successful.
-  final bool success;
-
-  /// Error message if fetch failed.
-  final String? errorMessage;
-
-  /// Timestamp when the fetch was attempted.
-  final DateTime fetchedAt;
-
   const EpgFetchResult({
     required this.data,
     required this.success,
@@ -62,6 +50,18 @@ class EpgFetchResult {
       fetchedAt: fetchedAt ?? DateTime.now().toUtc(),
     );
   }
+
+  /// The parsed EPG data.
+  final EpgData data;
+
+  /// Whether the fetch was successful.
+  final bool success;
+
+  /// Error message if fetch failed.
+  final String? errorMessage;
+
+  /// Timestamp when the fetch was attempted.
+  final DateTime fetchedAt;
 }
 
 /// Provider for fetching EPG data from URLs.
@@ -69,9 +69,6 @@ class EpgFetchResult {
 /// Supports XMLTV format EPG files from any HTTP/HTTPS URL.
 /// Handles network errors, parsing errors, and provides validation.
 class UrlEpgProvider {
-  final Dio _dio;
-  final XmltvParser _parser;
-
   UrlEpgProvider({Dio? dio, XmltvParser? parser})
       : _dio = dio ??
             Dio(BaseOptions(
@@ -83,6 +80,8 @@ class UrlEpgProvider {
               },
             )),
         _parser = parser ?? XmltvParser();
+  final Dio _dio;
+  final XmltvParser _parser;
 
   /// Fetch and parse EPG data from a URL.
   ///
@@ -99,10 +98,12 @@ class UrlEpgProvider {
           'Invalid EPG URL: $validationError',
           tag: 'UrlEpgProvider',
         );
-        return ApiResult.failure(ApiError(
-          type: ApiErrorType.validation,
-          message: validationError,
-        ));
+        return ApiResult.failure(
+          ApiError(
+            type: ApiErrorType.validation,
+            message: validationError,
+          ),
+        );
       }
 
       // Fetch the EPG content
@@ -118,11 +119,14 @@ class UrlEpgProvider {
 
       final content = response.data;
       if (content == null || content.isEmpty) {
-        moduleLogger.warning('Empty EPG response from URL', tag: 'UrlEpgProvider');
-        return ApiResult.failure(ApiError(
-          type: ApiErrorType.parse,
-          message: 'Empty EPG response received',
-        ));
+        moduleLogger.warning('Empty EPG response from URL',
+            tag: 'UrlEpgProvider');
+        return ApiResult.failure(
+          const ApiError(
+            type: ApiErrorType.parse,
+            message: 'Empty EPG response received',
+          ),
+        );
       }
 
       // Validate content looks like XMLTV
@@ -131,10 +135,12 @@ class UrlEpgProvider {
           'Response does not appear to be valid XMLTV format',
           tag: 'UrlEpgProvider',
         );
-        return ApiResult.failure(ApiError(
-          type: ApiErrorType.parse,
-          message: 'Invalid EPG format. Expected XMLTV format.',
-        ));
+        return ApiResult.failure(
+          const ApiError(
+            type: ApiErrorType.parse,
+            message: 'Invalid EPG format. Expected XMLTV format.',
+          ),
+        );
       }
 
       moduleLogger.debug(
@@ -150,10 +156,12 @@ class UrlEpgProvider {
           'Parsed EPG data is empty',
           tag: 'UrlEpgProvider',
         );
-        return ApiResult.failure(ApiError(
-          type: ApiErrorType.parse,
-          message: 'No valid EPG data found in the response',
-        ));
+        return ApiResult.failure(
+          const ApiError(
+            type: ApiErrorType.parse,
+            message: 'No valid EPG data found in the response',
+          ),
+        );
       }
 
       moduleLogger.info(
@@ -183,11 +191,13 @@ class UrlEpgProvider {
         error: e,
         stackTrace: stackTrace,
       );
-      return ApiResult.failure(ApiError(
-        type: ApiErrorType.unknown,
-        message: 'Failed to fetch EPG: ${e.toString()}',
-        originalError: e,
-      ));
+      return ApiResult.failure(
+        ApiError(
+          type: ApiErrorType.unknown,
+          message: 'Failed to fetch EPG: ${e.toString()}',
+          originalError: e,
+        ),
+      );
     }
   }
 
@@ -199,10 +209,12 @@ class UrlEpgProvider {
       // Basic URL validation
       final validationError = _validateUrl(url);
       if (validationError != null) {
-        return ApiResult.failure(ApiError(
-          type: ApiErrorType.validation,
-          message: validationError,
-        ));
+        return ApiResult.failure(
+          ApiError(
+            type: ApiErrorType.validation,
+            message: validationError,
+          ),
+        );
       }
 
       // Try a HEAD request to check if URL is accessible
@@ -217,19 +229,25 @@ class UrlEpgProvider {
       if (response.statusCode == 200) {
         return ApiResult.success(true);
       } else if (response.statusCode == 401 || response.statusCode == 403) {
-        return ApiResult.failure(ApiError.auth(
-          'EPG URL requires authentication',
-        ));
+        return ApiResult.failure(
+          ApiError.auth(
+            'EPG URL requires authentication',
+          ),
+        );
       } else if (response.statusCode == 404) {
-        return ApiResult.failure(ApiError(
-          type: ApiErrorType.notFound,
-          message: 'EPG URL not found',
-        ));
+        return ApiResult.failure(
+          const ApiError(
+            type: ApiErrorType.notFound,
+            message: 'EPG URL not found',
+          ),
+        );
       } else {
-        return ApiResult.failure(ApiError.server(
-          'EPG URL returned status ${response.statusCode}',
-          response.statusCode,
-        ));
+        return ApiResult.failure(
+          ApiError.server(
+            'EPG URL returned status ${response.statusCode}',
+            response.statusCode,
+          ),
+        );
       }
     } on DioException catch (e) {
       return ApiResult.failure(_handleDioError(e));
@@ -289,7 +307,7 @@ class UrlEpgProvider {
         return ApiError.network('Unable to connect to EPG server');
 
       case DioExceptionType.cancel:
-        return ApiError(
+        return const ApiError(
           type: ApiErrorType.unknown,
           message: 'EPG request was cancelled',
         );

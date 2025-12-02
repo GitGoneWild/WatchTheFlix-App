@@ -10,15 +10,14 @@ import '../logging/app_logger.dart';
 
 /// Network request result wrapper
 class NetworkResult<T> {
-  final T? data;
-  final NetworkError? error;
-  final int? statusCode;
-
   const NetworkResult({
     this.data,
     this.error,
     this.statusCode,
   });
+  final T? data;
+  final NetworkError? error;
+  final int? statusCode;
 
   bool get isSuccess => error == null && data != null;
   bool get isFailure => error != null;
@@ -26,7 +25,7 @@ class NetworkResult<T> {
   /// Map the result to a different type
   NetworkResult<R> map<R>(R Function(T data) mapper) {
     if (data != null) {
-      return NetworkResult(data: mapper(data!), statusCode: statusCode);
+      return NetworkResult(data: mapper(data as T), statusCode: statusCode);
     }
     return NetworkResult(error: error, statusCode: statusCode);
   }
@@ -44,17 +43,16 @@ enum NetworkErrorType {
 
 /// Network error model
 class NetworkError {
-  final NetworkErrorType type;
-  final String message;
-  final int? statusCode;
-  final dynamic originalError;
-
   const NetworkError({
     required this.type,
     required this.message,
     this.statusCode,
     this.originalError,
   });
+  final NetworkErrorType type;
+  final String message;
+  final int? statusCode;
+  final dynamic originalError;
 
   @override
   String toString() => 'NetworkError($type): $message';
@@ -100,15 +98,14 @@ abstract class INetworkClient {
 
 /// Retry configuration
 class RetryConfig {
-  final int maxRetries;
-  final Duration initialDelay;
-  final double backoffMultiplier;
-
   const RetryConfig({
     this.maxRetries = 3,
     this.initialDelay = const Duration(seconds: 1),
     this.backoffMultiplier = 2.0,
   });
+  final int maxRetries;
+  final Duration initialDelay;
+  final double backoffMultiplier;
 
   /// Calculate delay for a given retry attempt
   Duration getDelayForAttempt(int attempt) {

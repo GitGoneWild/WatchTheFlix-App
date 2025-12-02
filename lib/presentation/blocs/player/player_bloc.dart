@@ -12,9 +12,8 @@ abstract class PlayerEvent extends Equatable {
 }
 
 class InitializePlayerEvent extends PlayerEvent {
-  final Channel channel;
-
   const InitializePlayerEvent(this.channel);
+  final Channel channel;
 
   @override
   List<Object?> get props => [channel];
@@ -29,18 +28,16 @@ class PauseEvent extends PlayerEvent {
 }
 
 class SeekEvent extends PlayerEvent {
-  final Duration position;
-
   const SeekEvent(this.position);
+  final Duration position;
 
   @override
   List<Object?> get props => [position];
 }
 
 class SetVolumeEvent extends PlayerEvent {
-  final double volume;
-
   const SetVolumeEvent(this.volume);
+  final double volume;
 
   @override
   List<Object?> get props => [volume];
@@ -55,18 +52,16 @@ class TogglePiPEvent extends PlayerEvent {
 }
 
 class ChangeQualityEvent extends PlayerEvent {
-  final String quality;
-
   const ChangeQualityEvent(this.quality);
+  final String quality;
 
   @override
   List<Object?> get props => [quality];
 }
 
 class PlayerErrorEvent extends PlayerEvent {
-  final String message;
-
   const PlayerErrorEvent(this.message);
+  final String message;
 
   @override
   List<Object?> get props => [message];
@@ -89,24 +84,14 @@ class PlayerInitialState extends PlayerState {
 }
 
 class PlayerLoadingState extends PlayerState {
-  final Channel channel;
-
   const PlayerLoadingState(this.channel);
+  final Channel channel;
 
   @override
   List<Object?> get props => [channel];
 }
 
 class PlayerPlayingState extends PlayerState {
-  final Channel channel;
-  final Duration position;
-  final Duration duration;
-  final double volume;
-  final bool isFullscreen;
-  final bool isPiP;
-  final String? quality;
-  final bool isBuffering;
-
   const PlayerPlayingState({
     required this.channel,
     this.position = Duration.zero,
@@ -117,6 +102,14 @@ class PlayerPlayingState extends PlayerState {
     this.quality,
     this.isBuffering = false,
   });
+  final Channel channel;
+  final Duration position;
+  final Duration duration;
+  final double volume;
+  final bool isFullscreen;
+  final bool isPiP;
+  final String? quality;
+  final bool isBuffering;
 
   PlayerPlayingState copyWith({
     Channel? channel,
@@ -154,28 +147,26 @@ class PlayerPlayingState extends PlayerState {
 }
 
 class PlayerPausedState extends PlayerState {
-  final Channel channel;
-  final Duration position;
-  final Duration duration;
-
   const PlayerPausedState({
     required this.channel,
     required this.position,
     required this.duration,
   });
+  final Channel channel;
+  final Duration position;
+  final Duration duration;
 
   @override
   List<Object?> get props => [channel, position, duration];
 }
 
 class PlayerErrorState extends PlayerState {
-  final String message;
-  final Channel? channel;
-
   const PlayerErrorState({
     required this.message,
     this.channel,
   });
+  final String message;
+  final Channel? channel;
 
   @override
   List<Object?> get props => [message, channel];
@@ -202,28 +193,32 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
   ) {
     emit(PlayerLoadingState(event.channel));
     emit(PlayerPlayingState(channel: event.channel, isBuffering: true));
-    emit(PlayerPlayingState(channel: event.channel, isBuffering: false));
+    emit(PlayerPlayingState(channel: event.channel));
   }
 
   void _onPlay(PlayEvent event, Emitter<PlayerState> emit) {
     if (state is PlayerPausedState) {
       final pausedState = state as PlayerPausedState;
-      emit(PlayerPlayingState(
-        channel: pausedState.channel,
-        position: pausedState.position,
-        duration: pausedState.duration,
-      ));
+      emit(
+        PlayerPlayingState(
+          channel: pausedState.channel,
+          position: pausedState.position,
+          duration: pausedState.duration,
+        ),
+      );
     }
   }
 
   void _onPause(PauseEvent event, Emitter<PlayerState> emit) {
     if (state is PlayerPlayingState) {
       final playingState = state as PlayerPlayingState;
-      emit(PlayerPausedState(
-        channel: playingState.channel,
-        position: playingState.position,
-        duration: playingState.duration,
-      ));
+      emit(
+        PlayerPausedState(
+          channel: playingState.channel,
+          position: playingState.position,
+          duration: playingState.duration,
+        ),
+      );
     }
   }
 
@@ -266,12 +261,11 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
   }
 
   void _onPlayerError(PlayerErrorEvent event, Emitter<PlayerState> emit) {
-    final currentChannel =
-        state is PlayerPlayingState
-            ? (state as PlayerPlayingState).channel
-            : state is PlayerLoadingState
-                ? (state as PlayerLoadingState).channel
-                : null;
+    final currentChannel = state is PlayerPlayingState
+        ? (state as PlayerPlayingState).channel
+        : state is PlayerLoadingState
+            ? (state as PlayerLoadingState).channel
+            : null;
     emit(PlayerErrorState(message: event.message, channel: currentChannel));
   }
 

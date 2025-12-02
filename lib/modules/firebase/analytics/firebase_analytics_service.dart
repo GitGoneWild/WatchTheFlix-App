@@ -8,7 +8,8 @@ import '../../core/logging/app_logger.dart';
 /// Apps can implement this to use Firebase or any other analytics provider
 abstract class IAnalyticsService {
   /// Track screen view
-  Future<void> trackScreenView(String screenName, {Map<String, dynamic>? parameters});
+  Future<void> trackScreenView(String screenName,
+      {Map<String, dynamic>? parameters});
 
   /// Track custom event
   Future<void> trackEvent(String eventName, {Map<String, dynamic>? parameters});
@@ -26,9 +27,9 @@ abstract class IAnalyticsService {
 /// Firebase analytics service implementation
 /// Only functional when Firebase is configured and enabled
 class FirebaseAnalyticsService implements IAnalyticsService {
+  FirebaseAnalyticsService({AppConfig? config})
+      : _config = config ?? AppConfig();
   final AppConfig _config;
-
-  FirebaseAnalyticsService({AppConfig? config}) : _config = config ?? AppConfig();
 
   @override
   bool get isEnabled => _config.firebaseEnabled;
@@ -126,10 +127,12 @@ class NoOpAnalyticsService implements IAnalyticsService {
   bool get isEnabled => false;
 
   @override
-  Future<void> trackScreenView(String screenName, {Map<String, dynamic>? parameters}) async {}
+  Future<void> trackScreenView(String screenName,
+      {Map<String, dynamic>? parameters}) async {}
 
   @override
-  Future<void> trackEvent(String eventName, {Map<String, dynamic>? parameters}) async {}
+  Future<void> trackEvent(String eventName,
+      {Map<String, dynamic>? parameters}) async {}
 
   @override
   Future<void> setUserProperty(String name, String value) async {}

@@ -4,10 +4,9 @@
 
 /// Storage result wrapper
 class StorageResult<T> {
+  const StorageResult({this.data, this.error});
   final T? data;
   final StorageError? error;
-
-  const StorageResult({this.data, this.error});
 
   bool get isSuccess => error == null;
   bool get isFailure => error != null;
@@ -24,15 +23,14 @@ enum StorageErrorType {
 
 /// Storage error model
 class StorageError {
-  final StorageErrorType type;
-  final String message;
-  final dynamic originalError;
-
   const StorageError({
     required this.type,
     required this.message,
     this.originalError,
   });
+  final StorageErrorType type;
+  final String message;
+  final dynamic originalError;
 
   @override
   String toString() => 'StorageError($type): $message';
@@ -66,7 +64,9 @@ abstract class IStorageService {
 
   /// Store a list of JSON objects
   Future<StorageResult<void>> setJsonList(
-      String key, List<Map<String, dynamic>> value);
+    String key,
+    List<Map<String, dynamic>> value,
+  );
 
   /// Get a list of JSON objects
   Future<StorageResult<List<Map<String, dynamic>>>> getJsonList(String key);

@@ -11,6 +11,15 @@ import '../models/channel_model.dart';
 
 /// Channel repository implementation
 class ChannelRepositoryImpl implements ChannelRepository {
+  ChannelRepositoryImpl({
+    required PlaylistRepository playlistRepository,
+    required XtreamApiClient xtreamApiClient,
+    required XtreamService xtreamService,
+    required LocalStorage localStorage,
+  })  : _playlistRepository = playlistRepository,
+        _xtreamApiClient = xtreamApiClient,
+        _xtreamService = xtreamService,
+        _localStorage = localStorage;
   final PlaylistRepository _playlistRepository;
   final XtreamApiClient _xtreamApiClient;
   final XtreamService _xtreamService;
@@ -21,16 +30,6 @@ class ChannelRepositoryImpl implements ChannelRepository {
   List<Category>? _categoryCache;
   List<Movie>? _movieCache;
   List<Series>? _seriesCache;
-
-  ChannelRepositoryImpl({
-    required PlaylistRepository playlistRepository,
-    required XtreamApiClient xtreamApiClient,
-    required XtreamService xtreamService,
-    required LocalStorage localStorage,
-  })  : _playlistRepository = playlistRepository,
-        _xtreamApiClient = xtreamApiClient,
-        _xtreamService = xtreamService,
-        _localStorage = localStorage;
 
   @override
   Future<List<Channel>> getLiveChannels({String? categoryId}) async {
@@ -46,7 +45,8 @@ class ChannelRepositoryImpl implements ChannelRepository {
       // Sort channels by category name and then by channel name
       final sortedChannels = channels.toList()
         ..sort((a, b) {
-          final categoryCompare = (a.groupTitle ?? '').compareTo(b.groupTitle ?? '');
+          final categoryCompare =
+              (a.groupTitle ?? '').compareTo(b.groupTitle ?? '');
           if (categoryCompare != 0) return categoryCompare;
           return a.name.compareTo(b.name);
         });
@@ -97,7 +97,8 @@ class ChannelRepositoryImpl implements ChannelRepository {
     }
 
     // For M3U, filter channels by movie type
-    final channels = await _playlistRepository.refreshPlaylist(activePlaylist.id);
+    final channels =
+        await _playlistRepository.refreshPlaylist(activePlaylist.id);
     return channels
         .where((c) => c.type == ContentType.movie)
         .map(

@@ -87,7 +87,6 @@ void main() {
       test('should return false for URL config without URL', () {
         const config = EpgSourceConfig(
           type: EpgSourceType.url,
-          epgUrl: null,
         );
         expect(config.isConfigured, isFalse);
       });
@@ -108,7 +107,6 @@ void main() {
       test('should return false for Xtream config without profileId', () {
         const config = EpgSourceConfig(
           type: EpgSourceType.xtreamCodes,
-          profileId: null,
         );
         expect(config.isConfigured, isFalse);
       });
@@ -130,7 +128,6 @@ void main() {
           type: EpgSourceType.url,
           epgUrl: 'https://example.com/epg.xml',
           autoRefreshEnabled: false,
-          lastFetchedAt: null,
         );
         // Still true because lastFetchedAt is null
         expect(config.needsRefresh, isTrue);
@@ -141,7 +138,6 @@ void main() {
         final config = EpgSourceConfig(
           type: EpgSourceType.url,
           epgUrl: 'https://example.com/epg.xml',
-          refreshInterval: const Duration(hours: 6),
           lastFetchedAt: oldFetch,
         );
         expect(config.needsRefresh, isTrue);
@@ -152,7 +148,6 @@ void main() {
         final config = EpgSourceConfig(
           type: EpgSourceType.url,
           epgUrl: 'https://example.com/epg.xml',
-          refreshInterval: const Duration(hours: 6),
           lastFetchedAt: recentFetch,
         );
         expect(config.needsRefresh, isFalse);

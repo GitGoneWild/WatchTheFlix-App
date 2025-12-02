@@ -7,13 +7,6 @@ import '../../core/utils/extensions.dart';
 
 /// Video player widget with controls
 class VideoPlayerWidget extends StatefulWidget {
-  final String url;
-  final String? title;
-  final bool allowPip;
-  final bool autoRetry;
-  final bool autoPlay;
-  final VoidCallback? onBack;
-
   const VideoPlayerWidget({
     super.key,
     required this.url,
@@ -23,6 +16,12 @@ class VideoPlayerWidget extends StatefulWidget {
     this.autoPlay = true,
     this.onBack,
   });
+  final String url;
+  final String? title;
+  final bool allowPip;
+  final bool autoRetry;
+  final bool autoPlay;
+  final VoidCallback? onBack;
 
   @override
   State<VideoPlayerWidget> createState() => _VideoPlayerWidgetState();
@@ -170,7 +169,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
           _seekRelative(const Duration(seconds: 10));
         }
       },
-      child: Container(
+      child: ColoredBox(
         color: Colors.black,
         child: Stack(
           alignment: Alignment.center,
@@ -232,7 +231,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   }
 
   Widget _buildControls() {
-    return Container(
+    return DecoratedBox(
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
@@ -282,7 +281,8 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               IconButton(
-                icon: const Icon(Icons.replay_10, color: Colors.white, size: 36),
+                icon:
+                    const Icon(Icons.replay_10, color: Colors.white, size: 36),
                 onPressed: () => _seekRelative(const Duration(seconds: -10)),
               ),
               const SizedBox(width: 24),
@@ -296,7 +296,8 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
               ),
               const SizedBox(width: 24),
               IconButton(
-                icon: const Icon(Icons.forward_10, color: Colors.white, size: 36),
+                icon:
+                    const Icon(Icons.forward_10, color: Colors.white, size: 36),
                 onPressed: () => _seekRelative(const Duration(seconds: 10)),
               ),
             ],

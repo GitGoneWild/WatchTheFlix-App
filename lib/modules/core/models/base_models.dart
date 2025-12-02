@@ -12,16 +12,6 @@ enum ContentType {
 
 /// Channel domain model
 class DomainChannel extends Equatable {
-  final String id;
-  final String name;
-  final String streamUrl;
-  final String? logoUrl;
-  final String? groupTitle;
-  final String? categoryId;
-  final ContentType type;
-  final Map<String, dynamic>? metadata;
-  final EpgInfo? epgInfo;
-
   const DomainChannel({
     required this.id,
     required this.name,
@@ -33,6 +23,15 @@ class DomainChannel extends Equatable {
     this.metadata,
     this.epgInfo,
   });
+  final String id;
+  final String name;
+  final String streamUrl;
+  final String? logoUrl;
+  final String? groupTitle;
+  final String? categoryId;
+  final ContentType type;
+  final Map<String, dynamic>? metadata;
+  final EpgInfo? epgInfo;
 
   DomainChannel copyWith({
     String? id,
@@ -74,12 +73,6 @@ class DomainChannel extends Equatable {
 
 /// EPG information model
 class EpgInfo extends Equatable {
-  final String? currentProgram;
-  final String? nextProgram;
-  final DateTime? startTime;
-  final DateTime? endTime;
-  final String? description;
-
   const EpgInfo({
     this.currentProgram,
     this.nextProgram,
@@ -87,6 +80,11 @@ class EpgInfo extends Equatable {
     this.endTime,
     this.description,
   });
+  final String? currentProgram;
+  final String? nextProgram;
+  final DateTime? startTime;
+  final DateTime? endTime;
+  final String? description;
 
   /// Calculate progress percentage (0.0 to 1.0)
   double get progress {
@@ -111,12 +109,6 @@ class EpgInfo extends Equatable {
 
 /// Category domain model
 class DomainCategory extends Equatable {
-  final String id;
-  final String name;
-  final int channelCount;
-  final String? iconUrl;
-  final int? sortOrder;
-
   const DomainCategory({
     required this.id,
     required this.name,
@@ -124,6 +116,11 @@ class DomainCategory extends Equatable {
     this.iconUrl,
     this.sortOrder,
   });
+  final String id;
+  final String name;
+  final int channelCount;
+  final String? iconUrl;
+  final int? sortOrder;
 
   DomainCategory copyWith({
     String? id,
@@ -147,20 +144,6 @@ class DomainCategory extends Equatable {
 
 /// VOD (Video on Demand) item domain model
 class VodItem extends Equatable {
-  final String id;
-  final String name;
-  final String streamUrl;
-  final String? posterUrl;
-  final String? backdropUrl;
-  final String? description;
-  final String? categoryId;
-  final String? genre;
-  final String? releaseDate;
-  final double? rating;
-  final int? duration;
-  final ContentType type;
-  final Map<String, dynamic>? metadata;
-
   const VodItem({
     required this.id,
     required this.name,
@@ -176,6 +159,19 @@ class VodItem extends Equatable {
     this.type = ContentType.movie,
     this.metadata,
   });
+  final String id;
+  final String name;
+  final String streamUrl;
+  final String? posterUrl;
+  final String? backdropUrl;
+  final String? description;
+  final String? categoryId;
+  final String? genre;
+  final String? releaseDate;
+  final double? rating;
+  final int? duration;
+  final ContentType type;
+  final Map<String, dynamic>? metadata;
 
   VodItem copyWith({
     String? id,
@@ -229,18 +225,6 @@ class VodItem extends Equatable {
 
 /// Series domain model
 class DomainSeries extends Equatable {
-  final String id;
-  final String name;
-  final String? posterUrl;
-  final String? backdropUrl;
-  final String? description;
-  final String? categoryId;
-  final String? genre;
-  final String? releaseDate;
-  final double? rating;
-  final List<Season> seasons;
-  final Map<String, dynamic>? metadata;
-
   const DomainSeries({
     required this.id,
     required this.name,
@@ -254,6 +238,17 @@ class DomainSeries extends Equatable {
     this.seasons = const [],
     this.metadata,
   });
+  final String id;
+  final String name;
+  final String? posterUrl;
+  final String? backdropUrl;
+  final String? description;
+  final String? categoryId;
+  final String? genre;
+  final String? releaseDate;
+  final double? rating;
+  final List<Season> seasons;
+  final Map<String, dynamic>? metadata;
 
   int get totalEpisodes =>
       seasons.fold(0, (sum, season) => sum + season.episodes.length);
@@ -276,12 +271,6 @@ class DomainSeries extends Equatable {
 
 /// Season model
 class Season extends Equatable {
-  final String id;
-  final int seasonNumber;
-  final String? name;
-  final String? posterUrl;
-  final List<Episode> episodes;
-
   const Season({
     required this.id,
     required this.seasonNumber,
@@ -289,6 +278,11 @@ class Season extends Equatable {
     this.posterUrl,
     this.episodes = const [],
   });
+  final String id;
+  final int seasonNumber;
+  final String? name;
+  final String? posterUrl;
+  final List<Episode> episodes;
 
   @override
   List<Object?> get props => [id, seasonNumber, name, posterUrl, episodes];
@@ -296,15 +290,6 @@ class Season extends Equatable {
 
 /// Episode model
 class Episode extends Equatable {
-  final String id;
-  final int episodeNumber;
-  final String name;
-  final String streamUrl;
-  final String? description;
-  final String? thumbnailUrl;
-  final int? duration;
-  final String? airDate;
-
   const Episode({
     required this.id,
     required this.episodeNumber,
@@ -315,6 +300,14 @@ class Episode extends Equatable {
     this.duration,
     this.airDate,
   });
+  final String id;
+  final int episodeNumber;
+  final String name;
+  final String streamUrl;
+  final String? description;
+  final String? thumbnailUrl;
+  final int? duration;
+  final String? airDate;
 
   @override
   List<Object?> get props => [
@@ -331,15 +324,6 @@ class Episode extends Equatable {
 
 /// Profile domain model
 class Profile extends Equatable {
-  final String id;
-  final String name;
-  final ProfileType type;
-  final String? url;
-  final XtreamCredentialsModel? xtreamCredentials;
-  final DateTime createdAt;
-  final DateTime? lastUpdated;
-  final bool isActive;
-
   const Profile({
     required this.id,
     required this.name,
@@ -350,10 +334,17 @@ class Profile extends Equatable {
     this.lastUpdated,
     this.isActive = true,
   });
+  final String id;
+  final String name;
+  final ProfileType type;
+  final String? url;
+  final XtreamCredentialsModel? xtreamCredentials;
+  final DateTime createdAt;
+  final DateTime? lastUpdated;
+  final bool isActive;
 
   bool get isXtream => type == ProfileType.xtream;
-  bool get isM3U =>
-      type == ProfileType.m3uFile || type == ProfileType.m3uUrl;
+  bool get isM3U => type == ProfileType.m3uFile || type == ProfileType.m3uUrl;
 
   @override
   List<Object?> get props => [
@@ -377,17 +368,25 @@ enum ProfileType {
 
 /// Xtream credentials model
 class XtreamCredentialsModel extends Equatable {
-  final String host;
-  final String username;
-  final String password;
-  final String? serverInfo;
-
   const XtreamCredentialsModel({
     required this.host,
     required this.username,
     required this.password,
     this.serverInfo,
   });
+
+  factory XtreamCredentialsModel.fromJson(Map<String, dynamic> json) {
+    return XtreamCredentialsModel(
+      host: json['host'] as String,
+      username: json['username'] as String,
+      password: json['password'] as String,
+      serverInfo: json['serverInfo'] as String?,
+    );
+  }
+  final String host;
+  final String username;
+  final String password;
+  final String? serverInfo;
 
   /// Get base URL for API calls
   String get baseUrl {
@@ -406,15 +405,6 @@ class XtreamCredentialsModel extends Equatable {
       'password': password,
       'serverInfo': serverInfo,
     };
-  }
-
-  factory XtreamCredentialsModel.fromJson(Map<String, dynamic> json) {
-    return XtreamCredentialsModel(
-      host: json['host'] as String,
-      username: json['username'] as String,
-      password: json['password'] as String,
-      serverInfo: json['serverInfo'] as String?,
-    );
   }
 
   @override

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:watchtheflix/modules/epg/url_epg_provider.dart';
 import 'package:watchtheflix/modules/core/models/api_result.dart';
+import 'package:watchtheflix/modules/epg/url_epg_provider.dart';
 import 'package:watchtheflix/modules/xtreamcodes/epg/epg_models.dart';
 
 void main() {
@@ -102,7 +102,8 @@ void main() {
         programs: const {},
         fetchedAt: fetchTime,
       );
-      final result = EpgFetchResult.failure('Test error', cachedData: cachedData);
+      final result =
+          EpgFetchResult.failure('Test error', cachedData: cachedData);
 
       expect(result.success, isFalse);
       expect(result.errorMessage, equals('Test error'));

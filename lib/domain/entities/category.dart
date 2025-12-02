@@ -2,17 +2,16 @@ import 'package:equatable/equatable.dart';
 
 /// Category entity
 class Category extends Equatable {
-  final String id;
-  final String name;
-  final String? parentId;
-  final int channelCount;
-
   const Category({
     required this.id,
     required this.name,
     this.parentId,
     this.channelCount = 0,
   });
+  final String id;
+  final String name;
+  final String? parentId;
+  final int channelCount;
 
   Category copyWith({
     String? id,

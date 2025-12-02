@@ -30,15 +30,14 @@ abstract class IRemoteConfigService {
 
 /// Firebase remote config service implementation
 class FirebaseRemoteConfigService implements IRemoteConfigService {
-  final AppConfig _config;
-  final Map<String, dynamic> _defaults;
-  final Map<String, dynamic> _values = {};
-
   FirebaseRemoteConfigService({
     AppConfig? config,
     Map<String, dynamic>? defaults,
   })  : _config = config ?? AppConfig(),
         _defaults = defaults ?? {};
+  final AppConfig _config;
+  final Map<String, dynamic> _defaults;
+  final Map<String, dynamic> _values = {};
 
   @override
   bool get isEnabled => _config.firebaseEnabled;
@@ -76,7 +75,9 @@ class FirebaseRemoteConfigService implements IRemoteConfigService {
     try {
       // Firebase implementation would go here
       // return FirebaseRemoteConfig.instance.getBool(key);
-      return (_values[key] as bool?) ?? (_defaults[key] as bool?) ?? defaultValue;
+      return (_values[key] as bool?) ??
+          (_defaults[key] as bool?) ??
+          defaultValue;
     } catch (e) {
       return (_defaults[key] as bool?) ?? defaultValue;
     }
@@ -91,7 +92,9 @@ class FirebaseRemoteConfigService implements IRemoteConfigService {
     try {
       // Firebase implementation would go here
       // return FirebaseRemoteConfig.instance.getString(key);
-      return (_values[key] as String?) ?? (_defaults[key] as String?) ?? defaultValue;
+      return (_values[key] as String?) ??
+          (_defaults[key] as String?) ??
+          defaultValue;
     } catch (e) {
       return (_defaults[key] as String?) ?? defaultValue;
     }
@@ -150,10 +153,9 @@ class FirebaseRemoteConfigService implements IRemoteConfigService {
 
 /// No-op remote config service using defaults only
 class NoOpRemoteConfigService implements IRemoteConfigService {
-  final Map<String, dynamic> _defaults;
-
   NoOpRemoteConfigService({Map<String, dynamic>? defaults})
       : _defaults = defaults ?? {};
+  final Map<String, dynamic> _defaults;
 
   @override
   bool get isEnabled => false;

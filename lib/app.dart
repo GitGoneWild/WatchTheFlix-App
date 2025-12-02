@@ -4,10 +4,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'core/config/dependency_injection.dart';
 import 'core/constants/app_constants.dart';
 import 'core/theme/app_theme.dart';
-import 'presentation/blocs/playlist/playlist_bloc.dart';
 import 'presentation/blocs/channel/channel_bloc.dart';
-import 'presentation/blocs/navigation/navigation_bloc.dart';
 import 'presentation/blocs/favorites/favorites_bloc.dart';
+import 'presentation/blocs/navigation/navigation_bloc.dart';
+import 'presentation/blocs/playlist/playlist_bloc.dart';
 import 'presentation/blocs/settings/settings_bloc.dart' as settings;
 import 'presentation/routes/app_router.dart';
 
@@ -29,10 +29,12 @@ class WatchTheFlixApp extends StatelessWidget {
           create: (_) => getIt<NavigationBloc>(),
         ),
         BlocProvider<FavoritesBloc>(
-          create: (_) => getIt<FavoritesBloc>()..add(const LoadFavoritesEvent()),
+          create: (_) =>
+              getIt<FavoritesBloc>()..add(const LoadFavoritesEvent()),
         ),
         BlocProvider<settings.SettingsBloc>(
-          create: (_) => getIt<settings.SettingsBloc>()..add(const settings.LoadSettingsEvent()),
+          create: (_) => getIt<settings.SettingsBloc>()
+            ..add(const settings.LoadSettingsEvent()),
         ),
       ],
       child: BlocBuilder<settings.SettingsBloc, settings.SettingsState>(

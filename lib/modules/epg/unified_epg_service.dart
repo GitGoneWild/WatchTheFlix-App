@@ -19,15 +19,6 @@ import 'url_epg_provider.dart';
 /// - Handles both URL-based and Xtream Codes EPG sources
 /// - Integrates with local storage for persistence
 class UnifiedEpgService {
-  final UnifiedEpgRepository _repository;
-  final EpgRepositoryImpl? _xtreamRepository;
-
-  /// Current EPG source configuration.
-  EpgSourceConfig _sourceConfig;
-
-  /// Xtream credentials (if using Xtream source).
-  XtreamCredentialsModel? _xtreamCredentials;
-
   UnifiedEpgService({
     UnifiedEpgRepository? repository,
     EpgRepositoryImpl? xtreamRepository,
@@ -43,6 +34,14 @@ class UnifiedEpgService {
       _repository.configure(_sourceConfig);
     }
   }
+  final UnifiedEpgRepository _repository;
+  final EpgRepositoryImpl? _xtreamRepository;
+
+  /// Current EPG source configuration.
+  EpgSourceConfig _sourceConfig;
+
+  /// Xtream credentials (if using Xtream source).
+  XtreamCredentialsModel? _xtreamCredentials;
 
   /// Get current EPG source configuration.
   EpgSourceConfig get sourceConfig => _sourceConfig;
@@ -121,10 +120,12 @@ class UnifiedEpgService {
   /// [forceRefresh] If true, bypass cache and fetch fresh data.
   Future<ApiResult<EpgData>> fetchEpg({bool forceRefresh = false}) async {
     if (!_sourceConfig.isConfigured) {
-      return ApiResult.failure(ApiError(
-        type: ApiErrorType.validation,
-        message: 'EPG source not configured',
-      ));
+      return ApiResult.failure(
+        const ApiError(
+          type: ApiErrorType.validation,
+          message: 'EPG source not configured',
+        ),
+      );
     }
 
     final result = await _repository.fetchEpg(
@@ -179,13 +180,15 @@ class UnifiedEpgService {
       final current = epgResult.data.getCurrentProgram(channelId);
       final next = epgResult.data.getNextProgram(channelId);
 
-      return ApiResult.success(EpgInfo(
-        currentProgram: current?.title,
-        nextProgram: next?.title,
-        startTime: current?.startTime,
-        endTime: current?.endTime,
-        description: current?.description,
-      ));
+      return ApiResult.success(
+        EpgInfo(
+          currentProgram: current?.title,
+          nextProgram: next?.title,
+          startTime: current?.startTime,
+          endTime: current?.endTime,
+          description: current?.description,
+        ),
+      );
     } catch (e) {
       return ApiResult.failure(ApiError.fromException(e));
     }
@@ -243,13 +246,15 @@ class UnifiedEpgService {
     XtreamCredentialsModel credentials,
   ) async {
     if (_xtreamRepository == null) {
-      return ApiResult.failure(ApiError(
-        type: ApiErrorType.validation,
-        message: 'Xtream repository not configured',
-      ));
+      return ApiResult.failure(
+        const ApiError(
+          type: ApiErrorType.validation,
+          message: 'Xtream repository not configured',
+        ),
+      );
     }
 
-    final result = await _xtreamRepository!.fetchFullXmltvEpg(credentials);
+    final result = await _xtreamRepository.fetchFullXmltvEpg(credentials);
     return ApiResult.success(result.isSuccess && result.data.isNotEmpty);
   }
 

@@ -1,6 +1,6 @@
-import '../entities/playlist_source.dart';
-import '../entities/channel.dart';
 import '../entities/category.dart';
+import '../entities/channel.dart';
+import '../entities/playlist_source.dart';
 
 /// Playlist repository interface
 abstract class PlaylistRepository {

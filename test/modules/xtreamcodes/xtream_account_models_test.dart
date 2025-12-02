@@ -34,7 +34,7 @@ void main() {
     });
 
     test('should detect active account status', () {
-      final userInfo = XtreamUserInfo.fromJson({
+      final userInfo = XtreamUserInfo.fromJson(const {
         'auth': 1,
         'status': 'Active',
         'is_trial': '0',
@@ -46,7 +46,7 @@ void main() {
     });
 
     test('should detect trial account status', () {
-      final userInfo = XtreamUserInfo.fromJson({
+      final userInfo = XtreamUserInfo.fromJson(const {
         'auth': 1,
         'status': 'Active',
         'is_trial': '1',
@@ -58,8 +58,11 @@ void main() {
 
     test('should detect expired account', () {
       // Unix timestamp in the past
-      final pastTimestamp =
-          (DateTime.now().subtract(const Duration(days: 30)).millisecondsSinceEpoch ~/ 1000).toString();
+      final pastTimestamp = (DateTime.now()
+                  .subtract(const Duration(days: 30))
+                  .millisecondsSinceEpoch ~/
+              1000)
+          .toString();
 
       final userInfo = XtreamUserInfo.fromJson({
         'auth': 1,
@@ -72,8 +75,11 @@ void main() {
 
     test('should calculate days until expiry', () {
       // Unix timestamp 30 days in the future
-      final futureTimestamp =
-          (DateTime.now().add(const Duration(days: 30)).millisecondsSinceEpoch ~/ 1000).toString();
+      final futureTimestamp = (DateTime.now()
+                  .add(const Duration(days: 30))
+                  .millisecondsSinceEpoch ~/
+              1000)
+          .toString();
 
       final userInfo = XtreamUserInfo.fromJson({
         'auth': 1,
@@ -87,7 +93,7 @@ void main() {
     });
 
     test('should handle missing optional fields', () {
-      final userInfo = XtreamUserInfo.fromJson({
+      final userInfo = XtreamUserInfo.fromJson(const {
         'auth': 1,
         'status': 'Active',
       });
@@ -127,7 +133,7 @@ void main() {
     });
 
     test('should generate correct full URL', () {
-      final serverInfo = XtreamServerInfo.fromJson({
+      final serverInfo = XtreamServerInfo.fromJson(const {
         'url': 'server.example.com',
         'port': '8080',
         'https_port': '443',
@@ -138,7 +144,7 @@ void main() {
     });
 
     test('should omit default ports in full URL', () {
-      final httpServer = XtreamServerInfo.fromJson({
+      final httpServer = XtreamServerInfo.fromJson(const {
         'url': 'server.example.com',
         'port': '80',
         'server_protocol': 'http',
@@ -146,7 +152,7 @@ void main() {
 
       expect(httpServer.fullUrl, equals('http://server.example.com'));
 
-      final httpsServer = XtreamServerInfo.fromJson({
+      final httpsServer = XtreamServerInfo.fromJson(const {
         'url': 'server.example.com',
         'https_port': '443',
         'server_protocol': 'https',
@@ -156,11 +162,11 @@ void main() {
     });
 
     test('should detect HTTPS availability', () {
-      final serverWithHttps = XtreamServerInfo.fromJson({
+      final serverWithHttps = XtreamServerInfo.fromJson(const {
         'https_port': '443',
       });
 
-      final serverWithoutHttps = XtreamServerInfo.fromJson({
+      final serverWithoutHttps = XtreamServerInfo.fromJson(const {
         'https_port': '0',
       });
 
@@ -169,11 +175,11 @@ void main() {
     });
 
     test('should detect RTMP availability', () {
-      final serverWithRtmp = XtreamServerInfo.fromJson({
+      final serverWithRtmp = XtreamServerInfo.fromJson(const {
         'rtmp_port': '25462',
       });
 
-      final serverWithoutRtmp = XtreamServerInfo.fromJson({
+      final serverWithoutRtmp = XtreamServerInfo.fromJson(const {
         'rtmp_port': '',
       });
 
@@ -220,7 +226,7 @@ void main() {
     });
 
     test('should handle empty user_info and server_info', () {
-      final overview = XtreamAccountOverview.fromJson({});
+      final overview = XtreamAccountOverview.fromJson(const {});
 
       expect(overview.isAuthenticated, isFalse);
       expect(overview.userInfo.username, isEmpty);

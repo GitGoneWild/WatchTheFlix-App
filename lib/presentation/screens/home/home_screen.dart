@@ -33,8 +33,8 @@ class HomeScreen extends StatelessWidget {
               SettingsTab(),
             ],
           ),
-          bottomNavigationBar: Container(
-            decoration: BoxDecoration(
+          bottomNavigationBar: DecoratedBox(
+            decoration: const BoxDecoration(
               color: AppColors.backgroundLight,
               border: Border(
                 top: BorderSide(
@@ -68,7 +68,8 @@ class HomeScreen extends StatelessWidget {
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.video_library_outlined),
-                  selectedIcon: Icon(Icons.video_library, color: AppColors.primary),
+                  selectedIcon:
+                      Icon(Icons.video_library, color: AppColors.primary),
                   label: 'Series',
                 ),
                 NavigationDestination(
@@ -98,7 +99,6 @@ class HomeTab extends StatelessWidget {
             // App bar with logo and search
             SliverAppBar(
               floating: true,
-              pinned: false,
               expandedHeight: 60,
               backgroundColor: AppColors.background.withOpacity(0.95),
               title: Row(
@@ -133,7 +133,8 @@ class HomeTab extends StatelessWidget {
                 ),
                 IconButton(
                   icon: const Icon(Icons.search),
-                  onPressed: () => Navigator.pushNamed(context, AppRoutes.search),
+                  onPressed: () =>
+                      Navigator.pushNamed(context, AppRoutes.search),
                   tooltip: 'Search',
                 ),
                 const SizedBox(width: 8),
@@ -143,7 +144,8 @@ class HomeTab extends StatelessWidget {
             // Quick access buttons
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Row(
                   children: [
                     _QuickAccessButton(
@@ -151,7 +153,9 @@ class HomeTab extends StatelessWidget {
                       label: 'Live TV',
                       color: AppColors.primary,
                       onTap: () {
-                        context.read<NavigationBloc>().add(const ChangeTabEvent(1));
+                        context
+                            .read<NavigationBloc>()
+                            .add(const ChangeTabEvent(1));
                       },
                     ),
                     const SizedBox(width: 12),
@@ -160,7 +164,9 @@ class HomeTab extends StatelessWidget {
                       label: 'Movies',
                       color: AppColors.accent,
                       onTap: () {
-                        context.read<NavigationBloc>().add(const ChangeTabEvent(2));
+                        context
+                            .read<NavigationBloc>()
+                            .add(const ChangeTabEvent(2));
                       },
                     ),
                     const SizedBox(width: 12),
@@ -169,7 +175,9 @@ class HomeTab extends StatelessWidget {
                       label: 'Series',
                       color: AppColors.accentPurple,
                       onTap: () {
-                        context.read<NavigationBloc>().add(const ChangeTabEvent(3));
+                        context
+                            .read<NavigationBloc>()
+                            .add(const ChangeTabEvent(3));
                       },
                     ),
                   ],
@@ -196,20 +204,24 @@ class HomeTab extends StatelessWidget {
                   height: 180,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
                     itemCount: favoritesState.recentlyWatched.take(10).length,
                     separatorBuilder: (_, __) => const SizedBox(width: 12),
                     itemBuilder: (context, index) {
                       final channel = favoritesState.recentlyWatched[index];
                       // Progress tracking placeholder - actual progress would come from playback state
-                      final progress = (index + 1) * 0.1 % 1.0; // Simulated progress
+                      final progress =
+                          (index + 1) * 0.1 % 1.0; // Simulated progress
                       return SizedBox(
                         width: 140,
                         child: _ContinueWatchingCard(
                           channel: channel,
                           progress: progress,
                           onTap: () {
-                            context.read<FavoritesBloc>().add(AddRecentEvent(channel));
+                            context
+                                .read<FavoritesBloc>()
+                                .add(AddRecentEvent(channel));
                             Navigator.pushNamed(
                               context,
                               AppRoutes.player,
@@ -234,7 +246,8 @@ class HomeTab extends StatelessWidget {
                     title: 'My Favorites',
                     icon: Icons.favorite,
                     iconColor: AppColors.primary,
-                    onSeeAll: () => Navigator.pushNamed(context, AppRoutes.favorites),
+                    onSeeAll: () =>
+                        Navigator.pushNamed(context, AppRoutes.favorites),
                   ),
                 ),
               ),
@@ -243,7 +256,8 @@ class HomeTab extends StatelessWidget {
                   height: 200,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
                     itemCount: favoritesState.favorites.take(10).length,
                     separatorBuilder: (_, __) => const SizedBox(width: 12),
                     itemBuilder: (context, index) {
@@ -253,7 +267,9 @@ class HomeTab extends StatelessWidget {
                         child: ChannelCard(
                           channel: channel,
                           onTap: () {
-                            context.read<FavoritesBloc>().add(AddRecentEvent(channel));
+                            context
+                                .read<FavoritesBloc>()
+                                .add(AddRecentEvent(channel));
                             Navigator.pushNamed(
                               context,
                               AppRoutes.player,
@@ -284,16 +300,20 @@ class HomeTab extends StatelessWidget {
                             icon: Icons.trending_up,
                             iconColor: AppColors.accentOrange,
                             onSeeAll: () {
-                              context.read<NavigationBloc>().add(const ChangeTabEvent(1));
+                              context
+                                  .read<NavigationBloc>()
+                                  .add(const ChangeTabEvent(1));
                             },
                           ),
                           SizedBox(
                             height: 200,
                             child: ListView.separated(
                               scrollDirection: Axis.horizontal,
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 12),
                               itemCount: channelState.channels.take(10).length,
-                              separatorBuilder: (_, __) => const SizedBox(width: 12),
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(width: 12),
                               itemBuilder: (context, index) {
                                 final channel = channelState.channels[index];
                                 return SizedBox(
@@ -301,7 +321,9 @@ class HomeTab extends StatelessWidget {
                                   child: ChannelCard(
                                     channel: channel,
                                     onTap: () {
-                                      context.read<FavoritesBloc>().add(AddRecentEvent(channel));
+                                      context
+                                          .read<FavoritesBloc>()
+                                          .add(AddRecentEvent(channel));
                                       Navigator.pushNamed(
                                         context,
                                         AppRoutes.player,
@@ -333,7 +355,7 @@ class HomeTab extends StatelessWidget {
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _SectionHeader(
+                          const _SectionHeader(
                             title: 'Browse by Category',
                             icon: Icons.category_outlined,
                             iconColor: AppColors.accent,
@@ -342,16 +364,23 @@ class HomeTab extends StatelessWidget {
                             height: 50,
                             child: ListView.separated(
                               scrollDirection: Axis.horizontal,
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                              itemCount: channelState.categories.take(10).length,
-                              separatorBuilder: (_, __) => const SizedBox(width: 8),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 8),
+                              itemCount:
+                                  channelState.categories.take(10).length,
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(width: 8),
                               itemBuilder: (context, index) {
                                 final category = channelState.categories[index];
                                 return _CategoryPill(
                                   label: category.name,
                                   onTap: () {
-                                    context.read<NavigationBloc>().add(const ChangeTabEvent(1));
-                                    context.read<ChannelBloc>().add(SelectCategoryEvent(category));
+                                    context
+                                        .read<NavigationBloc>()
+                                        .add(const ChangeTabEvent(1));
+                                    context
+                                        .read<ChannelBloc>()
+                                        .add(SelectCategoryEvent(category));
                                   },
                                 );
                               },
@@ -390,17 +419,16 @@ class HomeTab extends StatelessWidget {
 
 /// Quick access button widget
 class _QuickAccessButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
   const _QuickAccessButton({
     required this.icon,
     required this.label,
     required this.color,
     required this.onTap,
   });
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -439,17 +467,16 @@ class _QuickAccessButton extends StatelessWidget {
 
 /// Section header widget
 class _SectionHeader extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final Color iconColor;
-  final VoidCallback? onSeeAll;
-
   const _SectionHeader({
     required this.title,
     required this.icon,
     required this.iconColor,
     this.onSeeAll,
   });
+  final String title;
+  final IconData icon;
+  final Color iconColor;
+  final VoidCallback? onSeeAll;
 
   @override
   Widget build(BuildContext context) {
@@ -469,14 +496,14 @@ class _SectionHeader extends StatelessWidget {
           if (onSeeAll != null)
             TextButton(
               onPressed: onSeeAll,
-              child: Row(
+              child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     'See All',
                     style: TextStyle(color: AppColors.textLink, fontSize: 13),
                   ),
-                  const SizedBox(width: 4),
+                  SizedBox(width: 4),
                   Icon(
                     Icons.arrow_forward_ios,
                     size: 12,
@@ -493,21 +520,20 @@ class _SectionHeader extends StatelessWidget {
 
 /// Continue watching card with progress
 class _ContinueWatchingCard extends StatelessWidget {
-  final Channel channel;
-  final double progress;
-  final VoidCallback? onTap;
-
   const _ContinueWatchingCard({
     required this.channel,
     required this.progress,
     this.onTap,
   });
+  final Channel channel;
+  final double progress;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
+      child: DecoratedBox(
         decoration: BoxDecoration(
           color: AppColors.backgroundCard,
           borderRadius: BorderRadius.circular(8),
@@ -521,19 +547,22 @@ class _ContinueWatchingCard extends StatelessWidget {
                 fit: StackFit.expand,
                 children: [
                   ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(7)),
-                    child: Container(
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(7)),
+                    child: ColoredBox(
                       color: AppColors.surface,
                       child: channel.logoUrl != null
                           ? Image.network(
                               channel.logoUrl!,
                               fit: BoxFit.cover,
                               errorBuilder: (_, __, ___) => const Center(
-                                child: Icon(Icons.live_tv, size: 40, color: AppColors.textSecondary),
+                                child: Icon(Icons.live_tv,
+                                    size: 40, color: AppColors.textSecondary),
                               ),
                             )
                           : const Center(
-                              child: Icon(Icons.live_tv, size: 40, color: AppColors.textSecondary),
+                              child: Icon(Icons.live_tv,
+                                  size: 40, color: AppColors.textSecondary),
                             ),
                     ),
                   ),
@@ -595,13 +624,12 @@ class _ContinueWatchingCard extends StatelessWidget {
 
 /// Category pill widget
 class _CategoryPill extends StatelessWidget {
-  final String label;
-  final VoidCallback? onTap;
-
   const _CategoryPill({
     required this.label,
     this.onTap,
   });
+  final String label;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -666,7 +694,8 @@ class _EmptyHomeState extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
-            onPressed: () => Navigator.pushNamed(context, AppRoutes.addPlaylist),
+            onPressed: () =>
+                Navigator.pushNamed(context, AppRoutes.addPlaylist),
             icon: const Icon(Icons.add),
             label: const Text('Add Playlist'),
           ),
@@ -699,7 +728,8 @@ class LiveTVTab extends StatelessWidget {
                     ),
                     IconButton(
                       icon: const Icon(Icons.search),
-                      onPressed: () => Navigator.pushNamed(context, AppRoutes.search),
+                      onPressed: () =>
+                          Navigator.pushNamed(context, AppRoutes.search),
                       tooltip: 'Search',
                     ),
                   ],
@@ -708,9 +738,9 @@ class LiveTVTab extends StatelessWidget {
                 // Favorites in Live TV
                 if (favoritesState is FavoritesLoadedState &&
                     favoritesState.favorites.isNotEmpty) ...[
-                  SliverToBoxAdapter(
+                  const SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.only(top: 8),
+                      padding: EdgeInsets.only(top: 8),
                       child: _SectionHeader(
                         title: 'Favorites',
                         icon: Icons.favorite,
@@ -723,7 +753,8 @@ class LiveTVTab extends StatelessWidget {
                       height: 140,
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
                         itemCount: favoritesState.favorites.take(8).length,
                         separatorBuilder: (_, __) => const SizedBox(width: 12),
                         itemBuilder: (context, index) {
@@ -734,11 +765,16 @@ class LiveTVTab extends StatelessWidget {
                               channel: channel,
                               isFavorite: true,
                               onTap: () {
-                                context.read<FavoritesBloc>().add(AddRecentEvent(channel));
-                                Navigator.pushNamed(context, AppRoutes.player, arguments: channel);
+                                context
+                                    .read<FavoritesBloc>()
+                                    .add(AddRecentEvent(channel));
+                                Navigator.pushNamed(context, AppRoutes.player,
+                                    arguments: channel);
                               },
                               onFavoriteToggle: () {
-                                context.read<FavoritesBloc>().add(ToggleFavoriteEvent(channel));
+                                context
+                                    .read<FavoritesBloc>()
+                                    .add(ToggleFavoriteEvent(channel));
                               },
                             ),
                           );
@@ -771,7 +807,8 @@ class LiveTVTab extends StatelessWidget {
                           final category = channelState.categories[index - 1];
                           return CategoryChip(
                             label: category.name,
-                            isSelected: channelState.selectedCategory?.id == category.id,
+                            isSelected: channelState.selectedCategory?.id ==
+                                category.id,
                             onTap: () => context
                                 .read<ChannelBloc>()
                                 .add(SelectCategoryEvent(category)),
@@ -785,7 +822,8 @@ class LiveTVTab extends StatelessWidget {
                   SliverPadding(
                     padding: const EdgeInsets.all(16),
                     sliver: SliverGrid(
-                      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                      gridDelegate:
+                          const SliverGridDelegateWithMaxCrossAxisExtent(
                         maxCrossAxisExtent: 180,
                         mainAxisSpacing: 12,
                         crossAxisSpacing: 12,
@@ -794,18 +832,24 @@ class LiveTVTab extends StatelessWidget {
                       delegate: SliverChildBuilderDelegate(
                         (context, index) {
                           final channel = channelState.filteredChannels[index];
-                          final isFavorite = favoritesState is FavoritesLoadedState
-                              ? favoritesState.isFavorite(channel.id)
-                              : false;
+                          final isFavorite =
+                              favoritesState is FavoritesLoadedState
+                                  ? favoritesState.isFavorite(channel.id)
+                                  : false;
                           return _ChannelGridCard(
                             channel: channel,
                             isFavorite: isFavorite,
                             onTap: () {
-                              context.read<FavoritesBloc>().add(AddRecentEvent(channel));
-                              Navigator.pushNamed(context, AppRoutes.player, arguments: channel);
+                              context
+                                  .read<FavoritesBloc>()
+                                  .add(AddRecentEvent(channel));
+                              Navigator.pushNamed(context, AppRoutes.player,
+                                  arguments: channel);
                             },
                             onFavoriteToggle: () {
-                              context.read<FavoritesBloc>().add(ToggleFavoriteEvent(channel));
+                              context
+                                  .read<FavoritesBloc>()
+                                  .add(ToggleFavoriteEvent(channel));
                             },
                           );
                         },
@@ -833,23 +877,22 @@ class LiveTVTab extends StatelessWidget {
 
 /// Compact channel card for horizontal lists
 class _CompactChannelCard extends StatelessWidget {
-  final Channel channel;
-  final bool isFavorite;
-  final VoidCallback? onTap;
-  final VoidCallback? onFavoriteToggle;
-
   const _CompactChannelCard({
     required this.channel,
     this.isFavorite = false,
     this.onTap,
     this.onFavoriteToggle,
   });
+  final Channel channel;
+  final bool isFavorite;
+  final VoidCallback? onTap;
+  final VoidCallback? onFavoriteToggle;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
+      child: DecoratedBox(
         decoration: BoxDecoration(
           color: AppColors.backgroundCard,
           borderRadius: BorderRadius.circular(8),
@@ -863,19 +906,22 @@ class _CompactChannelCard extends StatelessWidget {
                 fit: StackFit.expand,
                 children: [
                   ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(7)),
-                    child: Container(
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(7)),
+                    child: ColoredBox(
                       color: AppColors.surface,
                       child: channel.logoUrl != null
                           ? Image.network(
                               channel.logoUrl!,
                               fit: BoxFit.cover,
                               errorBuilder: (_, __, ___) => const Center(
-                                child: Icon(Icons.live_tv, size: 32, color: AppColors.textSecondary),
+                                child: Icon(Icons.live_tv,
+                                    size: 32, color: AppColors.textSecondary),
                               ),
                             )
                           : const Center(
-                              child: Icon(Icons.live_tv, size: 32, color: AppColors.textSecondary),
+                              child: Icon(Icons.live_tv,
+                                  size: 32, color: AppColors.textSecondary),
                             ),
                     ),
                   ),
@@ -922,17 +968,16 @@ class _CompactChannelCard extends StatelessWidget {
 
 /// Channel grid card with favorite toggle
 class _ChannelGridCard extends StatelessWidget {
-  final Channel channel;
-  final bool isFavorite;
-  final VoidCallback? onTap;
-  final VoidCallback? onFavoriteToggle;
-
   const _ChannelGridCard({
     required this.channel,
     this.isFavorite = false,
     this.onTap,
     this.onFavoriteToggle,
   });
+  final Channel channel;
+  final bool isFavorite;
+  final VoidCallback? onTap;
+  final VoidCallback? onFavoriteToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -942,7 +987,7 @@ class _ChannelGridCard extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(8),
-        child: Container(
+        child: DecoratedBox(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: AppColors.border),
@@ -956,19 +1001,22 @@ class _ChannelGridCard extends StatelessWidget {
                   fit: StackFit.expand,
                   children: [
                     ClipRRect(
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(7)),
-                      child: Container(
+                      borderRadius:
+                          const BorderRadius.vertical(top: Radius.circular(7)),
+                      child: ColoredBox(
                         color: AppColors.surface,
                         child: channel.logoUrl != null
                             ? Image.network(
                                 channel.logoUrl!,
                                 fit: BoxFit.cover,
                                 errorBuilder: (_, __, ___) => const Center(
-                                  child: Icon(Icons.live_tv, size: 36, color: AppColors.textSecondary),
+                                  child: Icon(Icons.live_tv,
+                                      size: 36, color: AppColors.textSecondary),
                                 ),
                               )
                             : const Center(
-                                child: Icon(Icons.live_tv, size: 36, color: AppColors.textSecondary),
+                                child: Icon(Icons.live_tv,
+                                    size: 36, color: AppColors.textSecondary),
                               ),
                       ),
                     ),
@@ -985,7 +1033,8 @@ class _ChannelGridCard extends StatelessWidget {
                           ),
                           child: Icon(
                             isFavorite ? Icons.favorite : Icons.favorite_border,
-                            color: isFavorite ? AppColors.primary : Colors.white,
+                            color:
+                                isFavorite ? AppColors.primary : Colors.white,
                             size: 16,
                           ),
                         ),
@@ -998,17 +1047,24 @@ class _ChannelGridCard extends StatelessWidget {
                         left: 0,
                         right: 0,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 4),
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
-                              colors: [Colors.transparent, AppColors.background.withOpacity(0.9)],
+                              colors: [
+                                Colors.transparent,
+                                AppColors.background.withOpacity(0.9)
+                              ],
                             ),
                           ),
                           child: Text(
                             channel.epgInfo!.currentProgram ?? '',
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelSmall
+                                ?.copyWith(
                                   color: AppColors.textSecondary,
                                   fontSize: 9,
                                 ),
@@ -1021,7 +1077,6 @@ class _ChannelGridCard extends StatelessWidget {
                 ),
               ),
               Expanded(
-                flex: 1,
                 child: Padding(
                   padding: const EdgeInsets.all(8),
                   child: Column(
@@ -1030,9 +1085,10 @@ class _ChannelGridCard extends StatelessWidget {
                     children: [
                       Text(
                         channel.name,
-                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
+                        style:
+                            Theme.of(context).textTheme.labelMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -1040,10 +1096,11 @@ class _ChannelGridCard extends StatelessWidget {
                         const SizedBox(height: 2),
                         Text(
                           channel.groupTitle!,
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                color: AppColors.textSecondary,
-                                fontSize: 10,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 10,
+                                  ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -1087,7 +1144,8 @@ class _EmptyChannelState extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
-            onPressed: () => Navigator.pushNamed(context, AppRoutes.addPlaylist),
+            onPressed: () =>
+                Navigator.pushNamed(context, AppRoutes.addPlaylist),
             icon: const Icon(Icons.add),
             label: const Text('Add Playlist'),
           ),
@@ -1118,7 +1176,8 @@ class MoviesTab extends StatelessWidget {
                 ),
                 IconButton(
                   icon: const Icon(Icons.search),
-                  onPressed: () => Navigator.pushNamed(context, AppRoutes.search),
+                  onPressed: () =>
+                      Navigator.pushNamed(context, AppRoutes.search),
                   tooltip: 'Search',
                 ),
               ],
@@ -1187,7 +1246,8 @@ class SeriesTab extends StatelessWidget {
                 ),
                 IconButton(
                   icon: const Icon(Icons.search),
-                  onPressed: () => Navigator.pushNamed(context, AppRoutes.search),
+                  onPressed: () =>
+                      Navigator.pushNamed(context, AppRoutes.search),
                   tooltip: 'Search',
                 ),
               ],
@@ -1258,8 +1318,8 @@ class SettingsTab extends StatelessWidget {
                 title: 'Data & Sync',
                 children: [
                   _RefreshTile(
-                    isRefreshing: state is settings.SettingsLoadedState 
-                        ? state.isRefreshing 
+                    isRefreshing: state is settings.SettingsLoadedState
+                        ? state.isRefreshing
                         : false,
                     lastRefresh: settingsData.lastRefresh,
                     onRefresh: () {
@@ -1311,14 +1371,16 @@ class SettingsTab extends StatelessWidget {
                     iconColor: AppColors.accent,
                     title: 'Manage Playlists',
                     subtitle: 'Add, edit, or remove playlists',
-                    onTap: () => Navigator.pushNamed(context, AppRoutes.addPlaylist),
+                    onTap: () =>
+                        Navigator.pushNamed(context, AppRoutes.addPlaylist),
                   ),
                   _SettingsTile(
                     icon: Icons.favorite,
                     iconColor: AppColors.primary,
                     title: 'Favorites',
                     subtitle: 'Your favorite channels and content',
-                    onTap: () => Navigator.pushNamed(context, AppRoutes.favorites),
+                    onTap: () =>
+                        Navigator.pushNamed(context, AppRoutes.favorites),
                   ),
                   _SettingsTile(
                     icon: Icons.history,
@@ -1341,7 +1403,8 @@ class SettingsTab extends StatelessWidget {
                     subtitle: settingsData.themeMode.label,
                     value: settingsData.themeMode,
                     items: settings.ThemeMode.values
-                        .map((e) => DropdownMenuItem(value: e, child: Text(e.label)))
+                        .map((e) =>
+                            DropdownMenuItem(value: e, child: Text(e.label)))
                         .toList(),
                     onChanged: (value) {
                       if (value != null) {
@@ -1377,7 +1440,8 @@ class SettingsTab extends StatelessWidget {
                     subtitle: settingsData.videoQuality.label,
                     value: settingsData.videoQuality,
                     items: settings.VideoQuality.values
-                        .map((e) => DropdownMenuItem(value: e, child: Text(e.label)))
+                        .map((e) =>
+                            DropdownMenuItem(value: e, child: Text(e.label)))
                         .toList(),
                     onChanged: (value) {
                       if (value != null) {
@@ -1465,9 +1529,10 @@ class SettingsTab extends StatelessWidget {
                           ),
                         ),
                         children: [
-                          const Text('Your ultimate IPTV streaming experience.'),
+                          const Text(
+                              'Your ultimate IPTV streaming experience.'),
                           const SizedBox(height: 8),
-                          Text(
+                          const Text(
                             'Built with Flutter',
                             style: TextStyle(color: AppColors.textSecondary),
                           ),
@@ -1505,7 +1570,7 @@ class SettingsTab extends StatelessWidget {
                                   ),
                                 );
                               },
-                              child: Text(
+                              child: const Text(
                                 'Reset',
                                 style: TextStyle(color: AppColors.error),
                               ),
@@ -1529,13 +1594,12 @@ class SettingsTab extends StatelessWidget {
 
 /// Settings section header
 class _SettingsSection extends StatelessWidget {
-  final String title;
-  final List<Widget> children;
-
   const _SettingsSection({
     required this.title,
     required this.children,
   });
+  final String title;
+  final List<Widget> children;
 
   @override
   Widget build(BuildContext context) {
@@ -1560,12 +1624,6 @@ class _SettingsSection extends StatelessWidget {
 
 /// Settings tile widget
 class _SettingsTile extends StatelessWidget {
-  final IconData icon;
-  final Color iconColor;
-  final String title;
-  final String subtitle;
-  final VoidCallback? onTap;
-
   const _SettingsTile({
     required this.icon,
     required this.iconColor,
@@ -1573,6 +1631,11 @@ class _SettingsTile extends StatelessWidget {
     required this.subtitle,
     this.onTap,
   });
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String subtitle;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -1586,7 +1649,8 @@ class _SettingsTile extends StatelessWidget {
         child: Icon(icon, color: iconColor, size: 20),
       ),
       title: Text(title),
-      subtitle: Text(subtitle, style: TextStyle(color: AppColors.textSecondary)),
+      subtitle: Text(subtitle,
+          style: const TextStyle(color: AppColors.textSecondary)),
       trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
       onTap: onTap,
     );
@@ -1595,13 +1659,6 @@ class _SettingsTile extends StatelessWidget {
 
 /// Settings switch tile widget
 class _SettingsSwitchTile extends StatelessWidget {
-  final IconData icon;
-  final Color iconColor;
-  final String title;
-  final String subtitle;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
   const _SettingsSwitchTile({
     required this.icon,
     required this.iconColor,
@@ -1610,6 +1667,12 @@ class _SettingsSwitchTile extends StatelessWidget {
     required this.value,
     required this.onChanged,
   });
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String subtitle;
+  final bool value;
+  final ValueChanged<bool> onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -1623,7 +1686,8 @@ class _SettingsSwitchTile extends StatelessWidget {
         child: Icon(icon, color: iconColor, size: 20),
       ),
       title: Text(title),
-      subtitle: Text(subtitle, style: TextStyle(color: AppColors.textSecondary)),
+      subtitle: Text(subtitle,
+          style: const TextStyle(color: AppColors.textSecondary)),
       trailing: Switch(
         value: value,
         onChanged: onChanged,
@@ -1634,14 +1698,6 @@ class _SettingsSwitchTile extends StatelessWidget {
 
 /// Settings dropdown tile widget
 class _SettingsDropdownTile<T> extends StatelessWidget {
-  final IconData icon;
-  final Color iconColor;
-  final String title;
-  final String subtitle;
-  final T value;
-  final List<DropdownMenuItem<T>> items;
-  final ValueChanged<T?> onChanged;
-
   const _SettingsDropdownTile({
     required this.icon,
     required this.iconColor,
@@ -1651,6 +1707,13 @@ class _SettingsDropdownTile<T> extends StatelessWidget {
     required this.items,
     required this.onChanged,
   });
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String subtitle;
+  final T value;
+  final List<DropdownMenuItem<T>> items;
+  final ValueChanged<T?> onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -1664,7 +1727,8 @@ class _SettingsDropdownTile<T> extends StatelessWidget {
         child: Icon(icon, color: iconColor, size: 20),
       ),
       title: Text(title),
-      subtitle: Text(subtitle, style: TextStyle(color: AppColors.textSecondary)),
+      subtitle: Text(subtitle,
+          style: const TextStyle(color: AppColors.textSecondary)),
       trailing: DropdownButton<T>(
         value: value,
         items: items,
@@ -1680,26 +1744,25 @@ class _SettingsDropdownTile<T> extends StatelessWidget {
 
 /// Refresh tile widget for manual data refresh
 class _RefreshTile extends StatelessWidget {
-  final bool isRefreshing;
-  final DateTime? lastRefresh;
-  final VoidCallback onRefresh;
-
   const _RefreshTile({
     required this.isRefreshing,
     this.lastRefresh,
     required this.onRefresh,
   });
+  final bool isRefreshing;
+  final DateTime? lastRefresh;
+  final VoidCallback onRefresh;
 
   String _formatLastRefresh() {
     if (lastRefresh == null) return 'Never';
     final now = DateTime.now();
     final difference = now.difference(lastRefresh!);
-    
+
     if (difference.inMinutes < 1) return 'Just now';
     if (difference.inMinutes < 60) return '${difference.inMinutes} minutes ago';
     if (difference.inHours < 24) return '${difference.inHours} hours ago';
     if (difference.inDays < 7) return '${difference.inDays} days ago';
-    
+
     return DateFormat('MMM d, yyyy').format(lastRefresh!);
   }
 
@@ -1720,8 +1783,10 @@ class _RefreshTile extends StatelessWidget {
       ),
       title: const Text('Refresh Playlist Data'),
       subtitle: Text(
-        isRefreshing ? 'Refreshing...' : 'Last updated: ${_formatLastRefresh()}',
-        style: TextStyle(color: AppColors.textSecondary),
+        isRefreshing
+            ? 'Refreshing...'
+            : 'Last updated: ${_formatLastRefresh()}',
+        style: const TextStyle(color: AppColors.textSecondary),
       ),
       trailing: isRefreshing
           ? const SizedBox(
@@ -1736,7 +1801,8 @@ class _RefreshTile extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.secondary,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               ),
             ),
     );

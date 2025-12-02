@@ -9,22 +9,16 @@ import '../../vpn/detection/vpn_detector.dart';
 enum VpnPreference {
   /// Auto-detect VPN status
   auto,
-  
+
   /// User declares VPN is on
   on,
-  
+
   /// User declares VPN is off
   off,
 }
 
 /// VPN status tile widget for settings
 class VpnStatusTile extends StatelessWidget {
-  final VpnDetectionResult? detectionResult;
-  final VpnPreference preference;
-  final ValueChanged<VpnPreference>? onPreferenceChanged;
-  final VoidCallback? onRefresh;
-  final bool isChecking;
-
   const VpnStatusTile({
     super.key,
     this.detectionResult,
@@ -33,6 +27,11 @@ class VpnStatusTile extends StatelessWidget {
     this.onRefresh,
     this.isChecking = false,
   });
+  final VpnDetectionResult? detectionResult;
+  final VpnPreference preference;
+  final ValueChanged<VpnPreference>? onPreferenceChanged;
+  final VoidCallback? onRefresh;
+  final bool isChecking;
 
   @override
   Widget build(BuildContext context) {
@@ -185,14 +184,13 @@ class VpnStatusTile extends StatelessWidget {
 
 /// Small VPN indicator badge for playback/account screens
 class VpnIndicatorBadge extends StatelessWidget {
-  final VpnStatus status;
-  final bool compact;
-
   const VpnIndicatorBadge({
     super.key,
     required this.status,
     this.compact = false,
   });
+  final VpnStatus status;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {

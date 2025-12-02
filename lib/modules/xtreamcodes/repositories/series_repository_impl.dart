@@ -21,17 +21,6 @@ const Duration _extendedTimeout = Duration(seconds: 60);
 /// Series repository implementation
 class SeriesRepositoryImpl extends XtreamRepositoryBase
     implements SeriesRepository {
-  final Dio _dio;
-
-  // Cache for categories and series
-  final Map<String, List<DomainCategory>> _categoryCache = {};
-  final Map<String, List<DomainSeries>> _seriesCache = {};
-  final Map<String, DomainSeries> _seriesDetailsCache = {};
-  final Map<String, DateTime> _cacheTimestamps = {};
-
-  /// Default cache duration (1 hour)
-  static const Duration _cacheDuration = Duration(hours: 1);
-
   SeriesRepositoryImpl({Dio? dio})
       : _dio = dio ??
             Dio(BaseOptions(
@@ -42,6 +31,16 @@ class SeriesRepositoryImpl extends XtreamRepositoryBase
                 'User-Agent': 'WatchTheFlix/1.0',
               },
             ));
+  final Dio _dio;
+
+  // Cache for categories and series
+  final Map<String, List<DomainCategory>> _categoryCache = {};
+  final Map<String, List<DomainSeries>> _seriesCache = {};
+  final Map<String, DomainSeries> _seriesDetailsCache = {};
+  final Map<String, DateTime> _cacheTimestamps = {};
+
+  /// Default cache duration (1 hour)
+  static const Duration _cacheDuration = Duration(hours: 1);
 
   String _getCacheKey(XtreamCredentialsModel credentials) =>
       '${credentials.baseUrl}_${credentials.username}';
@@ -85,7 +84,8 @@ class SeriesRepositoryImpl extends XtreamRepositoryBase
 
       return ApiResult.success(categories);
     } on DioException catch (e) {
-      moduleLogger.error('Failed to fetch series categories', tag: 'Series', error: e);
+      moduleLogger.error('Failed to fetch series categories',
+          tag: 'Series', error: e);
       return ApiResult.failure(handleApiError(e, 'Fetch series categories'));
     } on TimeoutException catch (_) {
       return ApiResult.failure(
@@ -175,13 +175,15 @@ class SeriesRepositoryImpl extends XtreamRepositoryBase
 
       moduleLogger.info('Fetching series details for $seriesId', tag: 'Series');
 
-      final url = '${buildUrl(credentials, 'get_series_info')}&series_id=$seriesId';
+      final url =
+          '${buildUrl(credentials, 'get_series_info')}&series_id=$seriesId';
       final response =
           await _dio.get<Map<String, dynamic>>(url).timeout(_seriesTimeout);
 
       if (response.data == null) {
         return ApiResult.failure(
-          ApiError(type: ApiErrorType.notFound, message: 'Series not found'),
+          const ApiError(
+              type: ApiErrorType.notFound, message: 'Series not found'),
         );
       }
 
@@ -201,7 +203,8 @@ class SeriesRepositoryImpl extends XtreamRepositoryBase
 
       return ApiResult.success(series);
     } on DioException catch (e) {
-      moduleLogger.error('Failed to fetch series details', tag: 'Series', error: e);
+      moduleLogger.error('Failed to fetch series details',
+          tag: 'Series', error: e);
       return ApiResult.failure(handleApiError(e, 'Fetch series details'));
     } on TimeoutException catch (_) {
       return ApiResult.failure(

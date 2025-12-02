@@ -18,8 +18,6 @@ const Duration _authTimeout = Duration(seconds: 15);
 /// Xtream authentication repository implementation
 class XtreamAuthRepositoryImpl extends XtreamRepositoryBase
     implements XtreamAuthRepository {
-  final Dio _dio;
-
   XtreamAuthRepositoryImpl({Dio? dio})
       : _dio = dio ??
             Dio(BaseOptions(
@@ -30,6 +28,7 @@ class XtreamAuthRepositoryImpl extends XtreamRepositoryBase
                 'User-Agent': 'WatchTheFlix/1.0',
               },
             ));
+  final Dio _dio;
 
   @override
   Future<ApiResult<XtreamAccountOverview>> authenticate(

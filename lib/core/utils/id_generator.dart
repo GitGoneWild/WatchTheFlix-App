@@ -2,9 +2,8 @@ import 'dart:math';
 
 /// Utility class for generating unique IDs
 class IdGenerator {
-  static final Random _random = Random.secure();
-
   IdGenerator._();
+  static final Random _random = Random.secure();
 
   /// Generate a unique ID combining timestamp and random characters
   static String generate() {

@@ -76,7 +76,7 @@ abstract class XtreamRepositoryBase {
     }
 
     if (errorStr.contains('404')) {
-      return ApiError(
+      return const ApiError(
         type: ApiErrorType.notFound,
         message: 'Resource not found',
       );

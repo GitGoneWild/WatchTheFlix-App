@@ -1,14 +1,13 @@
 /// Base exception class
 class AppException implements Exception {
-  final String message;
-  final int? statusCode;
-  final dynamic data;
-
   const AppException({
     required this.message,
     this.statusCode,
     this.data,
   });
+  final String message;
+  final int? statusCode;
+  final dynamic data;
 
   @override
   String toString() => 'AppException: $message (code: $statusCode)';

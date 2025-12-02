@@ -9,7 +9,8 @@ void main() {
       test('should parse EPG entry with timestamp fields', () {
         final now = DateTime.now();
         final startTimestamp = now.millisecondsSinceEpoch ~/ 1000;
-        final endTimestamp = now.add(const Duration(hours: 1)).millisecondsSinceEpoch ~/ 1000;
+        final endTimestamp =
+            now.add(const Duration(hours: 1)).millisecondsSinceEpoch ~/ 1000;
 
         final json = {
           'epg_id': '12345',
@@ -33,7 +34,9 @@ void main() {
       test('should parse EPG entry with string timestamps', () {
         final now = DateTime.now();
         final startTimestamp = (now.millisecondsSinceEpoch ~/ 1000).toString();
-        final endTimestamp = (now.add(const Duration(hours: 1)).millisecondsSinceEpoch ~/ 1000).toString();
+        final endTimestamp =
+            (now.add(const Duration(hours: 1)).millisecondsSinceEpoch ~/ 1000)
+                .toString();
 
         final json = {
           'channel_id': '999',
@@ -55,7 +58,10 @@ void main() {
           'title': 'Show',
           'desc': 'Description from desc field',
           'start': DateTime.now().millisecondsSinceEpoch ~/ 1000,
-          'end': DateTime.now().add(const Duration(hours: 1)).millisecondsSinceEpoch ~/ 1000,
+          'end': DateTime.now()
+                  .add(const Duration(hours: 1))
+                  .millisecondsSinceEpoch ~/
+              1000,
         };
 
         final entry = EpgEntry.fromJson(json);
@@ -87,8 +93,8 @@ void main() {
           channelId: 'ch1',
           title: 'Test Program',
           description: 'Test description',
-          startTime: DateTime.utc(2024, 1, 1, 10, 0),
-          endTime: DateTime.utc(2024, 1, 1, 11, 0),
+          startTime: DateTime.utc(2024, 1, 1, 10),
+          endTime: DateTime.utc(2024, 1, 1, 11),
           language: 'en',
         );
 
@@ -106,8 +112,8 @@ void main() {
         final program = EpgProgram(
           channelId: 'ch1',
           title: 'Test Program',
-          startTime: DateTime.utc(2024, 1, 1, 10, 0),
-          endTime: DateTime.utc(2024, 1, 1, 11, 0),
+          startTime: DateTime.utc(2024, 1, 1, 10),
+          endTime: DateTime.utc(2024, 1, 1, 11),
         );
 
         final entry = EpgEntry.fromEpgProgram(program);
@@ -191,8 +197,8 @@ void main() {
         final entry = EpgEntry(
           channelId: '1',
           title: 'One Hour Show',
-          startTime: DateTime(2024, 1, 1, 10, 0),
-          endTime: DateTime(2024, 1, 1, 11, 0),
+          startTime: DateTime(2024, 1, 1, 10),
+          endTime: DateTime(2024, 1, 1, 11),
         );
 
         expect(entry.duration, equals(const Duration(hours: 1)));
@@ -202,7 +208,7 @@ void main() {
         final entry = EpgEntry(
           channelId: '1',
           title: 'Half Hour Show',
-          startTime: DateTime(2024, 1, 1, 10, 0),
+          startTime: DateTime(2024, 1, 1, 10),
           endTime: DateTime(2024, 1, 1, 10, 30),
         );
 
@@ -212,8 +218,8 @@ void main() {
 
     group('toJson', () {
       test('should serialize to JSON correctly', () {
-        final startTime = DateTime(2024, 1, 1, 10, 0);
-        final endTime = DateTime(2024, 1, 1, 11, 0);
+        final startTime = DateTime(2024, 1, 1, 10);
+        final endTime = DateTime(2024, 1, 1, 11);
         final entry = EpgEntry(
           channelId: '12345',
           title: 'Test Show',
@@ -236,8 +242,8 @@ void main() {
 
     group('toEpgInfo', () {
       test('should convert to EpgInfo domain model', () {
-        final startTime = DateTime(2024, 1, 1, 10, 0);
-        final endTime = DateTime(2024, 1, 1, 11, 0);
+        final startTime = DateTime(2024, 1, 1, 10);
+        final endTime = DateTime(2024, 1, 1, 11);
         final entry = EpgEntry(
           channelId: '1',
           title: 'Test Show',

@@ -6,11 +6,6 @@ import '../../domain/entities/channel.dart';
 
 /// Channel card widget for displaying channel items
 class ChannelCard extends StatelessWidget {
-  final Channel channel;
-  final VoidCallback? onTap;
-  final VoidCallback? onLongPress;
-  final bool isSelected;
-
   const ChannelCard({
     super.key,
     required this.channel,
@@ -18,15 +13,21 @@ class ChannelCard extends StatelessWidget {
     this.onLongPress,
     this.isSelected = false,
   });
+  final Channel channel;
+  final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
+  final bool isSelected;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       onLongPress: onLongPress,
-      child: Container(
+      child: DecoratedBox(
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary.withOpacity(0.2) : AppColors.backgroundCard,
+          color: isSelected
+              ? AppColors.primary.withOpacity(0.2)
+              : AppColors.backgroundCard,
           borderRadius: BorderRadius.circular(8),
           border: isSelected
               ? Border.all(color: AppColors.primary, width: 2)
@@ -87,7 +88,7 @@ class ChannelCard extends StatelessWidget {
   }
 
   Widget _buildPlaceholder() {
-    return Container(
+    return ColoredBox(
       color: AppColors.surface,
       child: const Center(
         child: Icon(
@@ -102,12 +103,6 @@ class ChannelCard extends StatelessWidget {
 
 /// Movie card widget for displaying movie/VOD items
 class MovieCard extends StatelessWidget {
-  final String title;
-  final String? posterUrl;
-  final String? year;
-  final double? rating;
-  final VoidCallback? onTap;
-
   const MovieCard({
     super.key,
     required this.title,
@@ -116,12 +111,17 @@ class MovieCard extends StatelessWidget {
     this.rating,
     this.onTap,
   });
+  final String title;
+  final String? posterUrl;
+  final String? year;
+  final double? rating;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
+      child: DecoratedBox(
         decoration: BoxDecoration(
           color: AppColors.backgroundCard,
           borderRadius: BorderRadius.circular(8),
@@ -219,7 +219,7 @@ class MovieCard extends StatelessWidget {
   }
 
   Widget _buildPlaceholder() {
-    return Container(
+    return ColoredBox(
       color: AppColors.surface,
       child: const Center(
         child: Icon(

@@ -113,7 +113,8 @@ class XtreamLocalStorage {
   /// Ensure storage is initialized
   void _ensureInitialized() {
     if (!_isInitialized) {
-      throw StateError('XtreamLocalStorage not initialized. Call initialize() first.');
+      throw StateError(
+          'XtreamLocalStorage not initialized. Call initialize() first.');
     }
   }
 
@@ -155,10 +156,12 @@ class XtreamLocalStorage {
     _ensureInitialized();
     final prefix = '${profileId}_';
     final channels = _channelsBox.values
-        .where((c) => _channelsBox.keys
-            .firstWhere((k) => _channelsBox.get(k) == c, orElse: () => '')
-            .toString()
-            .startsWith(prefix))
+        .where(
+          (c) => _channelsBox.keys
+              .firstWhere((k) => _channelsBox.get(k) == c, orElse: () => '')
+              .toString()
+              .startsWith(prefix),
+        )
         .map((c) => c.toDomain())
         .where((c) => categoryId == null || c.categoryId == categoryId)
         .toList();
@@ -225,7 +228,11 @@ class XtreamLocalStorage {
   ) async {
     _ensureInitialized();
     await _saveCategories(
-        _seriesCategoriesBox, profileId, categories, 'series');
+      _seriesCategoriesBox,
+      profileId,
+      categories,
+      'series',
+    );
   }
 
   Future<void> _saveCategories(
@@ -510,11 +517,12 @@ class XtreamLocalStorage {
   }
 
   /// Clean up old EPG data (keep only future + recent past)
-  Future<void> cleanupOldEpg(String profileId, {Duration keepPast = const Duration(hours: 6)}) async {
+  Future<void> cleanupOldEpg(String profileId,
+      {Duration keepPast = const Duration(hours: 6)}) async {
     _ensureInitialized();
     final cutoff = DateTime.now().subtract(keepPast);
     final prefix = '${profileId}_';
-    
+
     final keysToDelete = <dynamic>[];
     for (final key in _epgProgramsBox.keys) {
       if (key.toString().startsWith(prefix)) {
@@ -524,7 +532,7 @@ class XtreamLocalStorage {
         }
       }
     }
-    
+
     if (keysToDelete.isNotEmpty) {
       await _epgProgramsBox.deleteAll(keysToDelete);
       moduleLogger.debug(

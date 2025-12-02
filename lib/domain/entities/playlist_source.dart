@@ -9,15 +9,6 @@ enum PlaylistSourceType {
 
 /// Playlist source entity
 class PlaylistSource extends Equatable {
-  final String id;
-  final String name;
-  final String url;
-  final PlaylistSourceType type;
-  final DateTime addedAt;
-  final DateTime? lastUpdated;
-  final XtreamCredentials? xtreamCredentials;
-  final bool isActive;
-
   const PlaylistSource({
     required this.id,
     required this.name,
@@ -28,6 +19,14 @@ class PlaylistSource extends Equatable {
     this.xtreamCredentials,
     this.isActive = true,
   });
+  final String id;
+  final String name;
+  final String url;
+  final PlaylistSourceType type;
+  final DateTime addedAt;
+  final DateTime? lastUpdated;
+  final XtreamCredentials? xtreamCredentials;
+  final bool isActive;
 
   /// Check if this is an Xtream source
   bool get isXtream => type == PlaylistSourceType.xtream;
@@ -73,17 +72,16 @@ class PlaylistSource extends Equatable {
 
 /// Xtream Codes API credentials
 class XtreamCredentials extends Equatable {
-  final String host;
-  final String username;
-  final String password;
-  final String? serverInfo;
-
   const XtreamCredentials({
     required this.host,
     required this.username,
     required this.password,
     this.serverInfo,
   });
+  final String host;
+  final String username;
+  final String password;
+  final String? serverInfo;
 
   /// Get base URL for API calls
   String get baseUrl {

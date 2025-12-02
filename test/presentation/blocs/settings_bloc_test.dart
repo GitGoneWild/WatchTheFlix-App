@@ -45,13 +45,15 @@ void main() {
     blocTest<SettingsBloc, SettingsState>(
       'emits [SettingsLoadingState, SettingsLoadedState] when LoadSettingsEvent is added with saved settings',
       build: () {
-        when(() => mockLocalStorage.getSettings()).thenAnswer((_) async => {
-              'themeMode': 'light',
-              'videoQuality': '720',
-              'autoPlay': false,
-              'showEpg': true,
-              'refreshIntervalHours': 12,
-            });
+        when(() => mockLocalStorage.getSettings()).thenAnswer(
+          (_) async => {
+            'themeMode': 'light',
+            'videoQuality': '720',
+            'autoPlay': false,
+            'showEpg': true,
+            'refreshIntervalHours': 12,
+          },
+        );
         return settingsBloc;
       },
       act: (bloc) => bloc.add(const LoadSettingsEvent()),
@@ -132,8 +134,8 @@ void main() {
             .thenAnswer((_) async {});
         return settingsBloc;
       },
-      seed: () => SettingsLoadedState(
-        const AppSettings(
+      seed: () => const SettingsLoadedState(
+        AppSettings(
           themeMode: ThemeMode.light,
           videoQuality: VideoQuality.hd,
           autoPlay: false,
@@ -143,10 +145,13 @@ void main() {
       act: (bloc) => bloc.add(const ResetSettingsEvent()),
       expect: () => [
         isA<SettingsLoadedState>()
-            .having((state) => state.settings.themeMode, 'themeMode', ThemeMode.dark)
-            .having((state) => state.settings.videoQuality, 'videoQuality', VideoQuality.auto)
+            .having((state) => state.settings.themeMode, 'themeMode',
+                ThemeMode.dark)
+            .having((state) => state.settings.videoQuality, 'videoQuality',
+                VideoQuality.auto)
             .having((state) => state.settings.autoPlay, 'autoPlay', true)
-            .having((state) => state.settings.refreshIntervalHours, 'refreshIntervalHours', 24),
+            .having((state) => state.settings.refreshIntervalHours,
+                'refreshIntervalHours', 24),
       ],
     );
 
@@ -159,7 +164,6 @@ void main() {
       test('needsRefresh returns true when past refresh interval', () {
         final settings = AppSettings(
           lastRefresh: DateTime.now().subtract(const Duration(hours: 25)),
-          refreshIntervalHours: 24,
         );
         expect(settings.needsRefresh, isTrue);
       });
@@ -167,7 +171,6 @@ void main() {
       test('needsRefresh returns false when within refresh interval', () {
         final settings = AppSettings(
           lastRefresh: DateTime.now().subtract(const Duration(hours: 1)),
-          refreshIntervalHours: 24,
         );
         expect(settings.needsRefresh, isFalse);
       });
@@ -192,10 +195,14 @@ void main() {
         expect(restored.autoPlay, equals(original.autoPlay));
         expect(restored.subtitlesEnabled, equals(original.subtitlesEnabled));
         expect(restored.showEpg, equals(original.showEpg));
-        expect(restored.refreshIntervalHours, equals(original.refreshIntervalHours));
+        expect(restored.refreshIntervalHours,
+            equals(original.refreshIntervalHours));
         // Compare timestamps with tolerance for parsing precision
         expect(
-          restored.lastRefresh?.difference(original.lastRefresh!).inSeconds.abs(),
+          restored.lastRefresh
+              ?.difference(original.lastRefresh!)
+              .inSeconds
+              .abs(),
           lessThan(2),
         );
       });

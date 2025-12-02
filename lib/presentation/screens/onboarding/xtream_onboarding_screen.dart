@@ -46,9 +46,8 @@ class XtreamOnboardingScreen extends StatelessWidget {
 
 /// Progress view showing real-time onboarding status
 class _OnboardingProgressView extends StatelessWidget {
-  final XtreamOnboardingInProgress state;
-
   const _OnboardingProgressView({required this.state});
+  final XtreamOnboardingInProgress state;
 
   @override
   Widget build(BuildContext context) {
@@ -145,9 +144,8 @@ class _OnboardingProgressView extends StatelessWidget {
 
 /// Animated progress bar
 class _AnimatedProgressBar extends StatelessWidget {
-  final double progress;
-
   const _AnimatedProgressBar({required this.progress});
+  final double progress;
 
   @override
   Widget build(BuildContext context) {
@@ -189,9 +187,8 @@ class _AnimatedProgressBar extends StatelessWidget {
 
 /// List of completed steps
 class _CompletedStepsList extends StatelessWidget {
-  final List<OnboardingStepResult> steps;
-
   const _CompletedStepsList({required this.steps});
+  final List<OnboardingStepResult> steps;
 
   @override
   Widget build(BuildContext context) {
@@ -213,9 +210,8 @@ class _CompletedStepsList extends StatelessWidget {
 
 /// Single step result tile
 class _StepResultTile extends StatelessWidget {
-  final OnboardingStepResult result;
-
   const _StepResultTile({required this.result});
+  final OnboardingStepResult result;
 
   @override
   Widget build(BuildContext context) {
@@ -271,9 +267,8 @@ class _StepResultTile extends StatelessWidget {
 
 /// Completed view showing summary
 class _OnboardingCompletedView extends StatelessWidget {
-  final OnboardingResult result;
-
   const _OnboardingCompletedView({required this.result});
+  final OnboardingResult result;
 
   @override
   Widget build(BuildContext context) {
@@ -381,15 +376,14 @@ class _OnboardingCompletedView extends StatelessWidget {
 
 /// Stat item widget
 class _StatItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-
   const _StatItem({
     required this.icon,
     required this.label,
     required this.value,
   });
+  final IconData icon;
+  final String label;
+  final String value;
 
   @override
   Widget build(BuildContext context) {
@@ -416,9 +410,8 @@ class _StatItem extends StatelessWidget {
 
 /// Error view with retry option
 class _OnboardingErrorView extends StatelessWidget {
-  final XtreamOnboardingError state;
-
   const _OnboardingErrorView({required this.state});
+  final XtreamOnboardingError state;
 
   @override
   Widget build(BuildContext context) {
@@ -441,7 +434,6 @@ class _OnboardingErrorView extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 32),
-
           Text(
             'Setup Failed',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -449,7 +441,6 @@ class _OnboardingErrorView extends StatelessWidget {
                 ),
           ),
           const SizedBox(height: 16),
-
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -475,7 +466,6 @@ class _OnboardingErrorView extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 32),
-
           if (state.canRetry) ...[
             SizedBox(
               width: double.infinity,

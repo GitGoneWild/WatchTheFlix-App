@@ -25,12 +25,6 @@ enum SyncState {
 
 /// Sync progress information
 class SyncProgress extends Equatable {
-  final SyncState state;
-  final String? currentOperation;
-  final double progress;
-  final String? errorMessage;
-  final SyncStats? stats;
-
   const SyncProgress({
     this.state = SyncState.idle,
     this.currentOperation,
@@ -38,6 +32,11 @@ class SyncProgress extends Equatable {
     this.errorMessage,
     this.stats,
   });
+  final SyncState state;
+  final String? currentOperation;
+  final double progress;
+  final String? errorMessage;
+  final SyncStats? stats;
 
   SyncProgress copyWith({
     SyncState? state,
@@ -56,19 +55,12 @@ class SyncProgress extends Equatable {
   }
 
   @override
-  List<Object?> get props => [state, currentOperation, progress, errorMessage, stats];
+  List<Object?> get props =>
+      [state, currentOperation, progress, errorMessage, stats];
 }
 
 /// Statistics from a sync operation
 class SyncStats extends Equatable {
-  final int channelsImported;
-  final int categoriesImported;
-  final int moviesImported;
-  final int seriesImported;
-  final int epgProgramsImported;
-  final Duration duration;
-  final List<String> errors;
-
   const SyncStats({
     this.channelsImported = 0,
     this.categoriesImported = 0,
@@ -78,6 +70,13 @@ class SyncStats extends Equatable {
     this.duration = Duration.zero,
     this.errors = const [],
   });
+  final int channelsImported;
+  final int categoriesImported;
+  final int moviesImported;
+  final int seriesImported;
+  final int epgProgramsImported;
+  final Duration duration;
+  final List<String> errors;
 
   int get totalItems =>
       channelsImported +
@@ -102,6 +101,16 @@ class SyncStats extends Equatable {
 
 /// Sync configuration options
 class SyncConfig {
+  const SyncConfig({
+    this.channelTtl = const Duration(hours: 1),
+    this.movieTtl = const Duration(hours: 4),
+    this.seriesTtl = const Duration(hours: 4),
+    this.epgTtl = const Duration(hours: 6),
+    this.syncEpgOnInitial = true,
+    this.syncMoviesOnInitial = true,
+    this.syncSeriesOnInitial = true,
+  });
+
   /// TTL for channel data (default: 1 hour)
   final Duration channelTtl;
 
@@ -123,16 +132,6 @@ class SyncConfig {
   /// Whether to sync series during initial sync
   final bool syncSeriesOnInitial;
 
-  const SyncConfig({
-    this.channelTtl = const Duration(hours: 1),
-    this.movieTtl = const Duration(hours: 4),
-    this.seriesTtl = const Duration(hours: 4),
-    this.epgTtl = const Duration(hours: 6),
-    this.syncEpgOnInitial = true,
-    this.syncMoviesOnInitial = true,
-    this.syncSeriesOnInitial = true,
-  });
-
   /// Default sync configuration
   static const SyncConfig defaultConfig = SyncConfig();
 }
@@ -145,6 +144,13 @@ class SyncConfig {
 /// - Graceful error handling with fallback to cached data
 /// - Progress tracking for UI feedback
 class XtreamSyncService {
+  XtreamSyncService({
+    required XtreamCodesClient client,
+    required XtreamLocalStorage storage,
+    SyncConfig config = SyncConfig.defaultConfig,
+  })  : _client = client,
+        _storage = storage,
+        _config = config;
   final XtreamCodesClient _client;
   final XtreamLocalStorage _storage;
   final SyncConfig _config;
@@ -154,14 +160,6 @@ class XtreamSyncService {
 
   /// Current sync progress
   SyncProgress _currentProgress = const SyncProgress();
-
-  XtreamSyncService({
-    required XtreamCodesClient client,
-    required XtreamLocalStorage storage,
-    SyncConfig config = SyncConfig.defaultConfig,
-  })  : _client = client,
-        _storage = storage,
-        _config = config;
 
   /// Stream of sync progress updates
   Stream<SyncProgress> get progressStream => _progressController.stream;
@@ -199,17 +197,21 @@ class XtreamSyncService {
         progress: 0.0,
       );
 
-      moduleLogger.info('Starting initial sync for profile $profileId', tag: 'Sync');
+      moduleLogger.info('Starting initial sync for profile $profileId',
+          tag: 'Sync');
 
       // Get or create sync status
       final syncStatus = _storage.getOrCreateSyncStatus(profileId);
 
       // 1. Sync Live TV Categories (5% progress)
-      _updateProgress(operation: 'Syncing live TV categories...', progress: 0.05);
+      _updateProgress(
+          operation: 'Syncing live TV categories...', progress: 0.05);
       try {
-        final liveCategoriesResult = await _client.getLiveTvCategories(credentials);
+        final liveCategoriesResult =
+            await _client.getLiveTvCategories(credentials);
         if (liveCategoriesResult.isSuccess) {
-          await _storage.saveLiveCategories(profileId, liveCategoriesResult.data);
+          await _storage.saveLiveCategories(
+              profileId, liveCategoriesResult.data);
           categoriesImported += liveCategoriesResult.data.length;
         } else {
           errors.add('Live categories: ${liveCategoriesResult.error.message}');
@@ -237,14 +239,18 @@ class XtreamSyncService {
 
       // 3. Sync Movie Categories (25% progress)
       if (_config.syncMoviesOnInitial) {
-        _updateProgress(operation: 'Syncing movie categories...', progress: 0.25);
+        _updateProgress(
+            operation: 'Syncing movie categories...', progress: 0.25);
         try {
-          final movieCategoriesResult = await _client.getMovieCategories(credentials);
+          final movieCategoriesResult =
+              await _client.getMovieCategories(credentials);
           if (movieCategoriesResult.isSuccess) {
-            await _storage.saveMovieCategories(profileId, movieCategoriesResult.data);
+            await _storage.saveMovieCategories(
+                profileId, movieCategoriesResult.data);
             categoriesImported += movieCategoriesResult.data.length;
           } else {
-            errors.add('Movie categories: ${movieCategoriesResult.error.message}');
+            errors.add(
+                'Movie categories: ${movieCategoriesResult.error.message}');
           }
         } catch (e) {
           errors.add('Movie categories: $e');
@@ -269,14 +275,18 @@ class XtreamSyncService {
 
       // 5. Sync Series Categories (50% progress)
       if (_config.syncSeriesOnInitial) {
-        _updateProgress(operation: 'Syncing series categories...', progress: 0.50);
+        _updateProgress(
+            operation: 'Syncing series categories...', progress: 0.50);
         try {
-          final seriesCategoriesResult = await _client.getSeriesCategories(credentials);
+          final seriesCategoriesResult =
+              await _client.getSeriesCategories(credentials);
           if (seriesCategoriesResult.isSuccess) {
-            await _storage.saveSeriesCategories(profileId, seriesCategoriesResult.data);
+            await _storage.saveSeriesCategories(
+                profileId, seriesCategoriesResult.data);
             categoriesImported += seriesCategoriesResult.data.length;
           } else {
-            errors.add('Series categories: ${seriesCategoriesResult.error.message}');
+            errors.add(
+                'Series categories: ${seriesCategoriesResult.error.message}');
           }
         } catch (e) {
           errors.add('Series categories: $e');
@@ -429,14 +439,17 @@ class XtreamSyncService {
         return const SyncStats();
       }
 
-      double getProgress() => totalOperations > 0 ? operationsDone / totalOperations : 0.0;
+      double getProgress() =>
+          totalOperations > 0 ? operationsDone / totalOperations : 0.0;
 
       // Sync channels if needed
       if (forceChannels || syncStatus.needsChannelRefresh(_config.channelTtl)) {
-        _updateProgress(operation: 'Syncing live TV...', progress: getProgress());
+        _updateProgress(
+            operation: 'Syncing live TV...', progress: getProgress());
 
         try {
-          final categoriesResult = await _client.getLiveTvCategories(credentials);
+          final categoriesResult =
+              await _client.getLiveTvCategories(credentials);
           if (categoriesResult.isSuccess) {
             await _storage.saveLiveCategories(profileId, categoriesResult.data);
             categoriesImported += categoriesResult.data.length;
@@ -460,12 +473,15 @@ class XtreamSyncService {
 
       // Sync movies if needed
       if (forceMovies || syncStatus.needsMovieRefresh(_config.movieTtl)) {
-        _updateProgress(operation: 'Syncing movies...', progress: getProgress());
+        _updateProgress(
+            operation: 'Syncing movies...', progress: getProgress());
 
         try {
-          final categoriesResult = await _client.getMovieCategories(credentials);
+          final categoriesResult =
+              await _client.getMovieCategories(credentials);
           if (categoriesResult.isSuccess) {
-            await _storage.saveMovieCategories(profileId, categoriesResult.data);
+            await _storage.saveMovieCategories(
+                profileId, categoriesResult.data);
             categoriesImported += categoriesResult.data.length;
           }
           operationsDone++;
@@ -487,12 +503,15 @@ class XtreamSyncService {
 
       // Sync series if needed
       if (forceSeries || syncStatus.needsSeriesRefresh(_config.seriesTtl)) {
-        _updateProgress(operation: 'Syncing TV series...', progress: getProgress());
+        _updateProgress(
+            operation: 'Syncing TV series...', progress: getProgress());
 
         try {
-          final categoriesResult = await _client.getSeriesCategories(credentials);
+          final categoriesResult =
+              await _client.getSeriesCategories(credentials);
           if (categoriesResult.isSuccess) {
-            await _storage.saveSeriesCategories(profileId, categoriesResult.data);
+            await _storage.saveSeriesCategories(
+                profileId, categoriesResult.data);
             categoriesImported += categoriesResult.data.length;
           }
           operationsDone++;

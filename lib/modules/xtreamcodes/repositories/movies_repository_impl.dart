@@ -21,17 +21,6 @@ const Duration _extendedTimeout = Duration(seconds: 60);
 /// Movies repository implementation
 class MoviesRepositoryImpl extends XtreamRepositoryBase
     implements MoviesRepository {
-  final Dio _dio;
-
-  // Cache for categories and movies
-  final Map<String, List<DomainCategory>> _categoryCache = {};
-  final Map<String, List<VodItem>> _moviesCache = {};
-  final Map<String, VodItem> _movieDetailsCache = {};
-  final Map<String, DateTime> _cacheTimestamps = {};
-
-  /// Default cache duration (1 hour)
-  static const Duration _cacheDuration = Duration(hours: 1);
-
   MoviesRepositoryImpl({Dio? dio})
       : _dio = dio ??
             Dio(BaseOptions(
@@ -42,6 +31,16 @@ class MoviesRepositoryImpl extends XtreamRepositoryBase
                 'User-Agent': 'WatchTheFlix/1.0',
               },
             ));
+  final Dio _dio;
+
+  // Cache for categories and movies
+  final Map<String, List<DomainCategory>> _categoryCache = {};
+  final Map<String, List<VodItem>> _moviesCache = {};
+  final Map<String, VodItem> _movieDetailsCache = {};
+  final Map<String, DateTime> _cacheTimestamps = {};
+
+  /// Default cache duration (1 hour)
+  static const Duration _cacheDuration = Duration(hours: 1);
 
   String _getCacheKey(XtreamCredentialsModel credentials) =>
       '${credentials.baseUrl}_${credentials.username}';
@@ -85,7 +84,8 @@ class MoviesRepositoryImpl extends XtreamRepositoryBase
 
       return ApiResult.success(categories);
     } on DioException catch (e) {
-      moduleLogger.error('Failed to fetch movie categories', tag: 'Movies', error: e);
+      moduleLogger.error('Failed to fetch movie categories',
+          tag: 'Movies', error: e);
       return ApiResult.failure(handleApiError(e, 'Fetch movie categories'));
     } on TimeoutException catch (_) {
       return ApiResult.failure(
@@ -188,7 +188,8 @@ class MoviesRepositoryImpl extends XtreamRepositoryBase
 
       if (response.data == null) {
         return ApiResult.failure(
-          ApiError(type: ApiErrorType.notFound, message: 'Movie not found'),
+          const ApiError(
+              type: ApiErrorType.notFound, message: 'Movie not found'),
         );
       }
 
@@ -204,8 +205,7 @@ class MoviesRepositoryImpl extends XtreamRepositoryBase
       };
 
       final streamId = mergedData['stream_id']?.toString() ?? movieId;
-      final extension =
-          (mergedData['container_extension'] ?? 'mp4').toString();
+      final extension = (mergedData['container_extension'] ?? 'mp4').toString();
       final streamUrl = buildMovieStreamUrl(
         credentials,
         streamId,
@@ -221,7 +221,8 @@ class MoviesRepositoryImpl extends XtreamRepositoryBase
 
       return ApiResult.success(movie);
     } on DioException catch (e) {
-      moduleLogger.error('Failed to fetch movie details', tag: 'Movies', error: e);
+      moduleLogger.error('Failed to fetch movie details',
+          tag: 'Movies', error: e);
       return ApiResult.failure(handleApiError(e, 'Fetch movie details'));
     } on TimeoutException catch (_) {
       return ApiResult.failure(
