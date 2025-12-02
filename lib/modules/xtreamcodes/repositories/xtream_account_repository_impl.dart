@@ -42,8 +42,8 @@ class XtreamAccountRepositoryImpl extends XtreamRepositoryBase
       );
 
       final url = buildUrl(credentials, '');
-      final response = await _dio.get<Map<String, dynamic>>(url)
-          .timeout(_accountTimeout);
+      // Note: Dio handles timeout via BaseOptions, no additional timeout needed
+      final response = await _dio.get<Map<String, dynamic>>(url);
 
       if (response.data == null) {
         return ApiResult.failure(

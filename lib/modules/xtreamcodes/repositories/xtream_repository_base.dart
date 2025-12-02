@@ -8,6 +8,7 @@ import '../../core/logging/app_logger.dart';
 /// Base class for Xtream API repositories
 abstract class XtreamRepositoryBase {
   /// Build API URL with authentication
+  /// Username and password are URL-encoded for query parameter safety
   String buildUrl(XtreamCredentialsModel credentials, String action) {
     final encodedUsername = Uri.encodeComponent(credentials.username);
     final encodedPassword = Uri.encodeComponent(credentials.password);
@@ -17,6 +18,9 @@ abstract class XtreamRepositoryBase {
   }
 
   /// Build stream URL for live content
+  /// Note: Credentials are NOT URL-encoded in stream paths as this is the
+  /// Xtream Codes API standard format. Most media players expect unencoded
+  /// paths. Users should avoid special characters in credentials if possible.
   String buildLiveStreamUrl(
     XtreamCredentialsModel credentials,
     String streamId, {
@@ -26,6 +30,9 @@ abstract class XtreamRepositoryBase {
   }
 
   /// Build stream URL for movie content
+  /// Note: Credentials are NOT URL-encoded in stream paths as this is the
+  /// Xtream Codes API standard format. Most media players expect unencoded
+  /// paths. Users should avoid special characters in credentials if possible.
   String buildMovieStreamUrl(
     XtreamCredentialsModel credentials,
     String streamId, {
@@ -35,6 +42,9 @@ abstract class XtreamRepositoryBase {
   }
 
   /// Build stream URL for series content
+  /// Note: Credentials are NOT URL-encoded in stream paths as this is the
+  /// Xtream Codes API standard format. Most media players expect unencoded
+  /// paths. Users should avoid special characters in credentials if possible.
   String buildSeriesStreamUrl(
     XtreamCredentialsModel credentials,
     String streamId, {
