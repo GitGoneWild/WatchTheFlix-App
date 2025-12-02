@@ -95,6 +95,9 @@ class XtreamLiveRepository implements IXtreamLiveRepository {
             .toList();
       }
 
+      // Enrich channels with category names
+      channels = await _enrichChannelsWithCategoryNames(channels);
+
       // Enrich channels with EPG data
       if (_epgRepository != null) {
         channels = await _enrichChannelsWithEpg(channels);
@@ -464,6 +467,45 @@ class XtreamLiveRepository implements IXtreamLiveRepository {
       );
       return null;
     }
+  }
+
+  /// Enrich channels with category names from cached categories
+  Future<List<DomainChannel>> _enrichChannelsWithCategoryNames(
+    List<DomainChannel> channels,
+  ) async {
+    // Ensure categories are loaded
+    if (_cachedCategories == null) {
+      await _loadCategoriesFromCache();
+    }
+
+    // If still no categories, try to fetch them
+    if (_cachedCategories == null) {
+      final categoriesResult = await _apiClient.getLiveCategories();
+      if (categoriesResult.isSuccess) {
+        _cachedCategories = categoriesResult.data
+            .map((c) => XtreamMappers.liveCategoryToCategory(c))
+            .toList();
+      }
+    }
+
+    // Build category name map
+    final categoryNameMap = <String, String>{};
+    if (_cachedCategories != null) {
+      for (final category in _cachedCategories!) {
+        categoryNameMap[category.id] = category.name;
+      }
+    }
+
+    // Enrich channels with category names
+    return channels.map((channel) {
+      if (channel.categoryId != null) {
+        final categoryName = categoryNameMap[channel.categoryId];
+        if (categoryName != null) {
+          return channel.copyWith(groupTitle: categoryName);
+        }
+      }
+      return channel;
+    }).toList();
   }
 
   /// Enrich channels with EPG data

@@ -252,6 +252,114 @@ void main() {
         expect(result.data.length, equals(1));
         expect(result.data[0].name, equals('Channel Cat 1'));
       });
+
+      group('category name enrichment', () {
+        void setUpMocksForEnrichment(
+          List<XtreamLiveCategory> categories,
+          List<XtreamLiveStream> streams,
+        ) {
+          when(() => mockStorage.getJsonList(any()))
+              .thenAnswer((_) async => ApiResult.success(null));
+          when(() => mockStorage.getInt(any()))
+              .thenAnswer((_) async => ApiResult.success(null));
+          when(() => mockApiClient.getLiveCategories())
+              .thenAnswer((_) async => ApiResult.success(categories));
+          when(() => mockApiClient.getLiveStreams(categoryId: any(named: 'categoryId')))
+              .thenAnswer((_) async => ApiResult.success(streams));
+          when(() => mockApiClient.getLiveStreamUrl(any()))
+              .thenReturn('http://test.com/stream');
+          when(() => mockStorage.setJsonList(any(), any()))
+              .thenAnswer((_) async => ApiResult.success(null));
+          when(() => mockStorage.setInt(any(), any()))
+              .thenAnswer((_) async => ApiResult.success(null));
+        }
+
+        test('should enrich channels with category names', () async {
+          // Arrange
+          final apiCategories = [
+            const XtreamLiveCategory(categoryId: '1', categoryName: 'Sports'),
+            const XtreamLiveCategory(categoryId: '2', categoryName: 'News'),
+          ];
+          
+          final apiStreams = [
+            const XtreamLiveStream(
+              num: '1',
+              name: 'ESPN',
+              streamType: 'live',
+              streamId: '101',
+              streamIcon: '',
+              epgChannelId: '',
+              added: '',
+              categoryId: '1',
+            ),
+            const XtreamLiveStream(
+              num: '2',
+              name: 'CNN',
+              streamType: 'live',
+              streamId: '102',
+              streamIcon: '',
+              epgChannelId: '',
+              added: '',
+              categoryId: '2',
+            ),
+          ];
+
+          setUpMocksForEnrichment(apiCategories, apiStreams);
+
+          // Act
+          final result = await repository.getLiveChannels();
+
+          // Assert
+          expect(result.isSuccess, isTrue);
+          expect(result.data.length, equals(2));
+          // Verify that groupTitle is enriched with category names
+          expect(result.data[0].groupTitle, equals('Sports'));
+          expect(result.data[1].groupTitle, equals('News'));
+        });
+
+        test('should handle channels with no matching category gracefully', () async {
+          // Arrange
+          final apiCategories = [
+            const XtreamLiveCategory(categoryId: '1', categoryName: 'Sports'),
+          ];
+          
+          final apiStreams = [
+            const XtreamLiveStream(
+              num: '1',
+              name: 'ESPN',
+              streamType: 'live',
+              streamId: '101',
+              streamIcon: '',
+              epgChannelId: '',
+              added: '',
+              categoryId: '1',
+            ),
+            const XtreamLiveStream(
+              num: '2',
+              name: 'Unknown Channel',
+              streamType: 'live',
+              streamId: '102',
+              streamIcon: '',
+              epgChannelId: '',
+              added: '',
+              categoryId: '999', // Category not in API response
+            ),
+          ];
+
+          setUpMocksForEnrichment(apiCategories, apiStreams);
+
+          // Act
+          final result = await repository.getLiveChannels();
+
+          // Assert
+          expect(result.isSuccess, isTrue);
+          expect(result.data.length, equals(2));
+          // Verify that known category is enriched
+          expect(result.data[0].groupTitle, equals('Sports'));
+          // Verify that unknown category has null groupTitle (not enriched)
+          expect(result.data[1].groupTitle, isNull);
+        });
+      });
     });
   });
 }
