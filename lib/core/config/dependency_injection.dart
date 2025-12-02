@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/datasources/local/local_storage.dart';
 import '../../data/datasources/remote/api_client.dart';
 import '../../data/repositories/channel_repository_impl.dart';
+import '../../data/repositories/composite_channel_repository.dart';
 import '../../data/repositories/playlist_repository_impl.dart';
 import '../../domain/repositories/channel_repository.dart';
 import '../../domain/repositories/playlist_repository.dart';
@@ -87,9 +88,19 @@ Future<void> initDependencies() async {
     ),
   );
 
-  getIt.registerLazySingleton<ChannelRepository>(
+  // Register M3U-based channel repository as a named singleton
+  getIt.registerLazySingleton<ChannelRepositoryImpl>(
     () => ChannelRepositoryImpl(
       playlistRepository: getIt<PlaylistRepository>(),
+      localStorage: getIt<LocalStorage>(),
+    ),
+  );
+
+  // Register the composite channel repository that switches between Xtream and M3U
+  getIt.registerLazySingleton<ChannelRepository>(
+    () => CompositeChannelRepository(
+      serviceManager: getIt<XtreamServiceManager>(),
+      m3uRepository: getIt<ChannelRepositoryImpl>(),
       localStorage: getIt<LocalStorage>(),
     ),
   );
