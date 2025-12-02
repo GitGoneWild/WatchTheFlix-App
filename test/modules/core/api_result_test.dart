@@ -52,6 +52,24 @@ void main() {
       expect(result.error, equals(error));
     });
 
+    test('should call onVoidSuccess for void success result', () {
+      final result = ApiResult<void>.success(null);
+      var called = false;
+
+      result.onVoidSuccess(() => called = true);
+
+      expect(called, isTrue);
+    });
+
+    test('should not call onVoidSuccess for void failure result', () {
+      final result = ApiResult<void>.failure(ApiError.network());
+      var called = false;
+
+      result.onVoidSuccess(() => called = true);
+
+      expect(called, isFalse);
+    });
+
     test('should map success result', () {
       final result = ApiResult.success(10);
       final mapped = result.map((data) => data * 2);
