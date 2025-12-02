@@ -35,21 +35,31 @@ class EpgFetchResult {
   });
 
   /// Create a successful result.
-  factory EpgFetchResult.success(EpgData data) {
+  ///
+  /// [fetchedAt] Optional timestamp for when the fetch occurred.
+  /// Defaults to current UTC time if not provided.
+  factory EpgFetchResult.success(EpgData data, {DateTime? fetchedAt}) {
     return EpgFetchResult(
       data: data,
       success: true,
-      fetchedAt: DateTime.now().toUtc(),
+      fetchedAt: fetchedAt ?? DateTime.now().toUtc(),
     );
   }
 
   /// Create a failure result with cached data.
-  factory EpgFetchResult.failure(String message, {EpgData? cachedData}) {
+  ///
+  /// [fetchedAt] Optional timestamp for when the fetch was attempted.
+  /// Defaults to current UTC time if not provided.
+  factory EpgFetchResult.failure(
+    String message, {
+    EpgData? cachedData,
+    DateTime? fetchedAt,
+  }) {
     return EpgFetchResult(
       data: cachedData ?? EpgData.empty(),
       success: false,
       errorMessage: message,
-      fetchedAt: DateTime.now().toUtc(),
+      fetchedAt: fetchedAt ?? DateTime.now().toUtc(),
     );
   }
 }

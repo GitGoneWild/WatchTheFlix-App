@@ -119,7 +119,9 @@ void main() {
     setUp(() {
       repository = UnifiedEpgRepository();
 
-      // Create test EPG data
+      // Create test EPG data with relative timestamps.
+      // Using DateTime.now() is intentional here since we're testing
+      // time-relative behavior (isCurrentlyAiring, isUpcoming, etc.)
       final now = DateTime.now().toUtc();
       testEpgData = EpgData(
         channels: {

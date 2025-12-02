@@ -78,6 +78,15 @@ void main() {
       expect(result.fetchedAt, isNotNull);
     });
 
+    test('should create success result with custom timestamp', () {
+      final data = EpgData.empty();
+      final timestamp = DateTime.utc(2024, 1, 15, 10, 30);
+      final result = EpgFetchResult.success(data, fetchedAt: timestamp);
+
+      expect(result.success, isTrue);
+      expect(result.fetchedAt, equals(timestamp));
+    });
+
     test('should create failure result', () {
       final result = EpgFetchResult.failure('Test error');
 
@@ -87,10 +96,11 @@ void main() {
     });
 
     test('should create failure result with cached data', () {
+      final fetchTime = DateTime.utc(2024, 1, 15, 10, 30);
       final cachedData = EpgData(
         channels: const {'ch1': EpgChannel(id: 'ch1', name: 'Channel 1')},
         programs: const {},
-        fetchedAt: DateTime.now(),
+        fetchedAt: fetchTime,
       );
       final result = EpgFetchResult.failure('Test error', cachedData: cachedData);
 
