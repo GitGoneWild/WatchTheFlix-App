@@ -23,7 +23,10 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
   final ApiClient _apiClient;
   final M3UParser _m3uParser;
 
-  // In-memory cache
+  // In-memory cache with size management
+  static const int _maxCacheSize = 10000; // Maximum items per cache entry
+  static const int _maxCacheEntries = 10; // Maximum playlist cache entries
+  
   final Map<String, List<ChannelModel>> _channelCache = {};
   final Map<String, List<CategoryModel>> _categoryCache = {};
 
@@ -106,7 +109,7 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
       channels = [];
     }
 
-    _channelCache[id] = channels;
+    _addToCache(id, channels);
     await _localStorage.cacheChannels(id, channels);
 
     return channels.map((c) => c.toEntity()).toList();
@@ -197,12 +200,29 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
 
     final cached = await _localStorage.getCachedChannels(playlistId);
     if (cached != null) {
-      _channelCache[playlistId] = cached;
+      _addToCache(playlistId, cached);
       return cached;
     }
 
     // Fetch fresh data
     final channels = await refreshPlaylist(playlistId);
     return channels.map((c) => ChannelModel.fromEntity(c)).toList();
+  }
+
+  /// Add to cache with size management to prevent memory issues
+  void _addToCache(String playlistId, List<ChannelModel> channels) {
+    // Limit per-entry size
+    final limitedChannels = channels.length > _maxCacheSize
+        ? channels.sublist(0, _maxCacheSize)
+        : channels;
+
+    // Limit number of cache entries (LRU-style: remove oldest)
+    if (_channelCache.length >= _maxCacheEntries) {
+      final firstKey = _channelCache.keys.first;
+      _channelCache.remove(firstKey);
+      _categoryCache.remove(firstKey);
+    }
+
+    _channelCache[playlistId] = limitedChannels;
   }
 }

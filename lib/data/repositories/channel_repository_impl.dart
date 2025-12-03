@@ -17,7 +17,9 @@ class ChannelRepositoryImpl implements ChannelRepository {
   final PlaylistRepository _playlistRepository;
   final LocalStorage _localStorage;
 
-  // In-memory cache
+  // In-memory cache with size limits to prevent memory leaks
+  static const int _maxCacheSize = 10000; // Maximum items in cache
+  
   List<Channel>? _channelCache;
   List<Category>? _categoryCache;
   List<Movie>? _movieCache;
@@ -35,7 +37,9 @@ class ChannelRepositoryImpl implements ChannelRepository {
           )
         : await _playlistRepository.refreshPlaylist(activePlaylist.id);
 
-    _channelCache = channels.where((c) => c.type == ContentType.live).toList();
+    _channelCache = _limitCacheSize(
+      channels.where((c) => c.type == ContentType.live).toList(),
+    );
     return _channelCache!;
   }
 
@@ -174,5 +178,14 @@ class ChannelRepositoryImpl implements ChannelRepository {
   @override
   Future<void> clearRecentHistory() async {
     await _localStorage.clearRecentChannels();
+  }
+
+  /// Limit cache size to prevent memory issues with large playlists
+  List<T> _limitCacheSize<T>(List<T> items) {
+    if (items.length <= _maxCacheSize) {
+      return items;
+    }
+    // Keep only the first _maxCacheSize items
+    return items.sublist(0, _maxCacheSize);
   }
 }
