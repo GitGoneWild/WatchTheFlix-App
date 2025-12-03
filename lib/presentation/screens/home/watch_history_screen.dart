@@ -50,7 +50,7 @@ class WatchHistoryScreen extends StatelessWidget {
             final recentlyWatched = state.recentlyWatched;
 
             if (recentlyWatched.isEmpty) {
-              return _EmptyHistoryView();
+              return const _EmptyHistoryView();
             }
 
             return ListView.separated(
@@ -222,6 +222,8 @@ class _HistoryItem extends StatelessWidget {
 
 /// Empty history view
 class _EmptyHistoryView extends StatelessWidget {
+  const _EmptyHistoryView();
+
   @override
   Widget build(BuildContext context) {
     return Center(
