@@ -48,6 +48,12 @@ abstract class LocalStorage {
   /// Add to recent channels
   Future<void> addRecentChannel(ChannelModel channel);
 
+  /// Remove a specific channel from recent history
+  Future<void> removeRecentChannel(String channelId);
+
+  /// Clear all recent channels history
+  Future<void> clearRecentChannels();
+
   /// Get settings
   Future<Map<String, dynamic>?> getSettings();
 
@@ -220,6 +226,22 @@ class LocalStorageImpl implements LocalStorage {
       AppConstants.keyRecentChannels,
       json.encode(jsonList),
     );
+  }
+
+  @override
+  Future<void> removeRecentChannel(String channelId) async {
+    final recent = await getRecentChannels();
+    recent.removeWhere((r) => r.id == channelId);
+    final jsonList = recent.map((c) => c.toJson()).toList();
+    await _sharedPreferences.setString(
+      AppConstants.keyRecentChannels,
+      json.encode(jsonList),
+    );
+  }
+
+  @override
+  Future<void> clearRecentChannels() async {
+    await _sharedPreferences.remove(AppConstants.keyRecentChannels);
   }
 
   @override

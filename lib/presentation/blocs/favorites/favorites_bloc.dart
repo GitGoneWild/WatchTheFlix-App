@@ -53,6 +53,18 @@ class AddRecentEvent extends FavoritesEvent {
   List<Object?> get props => [channel];
 }
 
+class RemoveRecentEvent extends FavoritesEvent {
+  const RemoveRecentEvent(this.channelId);
+  final String channelId;
+
+  @override
+  List<Object?> get props => [channelId];
+}
+
+class ClearRecentHistoryEvent extends FavoritesEvent {
+  const ClearRecentHistoryEvent();
+}
+
 // States
 abstract class FavoritesState extends Equatable {
   const FavoritesState();
@@ -116,6 +128,8 @@ class FavoritesBloc extends Bloc<FavoritesEvent, FavoritesState> {
     on<RemoveFavoriteEvent>(_onRemoveFavorite);
     on<ToggleFavoriteEvent>(_onToggleFavorite);
     on<AddRecentEvent>(_onAddRecent);
+    on<RemoveRecentEvent>(_onRemoveRecent);
+    on<ClearRecentHistoryEvent>(_onClearRecentHistory);
   }
   final ChannelRepository _repository;
 
@@ -249,6 +263,39 @@ class FavoritesBloc extends Bloc<FavoritesEvent, FavoritesState> {
       }
     } catch (e) {
       AppLogger.error('Failed to add to recent', e);
+    }
+  }
+
+  Future<void> _onRemoveRecent(
+    RemoveRecentEvent event,
+    Emitter<FavoritesState> emit,
+  ) async {
+    try {
+      await _repository.removeFromRecent(event.channelId);
+      if (state is FavoritesLoadedState) {
+        final currentState = state as FavoritesLoadedState;
+        final newList = currentState.recentlyWatched
+            .where((c) => c.id != event.channelId)
+            .toList();
+        emit(currentState.copyWith(recentlyWatched: newList));
+      }
+    } catch (e) {
+      AppLogger.error('Failed to remove from recent', e);
+    }
+  }
+
+  Future<void> _onClearRecentHistory(
+    ClearRecentHistoryEvent event,
+    Emitter<FavoritesState> emit,
+  ) async {
+    try {
+      await _repository.clearRecentHistory();
+      if (state is FavoritesLoadedState) {
+        final currentState = state as FavoritesLoadedState;
+        emit(currentState.copyWith(recentlyWatched: []));
+      }
+    } catch (e) {
+      AppLogger.error('Failed to clear recent history', e);
     }
   }
 }

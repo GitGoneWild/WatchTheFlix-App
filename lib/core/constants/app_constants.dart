@@ -14,6 +14,8 @@ class AppConstants {
   static const String keyFavorites = 'favorites';
   static const String keyRecentChannels = 'recent_channels';
   static const String keySettings = 'settings';
+  static const String keySelectedLiveTVCategory = 'selected_live_tv_category';
+  static const String keySelectedMovieCategory = 'selected_movie_category';
 
   /// API timeouts
   static const Duration connectionTimeout = Duration(seconds: 30);
@@ -40,6 +42,10 @@ class AppConstants {
   static const Duration searchDebounce = Duration(milliseconds: 500);
   static const int minSearchLength = 2;
 
+  /// Special category IDs
+  static const String favoriteCategoryId = '_favorites';
+  static const String recentCategoryId = '_recent';
+
   /// Cache settings
   static const Duration cacheExpiration = Duration(hours: 24);
   static const int maxCacheSize = 100; // MB
@@ -64,4 +70,5 @@ class AppRoutes {
   static const String favorites = '/favorites';
   static const String category = '/category';
   static const String details = '/details';
+  static const String watchHistory = '/watch-history';
 }

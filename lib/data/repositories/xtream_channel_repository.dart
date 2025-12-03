@@ -511,6 +511,16 @@ class XtreamChannelRepository implements ChannelRepository {
     await _localStorage.addRecentChannel(ChannelModel.fromEntity(channel));
   }
 
+  @override
+  Future<void> removeFromRecent(String channelId) async {
+    await _localStorage.removeRecentChannel(channelId);
+  }
+
+  @override
+  Future<void> clearRecentHistory() async {
+    await _localStorage.clearRecentChannels();
+  }
+
   // Mapper methods
 
   /// Convert domain channel to entity channel

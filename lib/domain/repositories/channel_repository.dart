@@ -52,6 +52,12 @@ abstract class ChannelRepository {
 
   /// Add to recent channels
   Future<void> addToRecent(Channel channel);
+
+  /// Remove a specific channel from recent history
+  Future<void> removeFromRecent(String channelId);
+
+  /// Clear all recent channels history
+  Future<void> clearRecentHistory();
 }
 
 /// Search result containing all content types

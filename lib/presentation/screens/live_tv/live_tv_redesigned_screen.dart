@@ -137,37 +137,89 @@ class _LiveTVRedesignedScreenState extends State<LiveTVRedesignedScreen> {
 
           // Categories list
           Expanded(
-            child: ListView.builder(
-              controller: _categoryScrollController,
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              itemCount: categories.length + 1, // +1 for "All" option
-              itemBuilder: (context, index) {
-                if (index == 0) {
-                  // "All" category option
-                  return _CategoryItem(
-                    label: 'All Channels',
-                    icon: Icons.live_tv,
-                    isSelected: selectedCategory == null,
-                    channelCount: state.channels.length,
-                    onTap: () {
-                      context.read<ChannelBloc>().add(
-                            const SelectCategoryEvent(null),
-                          );
-                    },
-                  );
-                }
+            child: BlocBuilder<FavoritesBloc, FavoritesState>(
+              builder: (context, favoritesState) {
+                final favorites = favoritesState is FavoritesLoadedState
+                    ? favoritesState.favorites
+                    : <Channel>[];
+                final recentlyWatched = favoritesState is FavoritesLoadedState
+                    ? favoritesState.recentlyWatched
+                    : <Channel>[];
+                
+                return ListView(
+                  controller: _categoryScrollController,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  children: [
+                    // Favorites category (special) - only show if there are favorites
+                    if (favorites.isNotEmpty)
+                      _CategoryItem(
+                        label: 'Favorites',
+                        icon: Icons.favorite,
+                        iconColor: AppColors.primary,
+                        isSelected: selectedCategory?.id == AppConstants.favoriteCategoryId,
+                        channelCount: favorites.length,
+                        onTap: () {
+                          context.read<ChannelBloc>().add(
+                                SelectCategoryEvent(
+                                  Category(
+                                    id: AppConstants.favoriteCategoryId,
+                                    name: 'Favorites',
+                                    channelCount: favorites.length,
+                                  ),
+                                ),
+                              );
+                        },
+                      ),
+                    
+                    // Recently Watched category (special) - only show if there is history
+                    if (recentlyWatched.isNotEmpty)
+                      _CategoryItem(
+                        label: 'Recently Watched',
+                        icon: Icons.history,
+                        iconColor: AppColors.accentOrange,
+                        isSelected: selectedCategory?.id == AppConstants.recentCategoryId,
+                        channelCount: recentlyWatched.length,
+                        onTap: () {
+                          context.read<ChannelBloc>().add(
+                                SelectCategoryEvent(
+                                  Category(
+                                    id: AppConstants.recentCategoryId,
+                                    name: 'Recently Watched',
+                                    channelCount: recentlyWatched.length,
+                                  ),
+                                ),
+                              );
+                        },
+                      ),
+                    
+                    // All Channels category
+                    _CategoryItem(
+                      label: 'All Channels',
+                      icon: Icons.live_tv,
+                      isSelected: selectedCategory == null,
+                      channelCount: state.channels.length,
+                      onTap: () {
+                        context.read<ChannelBloc>().add(
+                              const SelectCategoryEvent(null),
+                            );
+                      },
+                    ),
 
-                final category = categories[index - 1];
-                return _CategoryItem(
-                  label: category.name,
-                  icon: Icons.folder_outlined,
-                  isSelected: selectedCategory?.id == category.id,
-                  channelCount: category.channelCount,
-                  onTap: () {
-                    context.read<ChannelBloc>().add(
-                          SelectCategoryEvent(category),
-                        );
-                  },
+                    // Regular categories
+                    ...categories.map((category) {
+                      return _CategoryItem(
+                        label: category.name,
+                        icon: Icons.folder_outlined,
+                        isSelected: selectedCategory?.id == category.id,
+                        channelCount: category.channelCount,
+                        onTap: () {
+                          context.read<ChannelBloc>().add(
+                                SelectCategoryEvent(category),
+                              );
+                        },
+                      );
+                    }),
+                  ],
                 );
               },
             ),
@@ -178,53 +230,74 @@ class _LiveTVRedesignedScreenState extends State<LiveTVRedesignedScreen> {
   }
 
   Widget _buildAppBar(ChannelLoadedState state) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: const BoxDecoration(
-        color: AppColors.background,
-        border: Border(
-          bottom: BorderSide(color: AppColors.border, width: 1),
-        ),
-      ),
-      child: Row(
-        children: [
-          // Current category indicator
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  state.selectedCategory?.name ?? 'All Channels',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${state.filteredChannels.length} channels available',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                ),
-              ],
+    return BlocBuilder<FavoritesBloc, FavoritesState>(
+      builder: (context, favoritesState) {
+        final favorites = favoritesState is FavoritesLoadedState
+            ? favoritesState.favorites
+            : <Channel>[];
+        final recentlyWatched = favoritesState is FavoritesLoadedState
+            ? favoritesState.recentlyWatched
+            : <Channel>[];
+        
+        // Determine channel count based on selected category
+        int channelCount;
+        if (state.selectedCategory?.id == AppConstants.favoriteCategoryId) {
+          channelCount = favorites.length;
+        } else if (state.selectedCategory?.id == AppConstants.recentCategoryId) {
+          channelCount = recentlyWatched.length;
+        } else {
+          channelCount = state.filteredChannels.length;
+        }
+        
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: const BoxDecoration(
+            color: AppColors.background,
+            border: Border(
+              bottom: BorderSide(color: AppColors.border, width: 1),
             ),
           ),
+          child: Row(
+            children: [
+              // Current category indicator
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      state.selectedCategory?.name ?? 'All Channels',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '$channelCount channels available',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
 
-          // Action buttons
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () => Navigator.pushNamed(context, AppRoutes.search),
-            tooltip: 'Search',
+              // Action buttons
+              IconButton(
+                icon: const Icon(Icons.search),
+                onPressed: () => Navigator.pushNamed(context, AppRoutes.search),
+                tooltip: 'Search',
+              ),
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                onPressed: () {
+                  context.read<ChannelBloc>().add(const LoadChannelsEvent());
+                },
+                tooltip: 'Refresh',
+              ),
+            ],
           ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              context.read<ChannelBloc>().add(const LoadChannelsEvent());
-            },
-            tooltip: 'Refresh',
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -232,57 +305,88 @@ class _LiveTVRedesignedScreenState extends State<LiveTVRedesignedScreen> {
     ChannelLoadedState state,
     bool Function(String) isFavorite,
   ) {
-    final channels = state.filteredChannels;
+    return BlocBuilder<FavoritesBloc, FavoritesState>(
+      builder: (context, favoritesState) {
+        final favorites = favoritesState is FavoritesLoadedState
+            ? favoritesState.favorites
+            : <Channel>[];
+        final recentlyWatched = favoritesState is FavoritesLoadedState
+            ? favoritesState.recentlyWatched
+            : <Channel>[];
+        
+        List<Channel> displayChannels;
+        
+        // Handle special categories
+        if (state.selectedCategory?.id == AppConstants.favoriteCategoryId) {
+          displayChannels = favorites;
+        } else if (state.selectedCategory?.id == AppConstants.recentCategoryId) {
+          displayChannels = recentlyWatched;
+        } else {
+          // For regular categories, show favorited channels first
+          final channels = state.filteredChannels;
+          final favoriteIds = favorites.map((c) => c.id).toSet();
+          
+          final favoritedInCategory = channels
+              .where((c) => favoriteIds.contains(c.id))
+              .toList();
+          final nonFavoritedInCategory = channels
+              .where((c) => !favoriteIds.contains(c.id))
+              .toList();
+          
+          displayChannels = [...favoritedInCategory, ...nonFavoritedInCategory];
+        }
 
-    if (channels.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.tv_off_outlined,
-              size: 64,
-              color: AppColors.textSecondary.withOpacity(0.5),
+        if (displayChannels.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.tv_off_outlined,
+                  size: 64,
+                  color: AppColors.textSecondary.withOpacity(0.5),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'No channels in this category',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Try selecting a different category',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.textTertiary,
+                      ),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            Text(
-              'No channels in this category',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Try selecting a different category',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.textTertiary,
-                  ),
-            ),
-          ],
-        ),
-      );
-    }
+          );
+        }
 
-    return GridView.builder(
-      controller: _channelScrollController,
-      padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 180,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: 0.75,
-      ),
-      itemCount: channels.length,
-      itemBuilder: (context, index) {
-        final channel = channels[index];
-        return _ChannelCard(
-          channel: channel,
-          isFavorite: isFavorite(channel.id),
-          onTap: () => _onChannelSelected(channel),
-          onFavoriteToggle: () {
-            context.read<FavoritesBloc>().add(
-                  ToggleFavoriteEvent(channel),
-                );
+        return GridView.builder(
+          controller: _channelScrollController,
+          padding: const EdgeInsets.all(16),
+          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: 180,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: 0.75,
+          ),
+          itemCount: displayChannels.length,
+          itemBuilder: (context, index) {
+            final channel = displayChannels[index];
+            return _ChannelCard(
+              channel: channel,
+              isFavorite: isFavorite(channel.id),
+              onTap: () => _onChannelSelected(channel),
+              onFavoriteToggle: () {
+                context.read<FavoritesBloc>().add(
+                      ToggleFavoriteEvent(channel),
+                    );
+              },
+            );
           },
         );
       },
@@ -296,6 +400,7 @@ class _CategoryItem extends StatelessWidget {
     required this.label,
     required this.icon,
     required this.isSelected,
+    this.iconColor,
     this.channelCount,
     this.onTap,
   });
@@ -303,6 +408,7 @@ class _CategoryItem extends StatelessWidget {
   final String label;
   final IconData icon;
   final bool isSelected;
+  final Color? iconColor;
   final int? channelCount;
   final VoidCallback? onTap;
 
@@ -329,7 +435,7 @@ class _CategoryItem extends StatelessWidget {
               Icon(
                 icon,
                 size: 18,
-                color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                color: iconColor ?? (isSelected ? AppColors.primary : AppColors.textSecondary),
               ),
               const SizedBox(width: 12),
               Expanded(
