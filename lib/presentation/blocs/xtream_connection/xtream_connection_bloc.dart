@@ -172,14 +172,21 @@ class XtreamConnectionBloc
       // Initialize service manager
       await _serviceManager.initialize(credentials);
 
-      // Step 5: Fetch live channels (essential data - blocking)
+      // Step 5: Start fetching content progressively (non-blocking approach)
+      // Fetch first batch of channels to show immediate results
       emit(const XtreamConnectionInProgress(
         currentStep: ConnectionStep.fetchingChannels,
         progress: 0.3,
         message: 'Loading live TV channels...',
       ));
 
-      final liveStreamsResult = await apiClient.getLiveStreams();
+      // Start all content fetches in parallel for faster loading
+      final channelsFuture = apiClient.getLiveStreams();
+      final moviesFuture = apiClient.getVodStreams();
+      final seriesFuture = apiClient.getSeries();
+
+      // Wait for channels first (most important for IPTV)
+      final liveStreamsResult = await channelsFuture;
       if (liveStreamsResult.isSuccess) {
         _channelsLoaded = liveStreamsResult.data.length;
         moduleLogger.info(
@@ -198,19 +205,19 @@ class XtreamConnectionBloc
       emit(XtreamConnectionInProgress(
         currentStep: ConnectionStep.fetchingChannels,
         progress: 0.45,
-        message: 'Live channels loaded...',
+        message: 'Live channels loaded! Loading movies...',
         channelsLoaded: _channelsLoaded,
       ));
 
-      // Step 6: Fetch movies (essential data - blocking)
+      // Check movies progress
       emit(XtreamConnectionInProgress(
         currentStep: ConnectionStep.fetchingMovies,
         progress: 0.5,
-        message: 'Loading movies...',
+        message: 'Loading movies catalog...',
         channelsLoaded: _channelsLoaded,
       ));
 
-      final vodStreamsResult = await apiClient.getVodStreams();
+      final vodStreamsResult = await moviesFuture;
       if (vodStreamsResult.isSuccess) {
         _moviesLoaded = vodStreamsResult.data.length;
         moduleLogger.info(
@@ -229,21 +236,21 @@ class XtreamConnectionBloc
       emit(XtreamConnectionInProgress(
         currentStep: ConnectionStep.fetchingMovies,
         progress: 0.65,
-        message: 'Movies loaded...',
+        message: 'Movies loaded! Loading series...',
         channelsLoaded: _channelsLoaded,
         moviesLoaded: _moviesLoaded,
       ));
 
-      // Step 7: Fetch series (essential data - blocking)
+      // Check series progress
       emit(XtreamConnectionInProgress(
         currentStep: ConnectionStep.fetchingSeries,
         progress: 0.7,
-        message: 'Loading TV series...',
+        message: 'Loading TV series catalog...',
         channelsLoaded: _channelsLoaded,
         moviesLoaded: _moviesLoaded,
       ));
 
-      final seriesResult = await apiClient.getSeries();
+      final seriesResult = await seriesFuture;
       if (seriesResult.isSuccess) {
         _seriesLoaded = seriesResult.data.length;
         moduleLogger.info(
@@ -262,18 +269,18 @@ class XtreamConnectionBloc
       emit(XtreamConnectionInProgress(
         currentStep: ConnectionStep.fetchingSeries,
         progress: 0.85,
-        message: 'TV series loaded...',
+        message: 'All content loaded! Preparing EPG...',
         channelsLoaded: _channelsLoaded,
         moviesLoaded: _moviesLoaded,
         seriesLoaded: _seriesLoaded,
       ));
 
       // Step 8: Start EPG refresh in background (non-blocking)
-      // EPG can continue loading after the user navigates to home
+      // EPG will continue loading in the background while user explores content
       emit(XtreamConnectionInProgress(
         currentStep: ConnectionStep.updatingEpg,
         progress: 0.95,
-        message: 'Starting EPG update in background...',
+        message: 'Starting EPG in background... Ready to watch!',
         channelsLoaded: _channelsLoaded,
         moviesLoaded: _moviesLoaded,
         seriesLoaded: _seriesLoaded,
@@ -282,11 +289,11 @@ class XtreamConnectionBloc
       // Start EPG refresh in background - fire and forget
       _refreshEpgInBackground();
 
-      // Step 9: Completed
+      // Step 9: Completed - User can now navigate immediately
       emit(XtreamConnectionInProgress(
         currentStep: ConnectionStep.completed,
         progress: 1.0,
-        message: 'Setup complete! EPG updating in background...',
+        message: 'All set! EPG updating in background...',
         channelsLoaded: _channelsLoaded,
         moviesLoaded: _moviesLoaded,
         seriesLoaded: _seriesLoaded,

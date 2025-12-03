@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <!-- Background -->
+  <rect width="400" height="300" fill="#0D0D0D"/>
+  
+  <!-- TV Icon -->
+  <g transform="translate(200, 80)">
+    <!-- TV Screen -->
+    <rect x="-60" y="-40" width="120" height="80" rx="5" fill="#E50914" stroke="#FFFFFF" stroke-width="3"/>
+    <!-- TV Stand -->
+    <rect x="-30" y="45" width="60" height="5" rx="2" fill="#FFFFFF"/>
+    <rect x="-5" y="40" width="10" height="10" rx="1" fill="#FFFFFF"/>
+    
+    <!-- Play icon inside TV -->
+    <polygon points="-15,-10 -15,10 15,0" fill="#FFFFFF"/>
+  </g>
+  
+  <!-- Text: "You wouldn't steal" -->
+  <text x="200" y="180" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#FFFFFF" text-anchor="middle">
+    You wouldn't steal
+  </text>
+  
+  <!-- Text: "a channel..." -->
+  <text x="200" y="210" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#E50914" text-anchor="middle">
+    a channel...
+  </text>
+  
+  <!-- Text: "Or would you?" (smaller, playful) -->
+  <text x="200" y="240" font-family="Arial, sans-serif" font-size="16" font-style="italic" fill="#CCCCCC" text-anchor="middle" opacity="0.8">
+    (We're just organizing them for you 😉)
+  </text>
+  
+  <!-- Decorative elements (sparkles) -->
+  <circle cx="100" cy="100" r="2" fill="#FFFFFF" opacity="0.6"/>
+  <circle cx="300" cy="120" r="3" fill="#FFFFFF" opacity="0.5"/>
+  <circle cx="120" cy="220" r="2" fill="#E50914" opacity="0.7"/>
+  <circle cx="280" cy="190" r="2" fill="#FFFFFF" opacity="0.4"/>
+</svg>

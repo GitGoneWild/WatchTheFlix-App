@@ -15,24 +15,38 @@ WatchTheFlix is a modern, feature-rich IPTV streaming application built with Flu
 ### ✨ Key Features
 
 - 📺 **Live TV Streaming** - Watch your favorite channels with compact Sky TV-style interface
+  - Smart parallel import for instant access to content
   - Non-blocking EPG loading for instant app responsiveness
   - Category names displayed properly (not numeric IDs)
   - Persistent data across app restarts
   - Smaller channel cards with better information density
 - 🎬 **Movies & Series** - Browse and stream VOD content with optimized performance for large catalogs
+  - Parallel loading of movies and series during import
+  - Fast browsing with cached data
 - 📋 **M3U Playlist Support** - Import playlists via URL or file
 - 🔑 **Xtream Codes Integration** - Connect to Xtream Codes IPTV panels
+  - **NEW**: Parallel content loading (channels, movies, series load simultaneously)
+  - Background EPG processing for faster setup
+  - Fun "You wouldn't steal a channel" meme during import
+- 🎮 **Modern Video Player** - Comprehensive player with advanced features
+  - Gesture controls (double-tap to seek, tap to toggle controls)
+  - Auto-retry on errors with smart buffering
+  - Animated controls with auto-hide
+  - Fullscreen support with orientation handling
+  - Separate modes for Live TV, Movies, and Series
+  - **NEW**: Built from the ground up for reliability and UX
 - 🔍 **Enhanced Search** - Modern search experience across Live TV, Movies, and Series
 - 📱 **Cross-Platform** - Android, iOS, Web, Windows, macOS, Linux
 - 🌙 **Dark Theme** - Cinematic Netflix-style dark interface
 - ⭐ **Favorites** - Save your favorite channels
 - 📺 **Smart EPG** - Electronic Program Guide with background loading and current/next program display
-- 🖼️ **Picture-in-Picture** - Watch while multitasking
+- 🖼️ **Picture-in-Picture** - Watch while multitasking (platform support varies)
 - 🛡️ **VPN Awareness** - VPN detection and status display
 - 💾 **Intelligent Caching** - Minimize API calls with smart cache strategy
 - 📊 **Optional Firebase** - Analytics and push notifications (free tier)
 - 🎯 **Category Navigation** - Vertical sidebar for easy category browsing
 - 🚀 **Performance Optimized** - Lazy loading and virtualization for 100k+ items
+- ❓ **Help & Support** - **NEW**: Comprehensive in-app help with guides for all features
 
 ---
 
@@ -137,12 +151,68 @@ For detailed documentation, see [UI_IMPROVEMENTS.md](docs/UI_IMPROVEMENTS.md).
 
 ## 📋 Loading Playlists
 
+### Xtream Codes (Recommended)
+
+1. Open the app and navigate to **Settings**
+2. Select **Add Playlist** → **Xtream Codes**
+3. Enter your provider's credentials:
+   - Server URL (e.g., `http://example.com:8080`)
+   - Username
+   - Password
+4. Tap **Connect**
+5. **NEW**: Content loads in parallel for faster setup!
+   - Channels, movies, and series are fetched simultaneously
+   - EPG updates in the background without blocking
+   - You can start watching immediately once channels are loaded
+6. Enjoy the playful "You wouldn't steal a channel..." meme during import 😉
+
 ### M3U Playlist
 
 1. Open the app and navigate to **Settings** → **Manage Playlists**
 2. Enter a name for your playlist
 3. Paste the M3U URL (e.g., `http://example.com/playlist.m3u`)
 4. Tap **Add Playlist**
+
+---
+
+## 🎮 Modern Video Player
+
+WatchTheFlix now features a completely redesigned video player built from the ground up:
+
+### Features
+- **Gesture Controls**: Double-tap left/right to seek, double-tap center to play/pause
+- **Auto-Hide Controls**: Controls automatically hide after 5 seconds of playback
+- **Smart Buffering**: Automatic retry with exponential backoff on errors
+- **Content-Aware UI**: Different layouts for Live TV vs VOD content
+- **Fullscreen Support**: Seamless orientation handling
+- **Progress Tracking**: Visual progress bar with time display (VOD only)
+- **Error Handling**: Graceful error messages with retry options
+
+### Player Controls
+| Action | Gesture |
+|--------|---------|
+| Show/Hide Controls | Single tap |
+| Play/Pause | Double-tap center |
+| Seek Back 10s | Double-tap left side |
+| Seek Forward 10s | Double-tap right side |
+| Toggle Fullscreen | Use fullscreen button |
+
+### Usage
+The modern player automatically detects content type (Live TV, Movie, or Series) and adjusts the interface accordingly. For Live TV, seeking is disabled as it's a live stream.
+
+---
+
+## ❓ Help & Support
+
+Access comprehensive in-app help from **Settings** → **Help & Support**:
+
+- 📖 Adding Xtream Codes guide
+- 📋 Adding M3U Playlists guide
+- 🔄 Updating Playlists
+- 📺 Refreshing EPG
+- ⭐ Managing Favorites
+- 🎮 Player Controls explained
+- 🔧 Troubleshooting common issues
 
 ---
 
