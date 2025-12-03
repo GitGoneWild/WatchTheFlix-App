@@ -70,8 +70,12 @@ class XtreamLiveRepository implements IXtreamLiveRepository {
         await _loadChannelsFromCache();
       }
 
-      // Refresh if cache is stale or force refresh
-      if (forceRefresh || await _isCacheStale()) {
+      // Refresh in background if cache is stale (but still return cached data immediately)
+      if (!forceRefresh && await _isCacheStale()) {
+        // Trigger background refresh without waiting
+        _refreshChannelsInBackground();
+      } else if (forceRefresh) {
+        // Only block on force refresh
         final refreshResult = await refreshLiveChannels();
         if (refreshResult.isFailure && _cachedChannels == null) {
           return ApiResult.failure(refreshResult.error);
@@ -125,8 +129,12 @@ class XtreamLiveRepository implements IXtreamLiveRepository {
         await _loadCategoriesFromCache();
       }
 
-      // Refresh if cache is stale or force refresh
-      if (forceRefresh || await _isCacheStale()) {
+      // Refresh in background if cache is stale (but still return cached data immediately)
+      if (!forceRefresh && await _isCacheStale()) {
+        // Trigger background refresh without waiting
+        _refreshCategoriesInBackground();
+      } else if (forceRefresh) {
+        // Only block on force refresh
         final categoriesResult = await _apiClient.getLiveCategories();
         if (categoriesResult.isSuccess) {
           _cachedCategories = categoriesResult.data
@@ -287,6 +295,60 @@ class XtreamLiveRepository implements IXtreamLiveRepository {
       );
       return ApiResult.failure(ApiError.fromException(e));
     }
+  }
+
+  /// Refresh channels in background without blocking
+  void _refreshChannelsInBackground() {
+    // Fire and forget - don't await
+    refreshLiveChannels().then((result) {
+      if (result.isSuccess) {
+        moduleLogger.info(
+          'Background refresh completed successfully',
+          tag: 'XtreamLive',
+        );
+      } else {
+        moduleLogger.warning(
+          'Background refresh failed: ${result.error.message}',
+          tag: 'XtreamLive',
+        );
+      }
+    }).catchError((error, stackTrace) {
+      moduleLogger.error(
+        'Background refresh error',
+        tag: 'XtreamLive',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    });
+  }
+
+  /// Refresh categories in background without blocking
+  void _refreshCategoriesInBackground() {
+    // Fire and forget - don't await
+    _apiClient.getLiveCategories().then((categoriesResult) {
+      if (categoriesResult.isSuccess) {
+        _cachedCategories = categoriesResult.data
+            .map((c) => XtreamMappers.liveCategoryToCategory(c))
+            .toList();
+        _saveCategoriesToCache(_cachedCategories!);
+        moduleLogger.info(
+          'Background categories refresh completed',
+          tag: 'XtreamLive',
+        );
+      } else {
+        moduleLogger.warning(
+          'Background categories refresh failed',
+          tag: 'XtreamLive',
+        );
+      }
+    }).catchError((error, stackTrace) {
+      moduleLogger.error(
+        'Background categories refresh error',
+        tag: 'XtreamLive',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    });
   }
 
   /// Check if cache is stale
