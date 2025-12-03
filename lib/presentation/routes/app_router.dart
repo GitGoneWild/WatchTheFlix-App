@@ -8,6 +8,9 @@ import '../blocs/xtream_auth/xtream_auth_bloc.dart';
 import '../screens/onboarding/onboarding_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/home/search_screen.dart';
+import '../screens/home/enhanced_search_screen.dart';
+import '../screens/home/movies_optimized_screen.dart';
+import '../screens/live_tv/live_tv_redesigned_screen.dart';
 import '../screens/playback/player_screen.dart';
 import '../screens/xtream_login/xtream_login_screen.dart';
 import '../screens/xtream_progress/xtream_progress_screen.dart';
@@ -48,7 +51,8 @@ class AppRouter {
         return _buildRoute(const HomeScreen(), settings);
 
       case AppRoutes.search:
-        return _buildRoute(const SearchScreen(), settings);
+        // Use the enhanced search screen for better UX
+        return _buildRoute(const EnhancedSearchScreen(), settings);
 
       case AppRoutes.player:
         final channel = settings.arguments as Channel?;

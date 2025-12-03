@@ -14,19 +14,21 @@ WatchTheFlix is a modern, feature-rich IPTV streaming application built with Flu
 
 ### ✨ Key Features
 
-- 📺 **Live TV Streaming** - Watch your favorite channels in real-time
-- 🎬 **Movies & Series** - Browse and stream VOD content
+- 📺 **Live TV Streaming** - Watch your favorite channels in real-time with vertical category sidebar
+- 🎬 **Movies & Series** - Browse and stream VOD content with optimized performance for large catalogs
 - 📋 **M3U Playlist Support** - Import playlists via URL or file
 - 🔑 **Xtream Codes Integration** - Connect to Xtream Codes IPTV panels
-- 🔍 **Smart Search** - Find content across all categories
+- 🔍 **Enhanced Search** - Modern search experience across Live TV, Movies, and Series
 - 📱 **Cross-Platform** - Android, iOS, Web, Windows, macOS, Linux
 - 🌙 **Dark Theme** - Cinematic Netflix-style dark interface
 - ⭐ **Favorites** - Save your favorite channels
-- 📺 **Smart EPG** - Electronic Program Guide with single XMLTV download strategy
+- 📺 **Smart EPG** - Electronic Program Guide with current and next program display
 - 🖼️ **Picture-in-Picture** - Watch while multitasking
 - 🛡️ **VPN Awareness** - VPN detection and status display
 - 💾 **Intelligent Caching** - Minimize API calls with smart cache strategy
 - 📊 **Optional Firebase** - Analytics and push notifications (free tier)
+- 🎯 **Category Navigation** - Vertical sidebar for easy category browsing
+- 🚀 **Performance Optimized** - Lazy loading and virtualization for 100k+ items
 
 ---
 
@@ -98,6 +100,34 @@ flutter build macos --release
 # Linux
 flutter build linux --release
 ```
+
+---
+
+## 🎨 UI Improvements
+
+WatchTheFlix features a redesigned UI for better usability and performance:
+
+### Live TV Screen
+- **Vertical Category Sidebar** - Categories displayed on the left side for easy navigation
+- **EPG Integration** - Shows current and next programs directly on channel cards
+- **Category Names** - Displays descriptive category names instead of numeric IDs
+- **Smooth Scrolling** - Optimized grid with lazy loading
+
+### Enhanced Search
+- **Modern Interface** - Search icon in navbar opens dedicated search screen
+- **Multi-Content Search** - Search across Live TV, Movies, and Series
+- **Tabbed Filtering** - Quick filtering by content type
+- **Recent Searches** - Remembers your last 10 searches
+- **Favorites Quick Access** - Jump to favorite channels instantly
+
+### Optimized Movies Screen
+- **Performance First** - Designed for catalogs with 100,000+ movies
+- **Lazy Loading** - Loads content progressively as you scroll
+- **Category Sidebar** - Filter by genre/category on the left
+- **Sort Options** - Sort by name, rating, date, or popularity
+- **Cached Images** - Memory-optimized image loading for smooth scrolling
+
+For detailed documentation, see [UI_IMPROVEMENTS.md](docs/UI_IMPROVEMENTS.md).
 
 ---
 
