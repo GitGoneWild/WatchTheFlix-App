@@ -48,8 +48,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
     final uri = Uri.tryParse(url);
     if (uri == null) return false;
     
-    // Only allow HTTPS URLs
-    if (uri.scheme != 'https') return false;
+    // Only allow HTTPS URLs (case-insensitive)
+    if (uri.scheme.toLowerCase() != 'https') return false;
     
     final host = uri.host.toLowerCase();
     
@@ -91,10 +91,12 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   /// Switch to a different channel and reinitialize player
+  /// The PlayerBloc handles reinitialization through InitializePlayerEvent
   void _switchChannel(Channel newChannel) {
     setState(() {
       _currentChannel = newChannel;
     });
+    // PlayerBloc is designed to handle reinitialization
     _playerBloc.add(InitializePlayerEvent(newChannel));
   }
 
