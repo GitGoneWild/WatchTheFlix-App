@@ -142,6 +142,7 @@ class _ProgressView extends StatelessWidget {
                   child: SvgPicture.asset(
                     'assets/images/piracy_meme.svg',
                     fit: BoxFit.contain,
+                    placeholderBuilder: (context) => const SizedBox.shrink(),
                   ),
                 ),
               ),

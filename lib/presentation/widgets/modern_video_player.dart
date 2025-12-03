@@ -2,7 +2,6 @@
 // A comprehensive, modular video player with advanced features for IPTV streaming.
 
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,7 +9,6 @@ import 'package:video_player/video_player.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/extensions.dart';
-import '../../../domain/entities/channel.dart';
 
 /// Content type for the player
 enum PlayerContentType {
@@ -90,6 +88,10 @@ class ModernVideoPlayer extends StatefulWidget {
   final PlayerCallback? onPlayPause;
   final ValueChanged<Duration>? onSeek;
   final Map<String, dynamic>? metadata;
+
+  // Constants for gesture-based seeking
+  static const int _maxSeekSeconds = 60;
+  static const double _seekSensitivity = 60.0; // seconds per screen width
 
   @override
   State<ModernVideoPlayer> createState() => _ModernVideoPlayerState();
@@ -259,10 +261,18 @@ class _ModernVideoPlayerState extends State<ModernVideoPlayer>
   void _seekRelative(Duration offset) {
     if (!_isInitialized) return;
 
-    final newPosition = _controller.value.position + offset;
+    final currentPosition = _controller.value.position;
+    final duration = _controller.value.duration;
+    
+    // Skip seeking if duration is not available (e.g., live streams)
+    if (duration.inMilliseconds <= 0) {
+      return;
+    }
+
+    final newPosition = currentPosition + offset;
     final clampedPosition = newPosition.clamp(
       Duration.zero,
-      _controller.value.duration,
+      duration,
     );
     _controller.seekTo(clampedPosition);
     widget.onSeek?.call(clampedPosition);
@@ -312,8 +322,8 @@ class _ModernVideoPlayerState extends State<ModernVideoPlayer>
     if (!_isInitialized || !widget.config.enableGestures) return;
 
     // Calculate seek amount based on drag distance
-    // Full screen width = +/- 60 seconds
-    final seekSeconds = (dx / screenWidth) * 60;
+    // Full screen width = +/- configured max seek seconds
+    final seekSeconds = (dx / screenWidth) * ModernVideoPlayer._seekSensitivity;
     _seekRelative(Duration(seconds: seekSeconds.round()));
   }
 
@@ -622,14 +632,15 @@ class _ModernVideoPlayerState extends State<ModernVideoPlayer>
     final position = _controller.value.position;
     final duration = _controller.value.duration;
     final isLive = widget.config.contentType == PlayerContentType.liveTV;
+    final hasDuration = duration.inMilliseconds > 0;
 
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // Progress bar (only for VOD content)
-            if (!isLive && duration.inMilliseconds > 0) ...[
+            // Progress bar (only for VOD content with valid duration)
+            if (!isLive && hasDuration) ...[
               SliderTheme(
                 data: SliderThemeData(
                   activeTrackColor: AppColors.primary,
