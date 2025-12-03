@@ -14,7 +14,8 @@ import '../../blocs/playlist/playlist_bloc.dart';
 import '../../blocs/settings/settings_bloc.dart' as settings;
 import '../../widgets/content_widgets.dart';
 import '../../widgets/channel_card.dart';
-import '../live_tv/live_tv_screen.dart';
+import '../live_tv/live_tv_redesigned_screen.dart';
+import 'movies_optimized_screen.dart';
 
 /// Main home screen with bottom navigation
 class HomeScreen extends StatelessWidget {
@@ -29,8 +30,8 @@ class HomeScreen extends StatelessWidget {
             index: state.currentIndex,
             children: const [
               HomeTab(),
-              LiveTVTab(),
-              MoviesTab(),
+              LiveTVRedesignedScreen(),
+              MoviesOptimizedScreen(),
               SeriesTab(),
               SettingsTab(),
             ],
