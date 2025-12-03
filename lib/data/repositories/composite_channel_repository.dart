@@ -129,4 +129,14 @@ class CompositeChannelRepository implements ChannelRepository {
   Future<void> addToRecent(Channel channel) {
     return _activeRepository.addToRecent(channel);
   }
+
+  @override
+  Future<void> removeFromRecent(String channelId) {
+    return _activeRepository.removeFromRecent(channelId);
+  }
+
+  @override
+  Future<void> clearRecentHistory() {
+    return _activeRepository.clearRecentHistory();
+  }
 }

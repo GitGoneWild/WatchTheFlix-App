@@ -76,13 +76,9 @@ class WatchHistoryScreen extends StatelessWidget {
                     );
                   },
                   onRemove: () {
-                    // TODO: Implement remove from history functionality
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Remove from history not yet implemented'),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
+                    context
+                        .read<FavoritesBloc>()
+                        .add(RemoveRecentEvent(channel.id));
                   },
                 );
               },
@@ -111,14 +107,8 @@ class WatchHistoryScreen extends StatelessWidget {
           ),
           TextButton(
             onPressed: () {
-              // TODO: Implement clear history functionality
+              context.read<FavoritesBloc>().add(const ClearRecentHistoryEvent());
               Navigator.pop(dialogContext);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Clear history not yet implemented'),
-                  duration: Duration(seconds: 2),
-                ),
-              );
             },
             child: const Text(
               'Clear',

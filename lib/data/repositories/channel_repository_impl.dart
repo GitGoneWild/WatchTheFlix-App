@@ -165,4 +165,14 @@ class ChannelRepositoryImpl implements ChannelRepository {
   Future<void> addToRecent(Channel channel) async {
     await _localStorage.addRecentChannel(ChannelModel.fromEntity(channel));
   }
+
+  @override
+  Future<void> removeFromRecent(String channelId) async {
+    await _localStorage.removeRecentChannel(channelId);
+  }
+
+  @override
+  Future<void> clearRecentHistory() async {
+    await _localStorage.clearRecentChannels();
+  }
 }
