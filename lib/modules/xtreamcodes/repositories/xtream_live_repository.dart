@@ -62,6 +62,7 @@ class XtreamLiveRepository implements IXtreamLiveRepository {
   /// Flag to prevent multiple simultaneous background refreshes
   bool _isRefreshingChannels = false;
   bool _isRefreshingCategories = false;
+  bool _isEnrichingEpg = false;
 
   @override
   Future<ApiResult<List<DomainChannel>>> getLiveChannels({
@@ -592,6 +593,17 @@ class XtreamLiveRepository implements IXtreamLiveRepository {
 
   /// Enrich channels with EPG data in background (non-blocking)
   void _enrichChannelsWithEpgInBackground(List<DomainChannel> channels) {
+    // Prevent concurrent enrichment
+    if (_isEnrichingEpg) {
+      moduleLogger.info(
+        'EPG enrichment already in progress, skipping',
+        tag: 'XtreamLive',
+      );
+      return;
+    }
+
+    _isEnrichingEpg = true;
+
     // Fire and forget - don't block the main flow
     Future.microtask(() async {
       try {
@@ -600,6 +612,9 @@ class XtreamLiveRepository implements IXtreamLiveRepository {
           tag: 'XtreamLive',
         );
 
+        // Create updated channels list to avoid race conditions
+        final updatedChannels = <DomainChannel>[];
+
         for (final channel in channels) {
           try {
             // Get EPG channel ID from metadata
@@ -607,6 +622,7 @@ class XtreamLiveRepository implements IXtreamLiveRepository {
                 channel.metadata?[_metadataKeyEpgChannelId] as String?;
 
             if (epgChannelId == null || epgChannelId.isEmpty) {
+              updatedChannels.add(channel);
               continue;
             }
 
@@ -629,11 +645,10 @@ class XtreamLiveRepository implements IXtreamLiveRepository {
                 description: current?.description,
               );
 
-              // Update channel in cache with EPG info
-              final channelIndex = _cachedChannels?.indexWhere((c) => c.id == channel.id);
-              if (channelIndex != null && channelIndex >= 0 && _cachedChannels != null) {
-                _cachedChannels![channelIndex] = channel.copyWith(epgInfo: epgInfo);
-              }
+              // Add updated channel with EPG info
+              updatedChannels.add(channel.copyWith(epgInfo: epgInfo));
+            } else {
+              updatedChannels.add(channel);
             }
           } catch (e) {
             moduleLogger.warning(
@@ -641,8 +656,12 @@ class XtreamLiveRepository implements IXtreamLiveRepository {
               tag: 'XtreamLive',
               error: e,
             );
+            updatedChannels.add(channel);
           }
         }
+
+        // Atomically update the cache with enriched channels
+        _cachedChannels = updatedChannels;
 
         moduleLogger.info(
           'Background EPG enrichment completed',
@@ -655,6 +674,8 @@ class XtreamLiveRepository implements IXtreamLiveRepository {
           error: e,
           stackTrace: stackTrace,
         );
+      } finally {
+        _isEnrichingEpg = false;
       }
     });
   }

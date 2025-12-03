@@ -876,7 +876,6 @@ class _ChannelGridItem extends StatelessWidget {
                   padding: const EdgeInsets.all(8),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         channel.name,
@@ -910,6 +909,7 @@ class _ChannelGridItem extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
+                      const Spacer(),
                       if (channel.epgInfo?.nextProgram != null) ...[
                         const SizedBox(height: 2),
                         Row(
