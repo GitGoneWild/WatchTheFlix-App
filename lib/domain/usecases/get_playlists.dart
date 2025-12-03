@@ -7,7 +7,7 @@ class GetPlaylists {
   final PlaylistRepository _repository;
 
   /// Execute the use case
-  Future<List<PlaylistSource>> call() async {
+  Future<List<PlaylistSource>> call() {
     return _repository.getPlaylists();
   }
 }

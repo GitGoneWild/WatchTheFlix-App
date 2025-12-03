@@ -7,7 +7,7 @@ class GetCategories {
   final ChannelRepository _repository;
 
   /// Execute the use case
-  Future<List<Category>> call() async {
+  Future<List<Category>> call() {
     return _repository.getLiveCategories();
   }
 }

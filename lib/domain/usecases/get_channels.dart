@@ -7,7 +7,7 @@ class GetChannels {
   final ChannelRepository _repository;
 
   /// Execute the use case
-  Future<List<Channel>> call({String? categoryId}) async {
+  Future<List<Channel>> call({String? categoryId}) {
     return _repository.getLiveChannels(categoryId: categoryId);
   }
 }
