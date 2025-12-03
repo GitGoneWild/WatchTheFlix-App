@@ -1,3 +1,4 @@
+import '../../core/utils/logger.dart';
 import '../../domain/entities/channel.dart';
 import '../../domain/entities/category.dart';
 import '../../domain/entities/movie.dart';
