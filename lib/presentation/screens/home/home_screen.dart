@@ -1689,7 +1689,8 @@ class SettingsTab extends StatelessWidget {
                     iconColor: AppColors.accentOrange,
                     title: 'Watch History',
                     subtitle: 'Recently watched content',
-                    onTap: () {},
+                    onTap: () =>
+                        Navigator.pushNamed(context, AppRoutes.watchHistory),
                   ),
                 ],
               ),

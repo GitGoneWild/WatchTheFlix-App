@@ -14,6 +14,8 @@ class AppConstants {
   static const String keyFavorites = 'favorites';
   static const String keyRecentChannels = 'recent_channels';
   static const String keySettings = 'settings';
+  static const String keySelectedLiveTVCategory = 'selected_live_tv_category';
+  static const String keySelectedMovieCategory = 'selected_movie_category';
 
   /// API timeouts
   static const Duration connectionTimeout = Duration(seconds: 30);
@@ -64,4 +66,5 @@ class AppRoutes {
   static const String favorites = '/favorites';
   static const String category = '/category';
   static const String details = '/details';
+  static const String watchHistory = '/watch-history';
 }
