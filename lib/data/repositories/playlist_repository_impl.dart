@@ -217,9 +217,11 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
         : channels;
 
     // Limit number of cache entries (LRU-style: remove oldest)
-    if (_channelCache.length >= _maxCacheEntries) {
+    if (_channelCache.length >= _maxCacheEntries &&
+        !_channelCache.containsKey(playlistId)) {
       final firstKey = _channelCache.keys.first;
       _channelCache.remove(firstKey);
+      // Also remove corresponding category cache to maintain consistency
       _categoryCache.remove(firstKey);
     }
 

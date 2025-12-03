@@ -47,7 +47,7 @@ class AppLogger {
     if (_minLevel.value > Level.debug.value) return;
     final taggedMessage = tag != null ? '[$tag] $message' : message;
     _logger.d(taggedMessage, error: error, stackTrace: stackTrace);
-    _notifyListeners(Level.debug, taggedMessage, error, stackTrace, tag);
+    _notifyListeners(Level.debug, message, error, stackTrace, tag);
   }
 
   /// Log info message
@@ -60,7 +60,7 @@ class AppLogger {
     if (_minLevel.value > Level.info.value) return;
     final taggedMessage = tag != null ? '[$tag] $message' : message;
     _logger.i(taggedMessage, error: error, stackTrace: stackTrace);
-    _notifyListeners(Level.info, taggedMessage, error, stackTrace, tag);
+    _notifyListeners(Level.info, message, error, stackTrace, tag);
   }
 
   /// Log warning message
@@ -73,7 +73,7 @@ class AppLogger {
     if (_minLevel.value > Level.warning.value) return;
     final taggedMessage = tag != null ? '[$tag] $message' : message;
     _logger.w(taggedMessage, error: error, stackTrace: stackTrace);
-    _notifyListeners(Level.warning, taggedMessage, error, stackTrace, tag);
+    _notifyListeners(Level.warning, message, error, stackTrace, tag);
   }
 
   /// Log error message
@@ -86,7 +86,7 @@ class AppLogger {
     if (_minLevel.value > Level.error.value) return;
     final taggedMessage = tag != null ? '[$tag] $message' : message;
     _logger.e(taggedMessage, error: error, stackTrace: stackTrace);
-    _notifyListeners(Level.error, taggedMessage, error, stackTrace, tag);
+    _notifyListeners(Level.error, message, error, stackTrace, tag);
   }
 
   /// Log fatal message
