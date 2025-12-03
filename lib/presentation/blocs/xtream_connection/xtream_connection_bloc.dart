@@ -172,45 +172,121 @@ class XtreamConnectionBloc
       // Initialize service manager
       await _serviceManager.initialize(credentials);
 
-      // Step 5: Fetch live channels categories (essential data)
+      // Step 5: Fetch live channels (essential data - blocking)
       emit(const XtreamConnectionInProgress(
         currentStep: ConnectionStep.fetchingChannels,
-        progress: 0.4,
+        progress: 0.3,
         message: 'Loading live TV channels...',
       ));
 
-      final categoriesResult = await apiClient.getLiveCategories();
-      if (categoriesResult.isSuccess) {
-        _channelsLoaded = categoriesResult.data.length;
+      final liveStreamsResult = await apiClient.getLiveStreams();
+      if (liveStreamsResult.isSuccess) {
+        _channelsLoaded = liveStreamsResult.data.length;
         moduleLogger.info(
-          'Successfully fetched $_channelsLoaded live categories',
+          'Successfully fetched $_channelsLoaded live channels',
           tag: 'XtreamConnection',
         );
       } else {
         moduleLogger.warning(
-          'Failed to fetch live categories, will retry in background',
+          'Failed to fetch live channels',
           tag: 'XtreamConnection',
-          error: categoriesResult.error,
+          error: liveStreamsResult.error,
         );
+        // Continue even if channels fail - user may only want VOD
       }
 
-      // Emit progress quickly
       emit(XtreamConnectionInProgress(
         currentStep: ConnectionStep.fetchingChannels,
-        progress: 0.7,
-        message: 'Setup almost complete...',
+        progress: 0.45,
+        message: 'Live channels loaded...',
         channelsLoaded: _channelsLoaded,
       ));
 
-      // Step 6-8: Trigger background loading for movies, series, and EPG
-      // Don't wait for these to complete - let user navigate immediately
-      _loadContentInBackground(apiClient);
+      // Step 6: Fetch movies (essential data - blocking)
+      emit(XtreamConnectionInProgress(
+        currentStep: ConnectionStep.fetchingMovies,
+        progress: 0.5,
+        message: 'Loading movies...',
+        channelsLoaded: _channelsLoaded,
+      ));
+
+      final vodStreamsResult = await apiClient.getVodStreams();
+      if (vodStreamsResult.isSuccess) {
+        _moviesLoaded = vodStreamsResult.data.length;
+        moduleLogger.info(
+          'Successfully fetched $_moviesLoaded movies',
+          tag: 'XtreamConnection',
+        );
+      } else {
+        moduleLogger.warning(
+          'Failed to fetch movies',
+          tag: 'XtreamConnection',
+          error: vodStreamsResult.error,
+        );
+        // Continue even if movies fail - user may only want live TV
+      }
+
+      emit(XtreamConnectionInProgress(
+        currentStep: ConnectionStep.fetchingMovies,
+        progress: 0.65,
+        message: 'Movies loaded...',
+        channelsLoaded: _channelsLoaded,
+        moviesLoaded: _moviesLoaded,
+      ));
+
+      // Step 7: Fetch series (essential data - blocking)
+      emit(XtreamConnectionInProgress(
+        currentStep: ConnectionStep.fetchingSeries,
+        progress: 0.7,
+        message: 'Loading TV series...',
+        channelsLoaded: _channelsLoaded,
+        moviesLoaded: _moviesLoaded,
+      ));
+
+      final seriesResult = await apiClient.getSeries();
+      if (seriesResult.isSuccess) {
+        _seriesLoaded = seriesResult.data.length;
+        moduleLogger.info(
+          'Successfully fetched $_seriesLoaded series',
+          tag: 'XtreamConnection',
+        );
+      } else {
+        moduleLogger.warning(
+          'Failed to fetch series',
+          tag: 'XtreamConnection',
+          error: seriesResult.error,
+        );
+        // Continue even if series fail - user may not need them
+      }
+
+      emit(XtreamConnectionInProgress(
+        currentStep: ConnectionStep.fetchingSeries,
+        progress: 0.85,
+        message: 'TV series loaded...',
+        channelsLoaded: _channelsLoaded,
+        moviesLoaded: _moviesLoaded,
+        seriesLoaded: _seriesLoaded,
+      ));
+
+      // Step 8: Start EPG refresh in background (non-blocking)
+      // EPG can continue loading after the user navigates to home
+      emit(XtreamConnectionInProgress(
+        currentStep: ConnectionStep.updatingEpg,
+        progress: 0.95,
+        message: 'Starting EPG update in background...',
+        channelsLoaded: _channelsLoaded,
+        moviesLoaded: _moviesLoaded,
+        seriesLoaded: _seriesLoaded,
+      ));
+
+      // Start EPG refresh in background - fire and forget
+      _refreshEpgInBackground();
 
       // Step 9: Completed
       emit(XtreamConnectionInProgress(
         currentStep: ConnectionStep.completed,
         progress: 1.0,
-        message: 'Setup complete! Content loading in background...',
+        message: 'Setup complete! EPG updating in background...',
         channelsLoaded: _channelsLoaded,
         moviesLoaded: _moviesLoaded,
         seriesLoaded: _seriesLoaded,
@@ -244,71 +320,37 @@ class XtreamConnectionBloc
     }
   }
 
-  /// Load movies, series, and EPG in background without blocking UI
-  void _loadContentInBackground(XtreamApiClient apiClient) {
-    // Prepare futures list
-    final futures = <Future<void>>[
-      // Fetch movies
-      apiClient.getVodCategories().then((vodCategoriesResult) {
-        if (vodCategoriesResult.isSuccess) {
-          _moviesLoaded = vodCategoriesResult.data.length;
-          moduleLogger.info(
-            'Background: Successfully fetched $_moviesLoaded VOD categories',
-            tag: 'XtreamConnection',
-          );
-        } else {
-          moduleLogger.warning(
-            'Background: Failed to fetch VOD categories',
-            tag: 'XtreamConnection',
-            error: vodCategoriesResult.error,
-          );
-        }
-      }),
-
-      // Fetch series
-      apiClient.getSeriesCategories().then((seriesCategoriesResult) {
-        if (seriesCategoriesResult.isSuccess) {
-          _seriesLoaded = seriesCategoriesResult.data.length;
-          moduleLogger.info(
-            'Background: Successfully fetched $_seriesLoaded series categories',
-            tag: 'XtreamConnection',
-          );
-        } else {
-          moduleLogger.warning(
-            'Background: Failed to fetch series categories',
-            tag: 'XtreamConnection',
-            error: seriesCategoriesResult.error,
-          );
-        }
-      }),
-    ];
-
-    // Add EPG refresh if service is initialized
-    if (_serviceManager.isInitialized) {
-      futures.add(
-        _serviceManager.repositoryFactory.epgRepository.refreshEpg().then(
-          (result) {
-            if (result.isSuccess) {
-              moduleLogger.info(
-                'Background: EPG refreshed successfully',
-                tag: 'XtreamConnection',
-              );
-            } else {
-              moduleLogger.warning(
-                'Background: EPG refresh failed, will retry later',
-                tag: 'XtreamConnection',
-                error: result.error,
-              );
-            }
-          },
-        ),
+  /// Refresh EPG data in background without blocking UI navigation
+  /// This is the only operation that should run in background after setup
+  void _refreshEpgInBackground() {
+    // Only run if service is initialized
+    if (!_serviceManager.isInitialized) {
+      moduleLogger.warning(
+        'Service manager not initialized, skipping background EPG refresh',
+        tag: 'XtreamConnection',
       );
+      return;
     }
 
-    // Fire and forget - load content in parallel
-    Future.wait(futures).catchError((error, stackTrace) {
+    // Fire and forget - don't await, let it run in background
+    _serviceManager.repositoryFactory.epgRepository.refreshEpg().then(
+      (result) {
+        if (result.isSuccess) {
+          moduleLogger.info(
+            'Background: EPG refreshed successfully',
+            tag: 'XtreamConnection',
+          );
+        } else {
+          moduleLogger.warning(
+            'Background: EPG refresh failed, will retry later',
+            tag: 'XtreamConnection',
+            error: result.error,
+          );
+        }
+      },
+    ).catchError((error, stackTrace) {
       moduleLogger.error(
-        'Background: Error during content loading',
+        'Background: Error during EPG refresh',
         tag: 'XtreamConnection',
         error: error,
         stackTrace: stackTrace,

@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../domain/entities/channel.dart';
 import '../../blocs/channel/channel_bloc.dart';
 import '../../blocs/favorites/favorites_bloc.dart';
 import '../../widgets/channel_card.dart';
@@ -338,7 +339,28 @@ class _SearchScreenState extends State<SearchScreen> {
         return BlocBuilder<FavoritesBloc, FavoritesState>(
           builder: (context, favoritesState) {
             if (state is ChannelLoadedState) {
-              final results = state.filteredChannels;
+              var results = state.filteredChannels;
+
+              // Apply content type filter
+              if (_selectedFilter != null && _selectedFilter != 'All') {
+                switch (_selectedFilter) {
+                  case 'Live TV':
+                    results = results
+                        .where((c) => c.type == ContentType.live)
+                        .toList();
+                    break;
+                  case 'Movies':
+                    results = results
+                        .where((c) => c.type == ContentType.movie)
+                        .toList();
+                    break;
+                  case 'Series':
+                    results = results
+                        .where((c) => c.type == ContentType.series)
+                        .toList();
+                    break;
+                }
+              }
 
               if (state.searchQuery == null || state.searchQuery!.isEmpty) {
                 return Center(
@@ -398,7 +420,9 @@ class _SearchScreenState extends State<SearchScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Try a different search term',
+                        _selectedFilter != null && _selectedFilter != 'All'
+                            ? 'Try a different search term or filter'
+                            : 'Try a different search term',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: AppColors.textSecondary,
                             ),
@@ -414,11 +438,24 @@ class _SearchScreenState extends State<SearchScreen> {
                   Padding(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: Text(
-                      '${results.length} results found',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.textSecondary,
+                    child: Row(
+                      children: [
+                        Text(
+                          '${results.length} results found',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                        ),
+                        if (_selectedFilter != null && _selectedFilter != 'All')
+                          Text(
+                            ' in $_selectedFilter',
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.w500,
+                                    ),
                           ),
+                      ],
                     ),
                   ),
                   Expanded(

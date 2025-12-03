@@ -222,8 +222,36 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
                 ),
               ),
 
-            // Controls overlay
+            // Controls overlay (full controls when initialized and visible)
             if (_showControls && _isInitialized) _buildControls(),
+
+            // Always visible back button (when controls are hidden or not initialized)
+            // This ensures users can always exit the player
+            if (!_showControls || !_isInitialized)
+              Positioned(
+                top: 0,
+                left: 0,
+                child: SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: IconButton(
+                      icon: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.5),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.arrow_back,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                      onPressed: widget.onBack ?? () => Navigator.pop(context),
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
