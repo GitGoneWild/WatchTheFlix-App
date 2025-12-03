@@ -116,12 +116,12 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
             ),
             SliverToBoxAdapter(
               child: SizedBox(
-                height: 120,
+                height: 110,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   itemCount: recentlyWatched.take(10).length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 12),
+                  separatorBuilder: (_, __) => const SizedBox(width: 10),
                   itemBuilder: (context, index) {
                     final channel = recentlyWatched[index];
                     // Calculate progress based on EPG data if available
@@ -162,12 +162,12 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
             ),
             SliverToBoxAdapter(
               child: SizedBox(
-                height: 120,
+                height: 110,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   itemCount: favorites.take(10).length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 12),
+                  separatorBuilder: (_, __) => const SizedBox(width: 10),
                   itemBuilder: (context, index) {
                     final channel = favorites[index];
                     return _QuickAccessCard(
@@ -216,13 +216,13 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
             ),
           ),
           SliverPadding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(12),
             sliver: SliverGrid(
               gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: 200,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                childAspectRatio: 0.75,
+                maxCrossAxisExtent: 160,
+                mainAxisSpacing: 8,
+                crossAxisSpacing: 8,
+                childAspectRatio: 0.80,
               ),
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
@@ -573,7 +573,7 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-/// Quick access card for favorites and recent
+/// Quick access card for favorites and recent - Compact style
 class _QuickAccessCard extends StatelessWidget {
   const _QuickAccessCard({
     required this.channel,
@@ -595,11 +595,11 @@ class _QuickAccessCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 160,
+        width: 140,
         decoration: BoxDecoration(
           color: AppColors.backgroundCard,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.border),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: AppColors.border.withOpacity(0.5)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -610,25 +610,25 @@ class _QuickAccessCard extends StatelessWidget {
                 children: [
                   ClipRRect(
                     borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(11),
+                      top: Radius.circular(7),
                     ),
                     child: channel.logoUrl != null
                         ? CachedNetworkImage(
                             imageUrl: channel.logoUrl!,
-                            fit: BoxFit.cover,
+                            fit: BoxFit.contain,
                             errorWidget: (_, __, ___) => _buildPlaceholder(),
                           )
                         : _buildPlaceholder(),
                   ),
-                  // Favorite button
+                  // Compact favorite button
                   if (onFavoriteToggle != null)
                     Positioned(
-                      top: 6,
-                      right: 6,
+                      top: 4,
+                      right: 4,
                       child: GestureDetector(
                         onTap: onFavoriteToggle,
                         child: Container(
-                          padding: const EdgeInsets.all(4),
+                          padding: const EdgeInsets.all(3),
                           decoration: const BoxDecoration(
                             color: AppColors.overlay,
                             shape: BoxShape.circle,
@@ -637,17 +637,17 @@ class _QuickAccessCard extends StatelessWidget {
                             isFavorite ? Icons.favorite : Icons.favorite_border,
                             color:
                                 isFavorite ? AppColors.primary : Colors.white,
-                            size: 16,
+                            size: 12,
                           ),
                         ),
                       ),
                     ),
-                  // Play button overlay
+                  // Compact play button overlay
                   Positioned(
-                    bottom: 8,
-                    right: 8,
+                    bottom: 4,
+                    right: 4,
                     child: Container(
-                      padding: const EdgeInsets.all(6),
+                      padding: const EdgeInsets.all(4),
                       decoration: const BoxDecoration(
                         color: AppColors.primary,
                         shape: BoxShape.circle,
@@ -655,7 +655,7 @@ class _QuickAccessCard extends StatelessWidget {
                       child: const Icon(
                         Icons.play_arrow,
                         color: Colors.white,
-                        size: 18,
+                        size: 14,
                       ),
                     ),
                   ),
@@ -665,7 +665,7 @@ class _QuickAccessCard extends StatelessWidget {
             // Progress bar
             if (showProgress)
               Container(
-                height: 3,
+                height: 2,
                 color: AppColors.surface,
                 child: FractionallySizedBox(
                   alignment: Alignment.centerLeft,
@@ -673,15 +673,16 @@ class _QuickAccessCard extends StatelessWidget {
                   child: Container(color: AppColors.primary),
                 ),
               ),
-            // Channel name
+            // Compact channel name
             Padding(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(6),
               child: Text(
                 channel.name,
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       fontWeight: FontWeight.w500,
+                      fontSize: 11,
                     ),
-                maxLines: 1,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -695,7 +696,7 @@ class _QuickAccessCard extends StatelessWidget {
     return ColoredBox(
       color: AppColors.surface,
       child: const Center(
-        child: Icon(Icons.live_tv, size: 32, color: AppColors.textSecondary),
+        child: Icon(Icons.live_tv, size: 24, color: AppColors.textSecondary),
       ),
     );
   }
@@ -744,7 +745,7 @@ class _CategoryBar extends StatelessWidget {
   }
 }
 
-/// Channel grid item with EPG info
+/// Channel grid item with EPG info - Compact Sky TV style
 class _ChannelGridItem extends StatelessWidget {
   const _ChannelGridItem({
     required this.channel,
@@ -768,58 +769,58 @@ class _ChannelGridItem extends StatelessWidget {
         child: DecoratedBox(
           decoration: BoxDecoration(
             color: AppColors.backgroundCard,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.border),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: AppColors.border.withOpacity(0.5)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Channel logo/thumbnail
+              // Compact channel logo/thumbnail
               Expanded(
-                flex: 3,
+                flex: 2,
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
                     ClipRRect(
                       borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(11),
+                        top: Radius.circular(7),
                       ),
                       child: channel.logoUrl != null
                           ? CachedNetworkImage(
                               imageUrl: channel.logoUrl!,
-                              fit: BoxFit.cover,
+                              fit: BoxFit.contain,
                               placeholder: (_, __) => _buildPlaceholder(),
                               errorWidget: (_, __, ___) => _buildPlaceholder(),
                             )
                           : _buildPlaceholder(),
                     ),
-                    // Live indicator
+                    // Compact live indicator
                     Positioned(
-                      top: 8,
-                      left: 8,
+                      top: 4,
+                      left: 4,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
+                          horizontal: 4,
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
                           color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(4),
+                          borderRadius: BorderRadius.circular(3),
                         ),
                         child: const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
                               Icons.circle,
-                              size: 6,
+                              size: 4,
                               color: Colors.white,
                             ),
-                            SizedBox(width: 4),
+                            SizedBox(width: 2),
                             Text(
                               'LIVE',
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 9,
+                                fontSize: 8,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -827,14 +828,14 @@ class _ChannelGridItem extends StatelessWidget {
                         ),
                       ),
                     ),
-                    // Favorite button
+                    // Compact favorite button
                     Positioned(
-                      top: 8,
-                      right: 8,
+                      top: 4,
+                      right: 4,
                       child: GestureDetector(
                         onTap: onFavoriteToggle,
                         child: Container(
-                          padding: const EdgeInsets.all(6),
+                          padding: const EdgeInsets.all(4),
                           decoration: const BoxDecoration(
                             color: AppColors.overlay,
                             shape: BoxShape.circle,
@@ -843,7 +844,7 @@ class _ChannelGridItem extends StatelessWidget {
                             isFavorite ? Icons.favorite : Icons.favorite_border,
                             color:
                                 isFavorite ? AppColors.primary : Colors.white,
-                            size: 16,
+                            size: 12,
                           ),
                         ),
                       ),
@@ -856,7 +857,7 @@ class _ChannelGridItem extends StatelessWidget {
                         left: 0,
                         right: 0,
                         child: Container(
-                          height: 3,
+                          height: 2,
                           color: AppColors.surface,
                           child: FractionallySizedBox(
                             alignment: Alignment.centerLeft,
@@ -868,29 +869,32 @@ class _ChannelGridItem extends StatelessWidget {
                   ],
                 ),
               ),
-              // Channel info
+              // Compact channel info
               Expanded(
                 flex: 2,
                 child: Padding(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(8),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         channel.name,
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               fontWeight: FontWeight.w600,
+                              fontSize: 12,
                             ),
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 2),
                       if (channel.epgInfo?.currentProgram != null)
                         Text(
                           channel.epgInfo!.currentProgram!,
                           style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                              Theme.of(context).textTheme.labelSmall?.copyWith(
                                     color: AppColors.textSecondary,
+                                    fontSize: 10,
                                   ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -899,22 +903,23 @@ class _ChannelGridItem extends StatelessWidget {
                         Text(
                           channel.groupTitle!,
                           style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                              Theme.of(context).textTheme.labelSmall?.copyWith(
                                     color: AppColors.textSecondary,
+                                    fontSize: 10,
                                   ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                      const Spacer(),
-                      if (channel.epgInfo?.nextProgram != null)
+                      if (channel.epgInfo?.nextProgram != null) ...[
+                        const SizedBox(height: 2),
                         Row(
                           children: [
                             const Icon(
                               Icons.schedule,
-                              size: 12,
+                              size: 10,
                               color: AppColors.textTertiary,
                             ),
-                            const SizedBox(width: 4),
+                            const SizedBox(width: 2),
                             Expanded(
                               child: Text(
                                 'Next: ${channel.epgInfo!.nextProgram}',
@@ -923,7 +928,7 @@ class _ChannelGridItem extends StatelessWidget {
                                     .labelSmall
                                     ?.copyWith(
                                       color: AppColors.textTertiary,
-                                      fontSize: 9,
+                                      fontSize: 8,
                                     ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -931,6 +936,7 @@ class _ChannelGridItem extends StatelessWidget {
                             ),
                           ],
                         ),
+                      ],
                     ],
                   ),
                 ),
@@ -959,7 +965,7 @@ class _ChannelGridItem extends StatelessWidget {
     return ColoredBox(
       color: AppColors.surface,
       child: const Center(
-        child: Icon(Icons.live_tv, size: 40, color: AppColors.textSecondary),
+        child: Icon(Icons.live_tv, size: 24, color: AppColors.textSecondary),
       ),
     );
   }

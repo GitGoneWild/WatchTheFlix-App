@@ -106,9 +106,11 @@ class XtreamLiveRepository implements IXtreamLiveRepository {
       // Enrich channels with category names
       channels = await _enrichChannelsWithCategoryNames(channels);
 
-      // Enrich channels with EPG data
+      // Enrich channels with EPG data in background (non-blocking)
       if (_epgRepository != null) {
-        channels = await _enrichChannelsWithEpg(channels);
+        // Fire and forget - EPG enrichment happens in background
+        _enrichChannelsWithEpgInBackground(channels);
+        // Return channels immediately without EPG data
       }
 
       return ApiResult.success(channels);
@@ -588,57 +590,72 @@ class XtreamLiveRepository implements IXtreamLiveRepository {
     }).toList();
   }
 
-  /// Enrich channels with EPG data
-  Future<List<DomainChannel>> _enrichChannelsWithEpg(
-    List<DomainChannel> channels,
-  ) async {
-    final enrichedChannels = <DomainChannel>[];
-
-    for (final channel in channels) {
+  /// Enrich channels with EPG data in background (non-blocking)
+  void _enrichChannelsWithEpgInBackground(List<DomainChannel> channels) {
+    // Fire and forget - don't block the main flow
+    Future.microtask(() async {
       try {
-        // Get EPG channel ID from metadata
-        final epgChannelId = channel.metadata?[_metadataKeyEpgChannelId] as String?;
-        
-        if (epgChannelId == null || epgChannelId.isEmpty) {
-          enrichedChannels.add(channel);
-          continue;
-        }
-
-        // Fetch current and next program
-        final epgResult = await _epgRepository!.getCurrentAndNextProgram(
-          epgChannelId,
+        moduleLogger.info(
+          'Starting background EPG enrichment for ${channels.length} channels',
+          tag: 'XtreamLive',
         );
 
-        if (epgResult.isSuccess) {
-          final epgPair = epgResult.data;
-          final current = epgPair.current;
-          final next = epgPair.next;
+        for (final channel in channels) {
+          try {
+            // Get EPG channel ID from metadata
+            final epgChannelId =
+                channel.metadata?[_metadataKeyEpgChannelId] as String?;
 
-          // Create EPG info
-          final epgInfo = EpgInfo(
-            currentProgram: current?.title,
-            nextProgram: next?.title,
-            startTime: current?.start,
-            endTime: current?.stop,
-            description: current?.description,
-          );
+            if (epgChannelId == null || epgChannelId.isEmpty) {
+              continue;
+            }
 
-          // Add channel with EPG info
-          enrichedChannels.add(channel.copyWith(epgInfo: epgInfo));
-        } else {
-          // No EPG available, add channel as is
-          enrichedChannels.add(channel);
+            // Fetch current and next program
+            final epgResult = await _epgRepository!.getCurrentAndNextProgram(
+              epgChannelId,
+            );
+
+            if (epgResult.isSuccess) {
+              final epgPair = epgResult.data;
+              final current = epgPair.current;
+              final next = epgPair.next;
+
+              // Create EPG info
+              final epgInfo = EpgInfo(
+                currentProgram: current?.title,
+                nextProgram: next?.title,
+                startTime: current?.start,
+                endTime: current?.stop,
+                description: current?.description,
+              );
+
+              // Update channel in cache with EPG info
+              final channelIndex = _cachedChannels?.indexWhere((c) => c.id == channel.id);
+              if (channelIndex != null && channelIndex >= 0 && _cachedChannels != null) {
+                _cachedChannels![channelIndex] = channel.copyWith(epgInfo: epgInfo);
+              }
+            }
+          } catch (e) {
+            moduleLogger.warning(
+              'Failed to enrich channel ${channel.name} with EPG in background',
+              tag: 'XtreamLive',
+              error: e,
+            );
+          }
         }
-      } catch (e) {
-        moduleLogger.warning(
-          'Failed to enrich channel ${channel.name} with EPG',
+
+        moduleLogger.info(
+          'Background EPG enrichment completed',
+          tag: 'XtreamLive',
+        );
+      } catch (e, stackTrace) {
+        moduleLogger.error(
+          'Error during background EPG enrichment',
           tag: 'XtreamLive',
           error: e,
+          stackTrace: stackTrace,
         );
-        enrichedChannels.add(channel);
       }
-    }
-
-    return enrichedChannels;
+    });
   }
 }
