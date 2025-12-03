@@ -3,6 +3,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../core/config/dependency_injection.dart';
 import '../../../core/constants/app_constants.dart';
@@ -121,6 +122,9 @@ class _ProgressView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isCompleted = currentStep == ConnectionStep.completed;
+    final isLoadingContent = currentStep == ConnectionStep.fetchingChannels ||
+        currentStep == ConnectionStep.fetchingMovies ||
+        currentStep == ConnectionStep.fetchingSeries;
 
     return SafeArea(
       child: Padding(
@@ -128,6 +132,20 @@ class _ProgressView extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            // Playful meme during content loading
+            if (isLoadingContent && !isCompleted)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 24),
+                child: SizedBox(
+                  width: 200,
+                  height: 150,
+                  child: SvgPicture.asset(
+                    'assets/images/piracy_meme.svg',
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+
             // Animated Icon
             TweenAnimationBuilder<double>(
               duration: const Duration(milliseconds: 300),
