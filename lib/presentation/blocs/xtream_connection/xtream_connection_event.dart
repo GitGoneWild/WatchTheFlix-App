@@ -25,6 +25,18 @@ class XtreamConnectionStarted extends XtreamConnectionEvent {
   List<Object?> get props => [credentials];
 }
 
+/// Event to retry connection process after failure
+class XtreamConnectionRetry extends XtreamConnectionEvent {
+  const XtreamConnectionRetry({
+    required this.credentials,
+  });
+
+  final XtreamCredentials credentials;
+
+  @override
+  List<Object?> get props => [credentials];
+}
+
 /// Event to reset connection state
 class XtreamConnectionReset extends XtreamConnectionEvent {
   const XtreamConnectionReset();

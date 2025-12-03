@@ -22,6 +22,7 @@ class _XtreamLoginScreenState extends State<XtreamLoginScreen> {
   final _passwordController = TextEditingController();
 
   bool _obscurePassword = true;
+  String? _errorMessage;
 
   @override
   void dispose() {
@@ -32,6 +33,11 @@ class _XtreamLoginScreenState extends State<XtreamLoginScreen> {
   }
 
   void _onLogin() {
+    // Clear any previous error
+    setState(() {
+      _errorMessage = null;
+    });
+
     if (_formKey.currentState?.validate() ?? false) {
       context.read<XtreamAuthBloc>().add(
             XtreamAuthLoginRequested(
@@ -49,6 +55,15 @@ class _XtreamLoginScreenState extends State<XtreamLoginScreen> {
     }
     if (!value.startsWith('http://') && !value.startsWith('https://')) {
       return 'URL must start with http:// or https://';
+    }
+    // Check for valid URL format
+    try {
+      final uri = Uri.parse(value);
+      if (uri.host.isEmpty) {
+        return 'Please enter a valid server URL';
+      }
+    } catch (_) {
+      return 'Please enter a valid URL';
     }
     return null;
   }
@@ -72,6 +87,10 @@ class _XtreamLoginScreenState extends State<XtreamLoginScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Xtream Codes Login'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: BlocConsumer<XtreamAuthBloc, XtreamAuthState>(
         listener: (context, state) {
@@ -83,99 +102,224 @@ class _XtreamLoginScreenState extends State<XtreamLoginScreen> {
               arguments: state.credentials,
             );
           } else if (state is XtreamAuthError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: AppColors.primary,
-              ),
-            );
+            setState(() {
+              _errorMessage = state.message;
+            });
           } else if (state is XtreamAuthValidationError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: Colors.orange,
-              ),
-            );
+            setState(() {
+              _errorMessage = state.message;
+            });
           }
         },
         builder: (context, state) {
           final isLoading = state is XtreamAuthLoading;
 
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Icon(
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Header with icon
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
                       Icons.live_tv,
-                      size: 80,
+                      size: 40,
                       color: AppColors.primary,
                     ),
-                    const SizedBox(height: 24),
-                    Text(
-                      'Connect to Xtream Codes',
-                      style: Theme.of(context).textTheme.headlineMedium,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Enter your Xtream Codes server details',
-                      style: TextStyle(color: AppColors.textSecondary),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 32),
-                    TextFormField(
-                      controller: _serverUrlController,
-                      decoration: const InputDecoration(
-                        labelText: 'Server URL',
-                        hintText: 'http://example.com:8080',
-                        prefixIcon: Icon(Icons.dns),
-                        helperText: 'Include http:// or https:// and port',
-                      ),
-                      keyboardType: TextInputType.url,
-                      validator: _validateServerUrl,
-                      enabled: !isLoading,
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _usernameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Username',
-                        hintText: 'Enter your username',
-                        prefixIcon: Icon(Icons.person),
-                      ),
-                      validator: _validateUsername,
-                      enabled: !isLoading,
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Connect to Xtream Codes',
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Enter your Xtream Codes server details',
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Error message card
+                  if (_errorMessage != null) ...[
+                    _ErrorCard(
+                      message: _errorMessage!,
+                      onDismiss: () {
+                        setState(() {
+                          _errorMessage = null;
+                        });
+                      },
                     ),
                     const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _passwordController,
-                      decoration: InputDecoration(
-                        labelText: 'Password',
-                        hintText: 'Enter your password',
-                        prefixIcon: const Icon(Icons.lock),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility
-                                : Icons.visibility_off,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _obscurePassword = !_obscurePassword;
-                            });
-                          },
+                  ],
+
+                  // Server URL field
+                  TextFormField(
+                    controller: _serverUrlController,
+                    decoration: InputDecoration(
+                      labelText: 'Server URL',
+                      hintText: 'http://example.com:8080',
+                      prefixIcon: const Icon(Icons.dns),
+                      helperText: 'Include http:// or https:// and port',
+                      filled: true,
+                      fillColor: AppColors.surface,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                          color: AppColors.primary,
+                          width: 2,
                         ),
                       ),
-                      obscureText: _obscurePassword,
-                      validator: _validatePassword,
-                      enabled: !isLoading,
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppColors.error),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                          color: AppColors.error,
+                          width: 2,
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 32),
-                    ElevatedButton(
+                    keyboardType: TextInputType.url,
+                    textInputAction: TextInputAction.next,
+                    autocorrect: false,
+                    validator: _validateServerUrl,
+                    enabled: !isLoading,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Username field
+                  TextFormField(
+                    controller: _usernameController,
+                    decoration: InputDecoration(
+                      labelText: 'Username',
+                      hintText: 'Enter your username',
+                      prefixIcon: const Icon(Icons.person),
+                      filled: true,
+                      fillColor: AppColors.surface,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                          color: AppColors.primary,
+                          width: 2,
+                        ),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppColors.error),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                          color: AppColors.error,
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                    textInputAction: TextInputAction.next,
+                    autocorrect: false,
+                    validator: _validateUsername,
+                    enabled: !isLoading,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Password field
+                  TextFormField(
+                    controller: _passwordController,
+                    decoration: InputDecoration(
+                      labelText: 'Password',
+                      hintText: 'Enter your password',
+                      prefixIcon: const Icon(Icons.lock),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
+                      ),
+                      filled: true,
+                      fillColor: AppColors.surface,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                          color: AppColors.primary,
+                          width: 2,
+                        ),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppColors.error),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                          color: AppColors.error,
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                    obscureText: _obscurePassword,
+                    textInputAction: TextInputAction.done,
+                    onFieldSubmitted: (_) => _onLogin(),
+                    validator: _validatePassword,
+                    enabled: !isLoading,
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Login button
+                  SizedBox(
+                    height: 56,
+                    child: ElevatedButton(
                       onPressed: isLoading ? null : _onLogin,
+                      style: ElevatedButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
                       child: isLoading
                           ? const SizedBox(
                               width: 24,
@@ -186,49 +330,138 @@ class _XtreamLoginScreenState extends State<XtreamLoginScreen> {
                                     AlwaysStoppedAnimation<Color>(Colors.white),
                               ),
                             )
-                          : const Text('Login'),
-                    ),
-                    const SizedBox(height: 16),
-                    const Card(
-                      child: Padding(
-                        padding: EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.info_outline,
-                                  size: 20,
-                                  color: AppColors.primary,
-                                ),
-                                SizedBox(width: 8),
-                                Text(
-                                  'What is Xtream Codes?',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              'Xtream Codes is an IPTV panel that provides access to live TV, movies, and series. You need valid credentials from your IPTV provider.',
+                          : const Text(
+                              'Connect',
                               style: TextStyle(
-                                fontSize: 12,
-                                color: AppColors.textSecondary,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
-                          ],
-                        ),
-                      ),
                     ),
-                  ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Info card
+                  const _InfoCard(),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// Error card widget
+class _ErrorCard extends StatelessWidget {
+  const _ErrorCard({
+    required this.message,
+    required this.onDismiss,
+  });
+
+  final String message;
+  final VoidCallback onDismiss;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.error.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.error.withOpacity(0.3),
+        ),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.error_outline,
+            color: AppColors.error,
+            size: 24,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.error,
+                  ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(
+              Icons.close,
+              color: AppColors.error,
+              size: 20,
+            ),
+            onPressed: onDismiss,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Info card widget
+class _InfoCard extends StatelessWidget {
+  const _InfoCard();
+  
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.info.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.info_outline,
+                  size: 20,
+                  color: AppColors.info,
                 ),
               ),
-            );
-          },
-        ),
-      );
+              const SizedBox(width: 12),
+              Text(
+                'What is Xtream Codes?',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Xtream Codes is an IPTV panel that provides access to live TV, movies, and series. You need valid credentials from your IPTV provider.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.textSecondary,
+                  height: 1.5,
+                ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Your credentials are stored locally and never shared.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.textTertiary,
+                  fontStyle: FontStyle.italic,
+                ),
+          ),
+        ],
+      ),
+    );
   }
 }

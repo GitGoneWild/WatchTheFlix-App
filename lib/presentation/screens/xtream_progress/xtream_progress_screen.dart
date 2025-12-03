@@ -26,13 +26,15 @@ class XtreamProgressScreen extends StatelessWidget {
     return BlocProvider(
       create: (_) => getIt<XtreamConnectionBloc>()
         ..add(XtreamConnectionStarted(credentials: credentials)),
-      child: const _XtreamProgressContent(),
+      child: _XtreamProgressContent(credentials: credentials),
     );
   }
 }
 
 class _XtreamProgressContent extends StatelessWidget {
-  const _XtreamProgressContent();
+  const _XtreamProgressContent({required this.credentials});
+
+  final XtreamCredentials credentials;
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +43,7 @@ class _XtreamProgressContent extends StatelessWidget {
         listener: (context, state) {
           if (state is XtreamConnectionSuccess) {
             // Navigate to home on success
-            Future.delayed(const Duration(milliseconds: 1000), () {
+            Future.delayed(const Duration(milliseconds: 1500), () {
               if (context.mounted) {
                 Navigator.pushReplacementNamed(context, AppRoutes.home);
               }
@@ -53,7 +55,14 @@ class _XtreamProgressContent extends StatelessWidget {
             return _ErrorView(
               message: state.message,
               failedStep: state.failedStep,
+              errorType: state.errorType,
+              canRetry: state.canRetry,
               onRetry: () {
+                context.read<XtreamConnectionBloc>().add(
+                      XtreamConnectionRetry(credentials: credentials),
+                    );
+              },
+              onGoBack: () {
                 context.read<XtreamConnectionBloc>().add(
                       const XtreamConnectionReset(),
                     );
@@ -62,11 +71,22 @@ class _XtreamProgressContent extends StatelessWidget {
             );
           }
 
+          if (state is XtreamConnectionSuccess) {
+            return _SuccessView(
+              channelsLoaded: state.channelsLoaded,
+              moviesLoaded: state.moviesLoaded,
+              seriesLoaded: state.seriesLoaded,
+            );
+          }
+
           if (state is XtreamConnectionInProgress) {
             return _ProgressView(
               currentStep: state.currentStep,
               progress: state.progress,
               message: state.message,
+              channelsLoaded: state.channelsLoaded,
+              moviesLoaded: state.moviesLoaded,
+              seriesLoaded: state.seriesLoaded,
             );
           }
 
@@ -86,11 +106,17 @@ class _ProgressView extends StatelessWidget {
     required this.currentStep,
     required this.progress,
     this.message,
+    this.channelsLoaded = 0,
+    this.moviesLoaded = 0,
+    this.seriesLoaded = 0,
   });
 
   final ConnectionStep currentStep;
   final double progress;
   final String? message;
+  final int channelsLoaded;
+  final int moviesLoaded;
+  final int seriesLoaded;
 
   @override
   Widget build(BuildContext context) {
@@ -102,7 +128,7 @@ class _ProgressView extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Icon
+            // Animated Icon
             TweenAnimationBuilder<double>(
               duration: const Duration(milliseconds: 300),
               tween: Tween(begin: 0.8, end: 1.0),
@@ -114,7 +140,7 @@ class _ProgressView extends StatelessWidget {
                     height: 120,
                     decoration: BoxDecoration(
                       color: isCompleted
-                          ? Colors.green.withOpacity(0.1)
+                          ? AppColors.success.withOpacity(0.1)
                           : AppColors.primary.withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
@@ -122,7 +148,7 @@ class _ProgressView extends StatelessWidget {
                         ? const Icon(
                             Icons.check_circle,
                             size: 60,
-                            color: Colors.green,
+                            color: AppColors.success,
                           )
                         : Stack(
                             alignment: Alignment.center,
@@ -133,15 +159,21 @@ class _ProgressView extends StatelessWidget {
                                 child: CircularProgressIndicator(
                                   value: progress,
                                   strokeWidth: 4,
-                                  valueColor: const AlwaysStoppedAnimation<Color>(
+                                  valueColor:
+                                      const AlwaysStoppedAnimation<Color>(
                                     AppColors.primary,
                                   ),
+                                  backgroundColor: AppColors.surface,
                                 ),
                               ),
-                              Icon(
-                                currentStep.icon,
-                                size: 40,
-                                color: AppColors.primary,
+                              AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 200),
+                                child: Icon(
+                                  currentStep.icon,
+                                  key: ValueKey(currentStep),
+                                  size: 36,
+                                  color: AppColors.primary,
+                                ),
                               ),
                             ],
                           ),
@@ -153,59 +185,172 @@ class _ProgressView extends StatelessWidget {
             const SizedBox(height: 32),
 
             // Title
-            Text(
-              currentStep.title,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-              textAlign: TextAlign.center,
-            ),
-
-            const SizedBox(height: 12),
-
-            // Message
-            if (message != null)
-              Text(
-                message!,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textSecondary,
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: Text(
+                currentStep.title,
+                key: ValueKey(currentStep.title),
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
                     ),
                 textAlign: TextAlign.center,
-              ),
-
-            const SizedBox(height: 32),
-
-            // Progress bar
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: LinearProgressIndicator(
-                value: progress,
-                minHeight: 8,
-                valueColor: const AlwaysStoppedAnimation<Color>(
-                  AppColors.primary,
-                ),
-                backgroundColor: AppColors.surface,
               ),
             ),
 
             const SizedBox(height: 8),
 
-            // Progress percentage
-            Text(
-              '${(progress * 100).toInt()}%',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.bold,
-                  ),
+            // Description/Message
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: Text(
+                message ?? currentStep.description,
+                key: ValueKey(message ?? currentStep.description),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                textAlign: TextAlign.center,
+              ),
             ),
 
-            const SizedBox(height: 48),
+            const SizedBox(height: 32),
+
+            // Progress bar with animation
+            TweenAnimationBuilder<double>(
+              duration: const Duration(milliseconds: 300),
+              tween: Tween(begin: 0, end: progress),
+              builder: (context, animatedProgress, child) {
+                return Column(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: LinearProgressIndicator(
+                        value: animatedProgress,
+                        minHeight: 8,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          isCompleted ? AppColors.success : AppColors.primary,
+                        ),
+                        backgroundColor: AppColors.surface,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${(animatedProgress * 100).toInt()}%',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                  ],
+                );
+              },
+            ),
+
+            const SizedBox(height: 32),
 
             // Steps indicator
             _StepsIndicator(currentStep: currentStep),
+
+            const SizedBox(height: 32),
+
+            // Content stats
+            if (channelsLoaded > 0 || moviesLoaded > 0 || seriesLoaded > 0)
+              _ContentStats(
+                channelsLoaded: channelsLoaded,
+                moviesLoaded: moviesLoaded,
+                seriesLoaded: seriesLoaded,
+              ),
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Widget to display content loading stats
+class _ContentStats extends StatelessWidget {
+  const _ContentStats({
+    required this.channelsLoaded,
+    required this.moviesLoaded,
+    required this.seriesLoaded,
+  });
+
+  final int channelsLoaded;
+  final int moviesLoaded;
+  final int seriesLoaded;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _StatItem(
+            icon: Icons.live_tv,
+            value: channelsLoaded,
+            label: 'Channels',
+          ),
+          Container(
+            width: 1,
+            height: 32,
+            color: AppColors.border,
+          ),
+          _StatItem(
+            icon: Icons.movie,
+            value: moviesLoaded,
+            label: 'Movies',
+          ),
+          Container(
+            width: 1,
+            height: 32,
+            color: AppColors.border,
+          ),
+          _StatItem(
+            icon: Icons.video_library,
+            value: seriesLoaded,
+            label: 'Series',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatItem extends StatelessWidget {
+  const _StatItem({
+    required this.icon,
+    required this.value,
+    required this.label,
+  });
+
+  final IconData icon;
+  final int value;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 20, color: AppColors.textSecondary),
+        const SizedBox(height: 4),
+        Text(
+          value.toString(),
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+        ),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppColors.textSecondary,
+              ),
+        ),
+      ],
     );
   }
 }
@@ -230,29 +375,44 @@ class _StepsIndicator extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(steps.length, (index) {
-        final isCompleted = index < currentIndex ||
-            currentStep == ConnectionStep.completed;
+        final isCompleted =
+            index < currentIndex || currentStep == ConnectionStep.completed;
         final isCurrent = index == currentIndex;
 
         return Row(
           children: [
-            Container(
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
               width: isCurrent ? 12 : 8,
               height: isCurrent ? 12 : 8,
               decoration: BoxDecoration(
                 color: isCompleted || isCurrent
-                    ? AppColors.primary
+                    ? (currentStep == ConnectionStep.completed
+                        ? AppColors.success
+                        : AppColors.primary)
                     : AppColors.textTertiary,
                 shape: BoxShape.circle,
+                boxShadow: isCurrent
+                    ? [
+                        BoxShadow(
+                          color: AppColors.primary.withOpacity(0.4),
+                          blurRadius: 8,
+                          spreadRadius: 2,
+                        ),
+                      ]
+                    : null,
               ),
             ),
             if (index < steps.length - 1)
-              Container(
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
                 width: 24,
                 height: 2,
                 margin: const EdgeInsets.symmetric(horizontal: 4),
                 color: isCompleted
-                    ? AppColors.primary
+                    ? (currentStep == ConnectionStep.completed
+                        ? AppColors.success
+                        : AppColors.primary)
                     : AppColors.textTertiary,
               ),
           ],
@@ -262,16 +422,17 @@ class _StepsIndicator extends StatelessWidget {
   }
 }
 
-class _ErrorView extends StatelessWidget {
-  const _ErrorView({
-    required this.message,
-    required this.failedStep,
-    required this.onRetry,
+/// Success view after connection completes
+class _SuccessView extends StatelessWidget {
+  const _SuccessView({
+    required this.channelsLoaded,
+    required this.moviesLoaded,
+    required this.seriesLoaded,
   });
 
-  final String message;
-  final ConnectionStep failedStep;
-  final VoidCallback onRetry;
+  final int channelsLoaded;
+  final int moviesLoaded;
+  final int seriesLoaded;
 
   @override
   Widget build(BuildContext context) {
@@ -281,32 +442,160 @@ class _ErrorView extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.error_outline,
-                size: 60,
-                color: AppColors.primary,
-              ),
+            TweenAnimationBuilder<double>(
+              duration: const Duration(milliseconds: 600),
+              tween: Tween(begin: 0.0, end: 1.0),
+              curve: Curves.elasticOut,
+              builder: (context, scale, child) {
+                return Transform.scale(
+                  scale: scale,
+                  child: Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: AppColors.success.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.check_circle,
+                      size: 60,
+                      color: AppColors.success,
+                    ),
+                  ),
+                );
+              },
             ),
-
             const SizedBox(height: 32),
-
             Text(
-              'Connection Failed',
+              'All Set!',
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Your IPTV service is ready to use.',
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+            _ContentStats(
+              channelsLoaded: channelsLoaded,
+              moviesLoaded: moviesLoaded,
+              seriesLoaded: seriesLoaded,
+            ),
+            const SizedBox(height: 32),
+            Text(
+              'Redirecting to home...',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textTertiary,
+                  ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ErrorView extends StatelessWidget {
+  const _ErrorView({
+    required this.message,
+    required this.failedStep,
+    required this.errorType,
+    required this.canRetry,
+    required this.onRetry,
+    required this.onGoBack,
+  });
+
+  final String message;
+  final ConnectionStep failedStep;
+  final ConnectionErrorType errorType;
+  final bool canRetry;
+  final VoidCallback onRetry;
+  final VoidCallback onGoBack;
+
+  IconData get _errorIcon {
+    switch (errorType) {
+      case ConnectionErrorType.networkError:
+        return Icons.wifi_off;
+      case ConnectionErrorType.serverError:
+        return Icons.cloud_off;
+      case ConnectionErrorType.authenticationFailed:
+        return Icons.lock;
+      case ConnectionErrorType.accountExpired:
+        return Icons.timer_off;
+      case ConnectionErrorType.timeout:
+        return Icons.schedule;
+      case ConnectionErrorType.invalidCredentials:
+        return Icons.error;
+      default:
+        return Icons.error_outline;
+    }
+  }
+
+  String get _errorTitle {
+    switch (errorType) {
+      case ConnectionErrorType.networkError:
+        return 'No Connection';
+      case ConnectionErrorType.serverError:
+        return 'Server Error';
+      case ConnectionErrorType.authenticationFailed:
+        return 'Authentication Failed';
+      case ConnectionErrorType.accountExpired:
+        return 'Account Expired';
+      case ConnectionErrorType.timeout:
+        return 'Connection Timeout';
+      case ConnectionErrorType.invalidCredentials:
+        return 'Invalid Credentials';
+      default:
+        return 'Connection Failed';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            TweenAnimationBuilder<double>(
+              duration: const Duration(milliseconds: 400),
+              tween: Tween(begin: 0.0, end: 1.0),
+              curve: Curves.easeOut,
+              builder: (context, scale, child) {
+                return Transform.scale(
+                  scale: scale,
+                  child: Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: AppColors.error.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      _errorIcon,
+                      size: 60,
+                      color: AppColors.error,
+                    ),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 32),
+            Text(
+              _errorTitle,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
               textAlign: TextAlign.center,
             ),
-
             const SizedBox(height: 12),
-
             Text(
               message,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -314,22 +603,50 @@ class _ErrorView extends StatelessWidget {
                   ),
               textAlign: TextAlign.center,
             ),
-
-            const SizedBox(height: 32),
-
-            ElevatedButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Try Again'),
+            const SizedBox(height: 8),
+            // Show which step failed
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    failedStep.icon,
+                    size: 16,
+                    color: AppColors.textTertiary,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Failed at: ${failedStep.title}',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.textTertiary,
+                        ),
+                  ),
+                ],
+              ),
             ),
-
+            const SizedBox(height: 32),
+            if (canRetry)
+              ElevatedButton.icon(
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Try Again'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 16,
+                  ),
+                ),
+              ),
             const SizedBox(height: 16),
-
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('Go Back'),
+            TextButton.icon(
+              onPressed: onGoBack,
+              icon: const Icon(Icons.arrow_back, size: 18),
+              label: const Text('Change Credentials'),
             ),
           ],
         ),
