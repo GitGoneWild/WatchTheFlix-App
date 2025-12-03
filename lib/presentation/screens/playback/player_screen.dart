@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -49,54 +51,39 @@ class _PlayerScreenState extends State<PlayerScreen> {
     // Only allow HTTPS URLs
     if (uri.scheme != 'https') return false;
     
-    // Block private IP ranges and localhost
     final host = uri.host.toLowerCase();
     
-    // Block localhost
-    if (host == 'localhost' || host == '127.0.0.1' || host == '::1') {
-      return false;
-    }
+    // Block localhost by name
+    if (host == 'localhost') return false;
     
-    // Block IPv6 private and link-local ranges
-    // fc00::/7 (unique local addresses) includes fc00::/8 and fd00::/8
-    // fe80::/10 (link-local addresses)
-    if (host.startsWith('fc') || 
-        host.startsWith('fd') || 
-        host.startsWith('fe8') ||
-        host.startsWith('fe9') ||
-        host.startsWith('fea') ||
-        host.startsWith('feb')) {
-      return false;
-    }
-    
-    // Block private IPv4 ranges
-    final ipv4Pattern = RegExp(r'^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$');
-    final match = ipv4Pattern.firstMatch(host);
-    if (match != null) {
-      try {
-        final octets = [
-          int.parse(match.group(1)!),
-          int.parse(match.group(2)!),
-          int.parse(match.group(3)!),
-          int.parse(match.group(4)!),
-        ];
-        
-        // Validate octet range (0-255)
-        if (octets.any((octet) => octet < 0 || octet > 255)) {
-          return false;
-        }
+    // Try to parse as IP address
+    final address = InternetAddress.tryParse(host);
+    if (address != null) {
+      // Check if it's a loopback address (127.0.0.1, ::1)
+      if (address.isLoopback) return false;
+      
+      // Check if it's a link-local address (169.254.0.0/16, fe80::/10)
+      if (address.isLinkLocal) return false;
+      
+      // For IPv4, check private ranges
+      if (address.type == InternetAddressType.IPv4) {
+        final bytes = address.rawAddress;
         
         // 10.0.0.0/8
-        if (octets[0] == 10) return false;
+        if (bytes[0] == 10) return false;
         
         // 172.16.0.0/12
-        if (octets[0] == 172 && octets[1] >= 16 && octets[1] <= 31) return false;
+        if (bytes[0] == 172 && bytes[1] >= 16 && bytes[1] <= 31) return false;
         
         // 192.168.0.0/16
-        if (octets[0] == 192 && octets[1] == 168) return false;
-      } catch (e) {
-        // Invalid IP format
-        return false;
+        if (bytes[0] == 192 && bytes[1] == 168) return false;
+      }
+      
+      // For IPv6, check unique local addresses (fc00::/7)
+      if (address.type == InternetAddressType.IPv6) {
+        final bytes = address.rawAddress;
+        // fc00::/7 means first byte is 0xfc or 0xfd (252-253)
+        if (bytes[0] >= 252 && bytes[0] <= 253) return false;
       }
     }
     
