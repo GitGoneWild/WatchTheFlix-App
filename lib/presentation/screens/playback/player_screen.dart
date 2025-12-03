@@ -50,30 +50,36 @@ class _PlayerScreenState extends State<PlayerScreen> {
     
     // Block private IP ranges and localhost
     final host = uri.host.toLowerCase();
-    if (host == 'localhost' || 
-        host == '127.0.0.1' ||
-        host.startsWith('192.168.') ||
-        host.startsWith('10.') ||
-        host.startsWith('172.16.') ||
-        host.startsWith('172.17.') ||
-        host.startsWith('172.18.') ||
-        host.startsWith('172.19.') ||
-        host.startsWith('172.20.') ||
-        host.startsWith('172.21.') ||
-        host.startsWith('172.22.') ||
-        host.startsWith('172.23.') ||
-        host.startsWith('172.24.') ||
-        host.startsWith('172.25.') ||
-        host.startsWith('172.26.') ||
-        host.startsWith('172.27.') ||
-        host.startsWith('172.28.') ||
-        host.startsWith('172.29.') ||
-        host.startsWith('172.30.') ||
-        host.startsWith('172.31.') ||
-        host == '::1' ||
-        host.startsWith('fc00:') ||
-        host.startsWith('fd00:')) {
+    
+    // Block localhost
+    if (host == 'localhost' || host == '127.0.0.1' || host == '::1') {
       return false;
+    }
+    
+    // Block IPv6 private ranges
+    if (host.startsWith('fc00:') || host.startsWith('fd00:')) {
+      return false;
+    }
+    
+    // Block private IPv4 ranges
+    final ipv4Pattern = RegExp(r'^(\d+)\.(\d+)\.(\d+)\.(\d+)$');
+    final match = ipv4Pattern.firstMatch(host);
+    if (match != null) {
+      final octets = [
+        int.parse(match.group(1)!),
+        int.parse(match.group(2)!),
+        int.parse(match.group(3)!),
+        int.parse(match.group(4)!),
+      ];
+      
+      // 10.0.0.0/8
+      if (octets[0] == 10) return false;
+      
+      // 172.16.0.0/12
+      if (octets[0] == 172 && octets[1] >= 16 && octets[1] <= 31) return false;
+      
+      // 192.168.0.0/16
+      if (octets[0] == 192 && octets[1] == 168) return false;
     }
     
     return true;
