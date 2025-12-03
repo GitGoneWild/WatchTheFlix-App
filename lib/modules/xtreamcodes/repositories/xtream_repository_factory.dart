@@ -7,6 +7,7 @@ import '../auth/xtream_credentials.dart';
 import '../epg/xmltv_parser.dart';
 import '../epg/xtream_epg_repository.dart';
 import 'xtream_live_repository.dart';
+import 'xtream_series_repository.dart';
 import 'xtream_vod_repository.dart';
 
 /// Factory for creating Xtream repositories
@@ -30,6 +31,7 @@ class XtreamRepositoryFactory {
   IXtreamEpgRepository? _epgRepository;
   IXtreamLiveRepository? _liveRepository;
   IXtreamVodRepository? _vodRepository;
+  IXtreamSeriesRepository? _seriesRepository;
 
   /// Get or create EPG repository
   IXtreamEpgRepository get epgRepository {
@@ -60,6 +62,15 @@ class XtreamRepositoryFactory {
     return _vodRepository!;
   }
 
+  /// Get or create Series repository
+  IXtreamSeriesRepository get seriesRepository {
+    _seriesRepository ??= XtreamSeriesRepository(
+      apiClient: _apiClient,
+      storage: _storage,
+    );
+    return _seriesRepository!;
+  }
+
   /// Get the API client
   XtreamApiClient get apiClient => _apiClient;
 
@@ -69,5 +80,6 @@ class XtreamRepositoryFactory {
     _epgRepository = null;
     _liveRepository = null;
     _vodRepository = null;
+    _seriesRepository = null;
   }
 }
