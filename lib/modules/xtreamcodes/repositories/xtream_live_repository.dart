@@ -58,6 +58,10 @@ class XtreamLiveRepository implements IXtreamLiveRepository {
   /// In-memory cache
   List<DomainChannel>? _cachedChannels;
   List<DomainCategory>? _cachedCategories;
+  
+  /// Flag to prevent multiple simultaneous background refreshes
+  bool _isRefreshingChannels = false;
+  bool _isRefreshingCategories = false;
 
   @override
   Future<ApiResult<List<DomainChannel>>> getLiveChannels({
@@ -299,6 +303,11 @@ class XtreamLiveRepository implements IXtreamLiveRepository {
 
   /// Refresh channels in background without blocking
   void _refreshChannelsInBackground() {
+    // Prevent multiple simultaneous refreshes
+    if (_isRefreshingChannels) return;
+    
+    _isRefreshingChannels = true;
+    
     // Fire and forget - don't await
     refreshLiveChannels().then((result) {
       if (result.isSuccess) {
@@ -319,11 +328,18 @@ class XtreamLiveRepository implements IXtreamLiveRepository {
         error: error,
         stackTrace: stackTrace,
       );
+    }).whenComplete(() {
+      _isRefreshingChannels = false;
     });
   }
 
   /// Refresh categories in background without blocking
   void _refreshCategoriesInBackground() {
+    // Prevent multiple simultaneous refreshes
+    if (_isRefreshingCategories) return;
+    
+    _isRefreshingCategories = true;
+    
     // Fire and forget - don't await
     _apiClient.getLiveCategories().then((categoriesResult) {
       if (categoriesResult.isSuccess) {
@@ -337,7 +353,7 @@ class XtreamLiveRepository implements IXtreamLiveRepository {
         );
       } else {
         moduleLogger.warning(
-          'Background categories refresh failed',
+          'Background categories refresh failed: ${categoriesResult.error.message}',
           tag: 'XtreamLive',
         );
       }
@@ -348,6 +364,8 @@ class XtreamLiveRepository implements IXtreamLiveRepository {
         error: error,
         stackTrace: stackTrace,
       );
+    }).whenComplete(() {
+      _isRefreshingCategories = false;
     });
   }
 

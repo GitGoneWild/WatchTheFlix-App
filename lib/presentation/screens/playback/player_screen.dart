@@ -19,23 +19,76 @@ class PlayerScreen extends StatefulWidget {
   State<PlayerScreen> createState() => _PlayerScreenState();
 }
 
+/// Player screen state managing video playback, EPG display, and channel navigation
 class _PlayerScreenState extends State<PlayerScreen> {
   late Channel _currentChannel;
   bool _showEpgOverlay = false;
+  late PlayerBloc _playerBloc;
 
   @override
   void initState() {
     super.initState();
     _currentChannel = widget.channel;
+    _playerBloc = PlayerBloc()..add(InitializePlayerEvent(_currentChannel));
   }
 
+  @override
+  void dispose() {
+    _playerBloc.close();
+    super.dispose();
+  }
+
+  /// Validates if a URL is safe to load (HTTPS only and not a local network address)
+  bool _isValidImageUrl(String? url) {
+    if (url == null || url.isEmpty) return false;
+    
+    final uri = Uri.tryParse(url);
+    if (uri == null) return false;
+    
+    // Only allow HTTPS URLs
+    if (uri.scheme != 'https') return false;
+    
+    // Block private IP ranges and localhost
+    final host = uri.host.toLowerCase();
+    if (host == 'localhost' || 
+        host == '127.0.0.1' ||
+        host.startsWith('192.168.') ||
+        host.startsWith('10.') ||
+        host.startsWith('172.16.') ||
+        host.startsWith('172.17.') ||
+        host.startsWith('172.18.') ||
+        host.startsWith('172.19.') ||
+        host.startsWith('172.20.') ||
+        host.startsWith('172.21.') ||
+        host.startsWith('172.22.') ||
+        host.startsWith('172.23.') ||
+        host.startsWith('172.24.') ||
+        host.startsWith('172.25.') ||
+        host.startsWith('172.26.') ||
+        host.startsWith('172.27.') ||
+        host.startsWith('172.28.') ||
+        host.startsWith('172.29.') ||
+        host.startsWith('172.30.') ||
+        host.startsWith('172.31.') ||
+        host == '::1' ||
+        host.startsWith('fc00:') ||
+        host.startsWith('fd00:')) {
+      return false;
+    }
+    
+    return true;
+  }
+
+  /// Switch to a different channel and reinitialize player
   void _switchChannel(Channel newChannel) {
     setState(() {
       _currentChannel = newChannel;
     });
-    context.read<PlayerBloc>().add(InitializePlayerEvent(newChannel));
+    _playerBloc.add(InitializePlayerEvent(newChannel));
   }
 
+  /// Navigate to the next channel in the channel list
+  /// Only works when ChannelBloc is available and in loaded state
   void _navigateToNextChannel() {
     try {
       final channelBloc = context.read<ChannelBloc>();
@@ -53,6 +106,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
     }
   }
 
+  /// Navigate to the previous channel in the channel list
+  /// Only works when ChannelBloc is available and in loaded state
   void _navigateToPreviousChannel() {
     try {
       final channelBloc = context.read<ChannelBloc>();
@@ -72,8 +127,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => PlayerBloc()..add(InitializePlayerEvent(_currentChannel)),
+    return BlocProvider.value(
+      value: _playerBloc,
       child: Scaffold(
         backgroundColor: Colors.black,
         body: Stack(
@@ -135,6 +190,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     );
   }
 
+  /// Builds a navigation button for channel switching (left/right)
   Widget _buildNavigationButton({
     required IconData icon,
     required VoidCallback onTap,
@@ -162,6 +218,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     );
   }
 
+  /// Builds the EPG overlay showing current and next program information
   Widget _buildEpgOverlay() {
     final epgInfo = _currentChannel.epgInfo;
     
@@ -193,7 +250,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 // Channel info
                 Row(
                   children: [
-                    if (_currentChannel.logoUrl != null)
+                    if (_currentChannel.logoUrl != null && 
+                        _isValidImageUrl(_currentChannel.logoUrl))
                       ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: Image.network(
@@ -398,15 +456,19 @@ class _PlayerScreenState extends State<PlayerScreen> {
     );
   }
 
+  /// Formats a DateTime to HH:MM format
   String _formatTime(DateTime time) {
     final hour = time.hour.toString().padLeft(2, '0');
     final minute = time.minute.toString().padLeft(2, '0');
     return '$hour:$minute';
   }
 
+  /// Calculates program progress as a value between 0.0 and 1.0
+  /// Returns 0.0 if program hasn't started, 1.0 if completed
   double _calculateProgress(DateTime start, DateTime end) {
     final now = DateTime.now();
-    if (now.isBefore(start) || now.isAfter(end)) return 0.0;
+    if (now.isBefore(start)) return 0.0;
+    if (now.isAfter(end)) return 1.0; // Program completed
     
     final total = end.difference(start).inSeconds;
     final elapsed = now.difference(start).inSeconds;
