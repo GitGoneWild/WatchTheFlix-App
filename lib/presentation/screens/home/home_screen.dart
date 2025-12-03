@@ -1299,17 +1299,11 @@ class _MoviesTabState extends State<MoviesTab> {
                         return _MovieGridCard(
                           movie: movie,
                           onTap: () {
-                            // Navigate to play the movie
+                            // Navigate to play the movie using toChannel() adapter
                             Navigator.pushNamed(
                               context,
                               AppRoutes.player,
-                              arguments: Channel(
-                                id: movie.id,
-                                name: movie.name,
-                                streamUrl: movie.streamUrl,
-                                logoUrl: movie.posterUrl,
-                                type: ContentType.movie,
-                              ),
+                              arguments: movie.toChannel(),
                             );
                           },
                         );
