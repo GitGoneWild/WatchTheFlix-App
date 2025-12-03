@@ -246,8 +246,8 @@ class XtreamConnectionBloc
 
   /// Load movies, series, and EPG in background without blocking UI
   void _loadContentInBackground(XtreamApiClient apiClient) {
-    // Fire and forget - load content in parallel
-    Future.wait([
+    // Prepare futures list
+    final futures = <Future<void>>[
       // Fetch movies
       apiClient.getVodCategories().then((vodCategoriesResult) {
         if (vodCategoriesResult.isSuccess) {
@@ -281,9 +281,11 @@ class XtreamConnectionBloc
           );
         }
       }),
+    ];
 
-      // Update EPG
-      if (_serviceManager.isInitialized)
+    // Add EPG refresh if service is initialized
+    if (_serviceManager.isInitialized) {
+      futures.add(
         _serviceManager.repositoryFactory.epgRepository.refreshEpg().then(
           (result) {
             if (result.isSuccess) {
@@ -299,10 +301,12 @@ class XtreamConnectionBloc
               );
             }
           },
-        )
-      else
-        Future.value(),
-    ]).catchError((error, stackTrace) {
+        ),
+      );
+    }
+
+    // Fire and forget - load content in parallel
+    Future.wait(futures).catchError((error, stackTrace) {
       moduleLogger.error(
         'Background: Error during content loading',
         tag: 'XtreamConnection',

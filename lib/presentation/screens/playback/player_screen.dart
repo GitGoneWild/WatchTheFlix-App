@@ -295,7 +295,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.schedule,
                             size: 16,
                             color: AppColors.textSecondary,
