@@ -185,9 +185,6 @@ class MoviesBloc extends Bloc<MoviesEvent, MoviesState> {
           clearCategory: event.category == null,
         ),
       );
-      // Reload movies with the selected category filter
-      // Note: This doesn't re-fetch from API, just updates the state
-      // The filteredMovies getter in MoviesLoadedState handles the filtering
     }
   }
 

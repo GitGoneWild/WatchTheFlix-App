@@ -146,99 +146,80 @@ class _LiveTVRedesignedScreenState extends State<LiveTVRedesignedScreen> {
                     ? favoritesState.recentlyWatched
                     : <Channel>[];
                 
-                // Calculate item count: Favorites + Recently Watched + All + Regular categories
-                final specialCategoriesCount = (favorites.isNotEmpty ? 1 : 0) + 
-                                               (recentlyWatched.isNotEmpty ? 1 : 0);
-                final totalItemCount = specialCategoriesCount + 1 + categories.length;
-                
-                return ListView.builder(
+                return ListView(
                   controller: _categoryScrollController,
                   padding: const EdgeInsets.symmetric(vertical: 8),
-                  itemCount: totalItemCount,
-                  itemBuilder: (context, index) {
-                    var currentIndex = 0;
-                    
-                    // Favorites category (special)
-                    if (favorites.isNotEmpty) {
-                      if (index == currentIndex) {
-                        return _CategoryItem(
-                          label: 'Favorites',
-                          icon: Icons.favorite,
-                          iconColor: AppColors.primary,
-                          isSelected: selectedCategory?.id == '_favorites',
-                          channelCount: favorites.length,
-                          onTap: () {
-                            context.read<ChannelBloc>().add(
-                                  SelectCategoryEvent(
-                                    Category(
-                                      id: '_favorites',
-                                      name: 'Favorites',
-                                      channelCount: favorites.length,
-                                    ),
-                                  ),
-                                );
-                          },
-                        );
-                      }
-                      currentIndex++;
-                    }
-                    
-                    // Recently Watched category (special)
-                    if (recentlyWatched.isNotEmpty) {
-                      if (index == currentIndex) {
-                        return _CategoryItem(
-                          label: 'Recently Watched',
-                          icon: Icons.history,
-                          iconColor: AppColors.accentOrange,
-                          isSelected: selectedCategory?.id == '_recent',
-                          channelCount: recentlyWatched.length,
-                          onTap: () {
-                            context.read<ChannelBloc>().add(
-                                  SelectCategoryEvent(
-                                    Category(
-                                      id: '_recent',
-                                      name: 'Recently Watched',
-                                      channelCount: recentlyWatched.length,
-                                    ),
-                                  ),
-                                );
-                          },
-                        );
-                      }
-                      currentIndex++;
-                    }
-                    
-                    // All Channels category
-                    if (index == currentIndex) {
-                      return _CategoryItem(
-                        label: 'All Channels',
-                        icon: Icons.live_tv,
-                        isSelected: selectedCategory == null,
-                        channelCount: state.channels.length,
+                  children: [
+                    // Favorites category (special) - only show if there are favorites
+                    if (favorites.isNotEmpty)
+                      _CategoryItem(
+                        label: 'Favorites',
+                        icon: Icons.favorite,
+                        iconColor: AppColors.primary,
+                        isSelected: selectedCategory?.id == AppConstants.favoriteCategoryId,
+                        channelCount: favorites.length,
                         onTap: () {
                           context.read<ChannelBloc>().add(
-                                const SelectCategoryEvent(null),
+                                SelectCategoryEvent(
+                                  Category(
+                                    id: AppConstants.favoriteCategoryId,
+                                    name: 'Favorites',
+                                    channelCount: favorites.length,
+                                  ),
+                                ),
+                              );
+                        },
+                      ),
+                    
+                    // Recently Watched category (special) - only show if there is history
+                    if (recentlyWatched.isNotEmpty)
+                      _CategoryItem(
+                        label: 'Recently Watched',
+                        icon: Icons.history,
+                        iconColor: AppColors.accentOrange,
+                        isSelected: selectedCategory?.id == AppConstants.recentCategoryId,
+                        channelCount: recentlyWatched.length,
+                        onTap: () {
+                          context.read<ChannelBloc>().add(
+                                SelectCategoryEvent(
+                                  Category(
+                                    id: AppConstants.recentCategoryId,
+                                    name: 'Recently Watched',
+                                    channelCount: recentlyWatched.length,
+                                  ),
+                                ),
+                              );
+                        },
+                      ),
+                    
+                    // All Channels category
+                    _CategoryItem(
+                      label: 'All Channels',
+                      icon: Icons.live_tv,
+                      isSelected: selectedCategory == null,
+                      channelCount: state.channels.length,
+                      onTap: () {
+                        context.read<ChannelBloc>().add(
+                              const SelectCategoryEvent(null),
+                            );
+                      },
+                    ),
+
+                    // Regular categories
+                    ...categories.map((category) {
+                      return _CategoryItem(
+                        label: category.name,
+                        icon: Icons.folder_outlined,
+                        isSelected: selectedCategory?.id == category.id,
+                        channelCount: category.channelCount,
+                        onTap: () {
+                          context.read<ChannelBloc>().add(
+                                SelectCategoryEvent(category),
                               );
                         },
                       );
-                    }
-                    currentIndex++;
-
-                    // Regular categories
-                    final categoryIndex = index - currentIndex;
-                    final category = categories[categoryIndex];
-                    return _CategoryItem(
-                      label: category.name,
-                      icon: Icons.folder_outlined,
-                      isSelected: selectedCategory?.id == category.id,
-                      channelCount: category.channelCount,
-                      onTap: () {
-                        context.read<ChannelBloc>().add(
-                              SelectCategoryEvent(category),
-                            );
-                      },
-                    );
-                  },
+                    }),
+                  ],
                 );
               },
             ),
@@ -260,9 +241,9 @@ class _LiveTVRedesignedScreenState extends State<LiveTVRedesignedScreen> {
         
         // Determine channel count based on selected category
         int channelCount;
-        if (state.selectedCategory?.id == '_favorites') {
+        if (state.selectedCategory?.id == AppConstants.favoriteCategoryId) {
           channelCount = favorites.length;
-        } else if (state.selectedCategory?.id == '_recent') {
+        } else if (state.selectedCategory?.id == AppConstants.recentCategoryId) {
           channelCount = recentlyWatched.length;
         } else {
           channelCount = state.filteredChannels.length;
@@ -336,9 +317,9 @@ class _LiveTVRedesignedScreenState extends State<LiveTVRedesignedScreen> {
         List<Channel> displayChannels;
         
         // Handle special categories
-        if (state.selectedCategory?.id == '_favorites') {
+        if (state.selectedCategory?.id == AppConstants.favoriteCategoryId) {
           displayChannels = favorites;
-        } else if (state.selectedCategory?.id == '_recent') {
+        } else if (state.selectedCategory?.id == AppConstants.recentCategoryId) {
           displayChannels = recentlyWatched;
         } else {
           // For regular categories, show favorited channels first

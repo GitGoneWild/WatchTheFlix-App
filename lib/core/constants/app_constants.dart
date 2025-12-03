@@ -42,6 +42,10 @@ class AppConstants {
   static const Duration searchDebounce = Duration(milliseconds: 500);
   static const int minSearchLength = 2;
 
+  /// Special category IDs
+  static const String favoriteCategoryId = '_favorites';
+  static const String recentCategoryId = '_recent';
+
   /// Cache settings
   static const Duration cacheExpiration = Duration(hours: 24);
   static const int maxCacheSize = 100; // MB

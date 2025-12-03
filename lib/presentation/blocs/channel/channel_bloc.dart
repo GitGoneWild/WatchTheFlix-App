@@ -80,7 +80,8 @@ class ChannelLoadedState extends ChannelState {
     
     // Filter by category first (including special categories)
     if (selectedCategory != null) {
-      if (selectedCategory!.id == '_favorites' || selectedCategory!.id == '_recent') {
+      if (selectedCategory!.id == AppConstants.favoriteCategoryId || 
+          selectedCategory!.id == AppConstants.recentCategoryId) {
         // Special categories are handled in the UI layer
         // Don't filter here as we don't have access to favorites/recent data
         result = channels;
