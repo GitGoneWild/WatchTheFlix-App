@@ -252,8 +252,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
                   // Now Playing
                   if (epgInfo.currentProgram != null) ...[
-                    Row(
-                      children: const [
+                    const Row(
+                      children: [
                         Icon(
                           Icons.play_circle_filled,
                           color: AppColors.primary,
@@ -339,8 +339,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   // Up Next
                   if (epgInfo.nextProgram != null) ...[
                     const SizedBox(height: 16),
-                    Row(
-                      children: const [
+                    const Row(
+                      children: [
                         Icon(
                           Icons.upcoming,
                           color: AppColors.secondary,
