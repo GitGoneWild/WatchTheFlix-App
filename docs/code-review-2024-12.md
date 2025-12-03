@@ -68,7 +68,7 @@ The codebase is well-architected, follows Flutter/Dart best practices, and demon
 2. **Memory Management** (FIXED)
    - **Issue**: Unbounded in-memory caches in repositories
    - **Impact**: Potential memory leaks with large playlists (100k+ items)
-   - **Resolution**: Added size limits and LRU eviction strategy
+   - **Resolution**: Added size limits and FIFO eviction strategy
 
 3. **Performance** (OPTIMIZED)
    - **Issue**: Unnecessary `async/await` in use cases
@@ -123,13 +123,13 @@ The codebase is well-architected, follows Flutter/Dart best practices, and demon
 // Playlist Repository  
 - Added _maxCacheSize (10,000 items per entry)
 - Added _maxCacheEntries (10 playlist entries)
-- Implemented LRU-style eviction in _addToCache()
+- Implemented FIFO eviction (oldest-entry removal) in _addToCache()
 - Automatic cache management prevents memory growth
 ```
 
 **Impact:**
 - ✅ Prevents out-of-memory errors with massive playlists
-- ✅ LRU eviction keeps most relevant data
+- ✅ FIFO eviction removes oldest data, keeping most recent entries
 - ✅ Predictable memory footprint
 - ✅ No user-visible impact (cache still sufficient for UX)
 
@@ -214,7 +214,7 @@ Future<List<Channel>> call({String? categoryId}) {
 
 1. **Memory Management** ✅
    - Cache size limits prevent unbounded growth
-   - LRU eviction keeps memory usage predictable
+   - FIFO eviction keeps memory usage predictable
    - Efficient data structures (Lists, Maps)
 
 2. **Network Efficiency** ✅
@@ -371,7 +371,7 @@ Future<List<Channel>> call({String? categoryId}) {
 1. `lib/core/utils/logger.dart` - Enhanced unified logger
 2. `lib/modules/core/logging/app_logger.dart` - Backward-compatible adapter
 3. `lib/data/repositories/channel_repository_impl.dart` - Cache size limits
-4. `lib/data/repositories/playlist_repository_impl.dart` - Cache management + LRU
+4. `lib/data/repositories/playlist_repository_impl.dart` - Cache management + FIFO
 5. `lib/domain/usecases/get_channels.dart` - Removed unnecessary async
 6. `lib/domain/usecases/get_categories.dart` - Removed unnecessary async
 7. `lib/domain/usecases/get_playlists.dart` - Removed unnecessary async

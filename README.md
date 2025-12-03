@@ -443,7 +443,7 @@ A full code review was conducted following SMART, DRY, and industry best practic
 
 2. **Memory Management**
    - Added cache size limits (10k items max)
-   - Implemented LRU eviction for playlist caches
+   - Implemented FIFO (First In First Out) eviction for playlist caches
    - Prevents memory issues with massive playlists
    - See: [IMPROVEMENTS_SUMMARY.md](IMPROVEMENTS_SUMMARY.md#2-memory-management-enhancements-)
 

@@ -185,6 +185,13 @@ class ChannelRepositoryImpl implements ChannelRepository {
     if (items.length <= _maxCacheSize) {
       return items;
     }
+    // Warn if truncation occurs
+    AppLogger.warning(
+      'Cache size limit reached: truncating ${items.length} items to $_maxCacheSize',
+      null,
+      null,
+      'ChannelRepository',
+    );
     // Keep only the first _maxCacheSize items
     return items.sublist(0, _maxCacheSize);
   }

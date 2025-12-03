@@ -216,7 +216,16 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
         ? channels.sublist(0, _maxCacheSize)
         : channels;
 
-    // Limit number of cache entries (LRU-style: remove oldest)
+    if (channels.length > _maxCacheSize) {
+      AppLogger.warning(
+        'Playlist $playlistId truncated from ${channels.length} to $_maxCacheSize items',
+        null,
+        null,
+        'PlaylistRepository',
+      );
+    }
+
+    // Limit number of cache entries (FIFO: remove oldest)
     if (_channelCache.length >= _maxCacheEntries &&
         !_channelCache.containsKey(playlistId)) {
       final firstKey = _channelCache.keys.first;

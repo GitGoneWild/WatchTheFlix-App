@@ -98,7 +98,7 @@ class AppLogger {
   ]) {
     final taggedMessage = tag != null ? '[$tag] $message' : message;
     _logger.f(taggedMessage, error: error, stackTrace: stackTrace);
-    _notifyListeners(Level.fatal, taggedMessage, error, stackTrace, tag);
+    _notifyListeners(Level.fatal, message, error, stackTrace, tag);
   }
 
   static void _notifyListeners(

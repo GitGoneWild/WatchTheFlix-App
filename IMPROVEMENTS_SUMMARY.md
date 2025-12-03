@@ -45,7 +45,7 @@ AppLogger.setMinLevel(Level.warning); // Only warnings and errors
 
 **Problem**: Unbounded in-memory caches could cause memory issues with large playlists (100k+ items).
 
-**Solution**: Added size limits and LRU eviction to prevent memory leaks.
+**Solution**: Added size limits and FIFO eviction to prevent memory leaks.
 
 **Changes**:
 
@@ -62,7 +62,7 @@ _channelCache = _limitCacheSize(channels);
 static const int _maxCacheSize = 10000;    // Max items per entry
 static const int _maxCacheEntries = 10;    // Max playlist caches
 
-// LRU eviction implemented
+// FIFO eviction implemented
 void _addToCache(String id, List<ChannelModel> channels) {
   // Removes oldest entry when limit reached
   if (_channelCache.length >= _maxCacheEntries) {
@@ -76,7 +76,7 @@ void _addToCache(String id, List<ChannelModel> channels) {
 **Benefits**:
 - Predictable memory usage
 - No OOM errors with massive playlists
-- Keeps most relevant data (LRU)
+- Keeps most recent data (FIFO)
 - Transparent to users
 
 ---
@@ -121,7 +121,7 @@ Future<List<Channel>> call({String? categoryId}) {
 |------|--------|-------|---------|
 | **Loggers** | 2 implementations | 1 unified system | DRY, consistency |
 | **Cache Limits** | Unbounded | 10k items max | Memory safety |
-| **Playlist Caches** | Unlimited | 10 max (LRU) | Memory efficiency |
+| **Playlist Caches** | Unlimited | 10 max (FIFO) | Memory efficiency |
 | **Use Case Overhead** | Async wrapper | Direct forwarding | Better performance |
 | **Breaking Changes** | N/A | 0 | Safe deployment |
 
@@ -210,7 +210,7 @@ test('Cache respects size limit', () async {
   expect(repo.cachedItemCount, equals(10000));
 });
 
-test('LRU eviction works correctly', () async {
+test('FIFO eviction works correctly', () async {
   final repo = PlaylistRepositoryImpl(...);
   
   // Add 11 playlists (exceeds max of 10)
