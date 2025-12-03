@@ -360,6 +360,107 @@ void main() {
           expect(result.data[1].groupTitle, isNull);
         });
       });
+
+      group('Cache Behavior', () {
+        test('should return cached data immediately when cache is stale', () async {
+          // Arrange
+          final cachedChannels = [
+            {
+              'id': '101',
+              'name': 'Cached Channel',
+              'streamUrl': 'http://test.com/stream',
+              'categoryId': '1',
+              'type': 0,
+            },
+          ];
+
+          // Mock stale cache - timestamp from 25 hours ago
+          final staleTimestamp = DateTime.now()
+              .subtract(const Duration(hours: 25))
+              .millisecondsSinceEpoch;
+
+          when(() => mockStorage.getJsonList(any()))
+              .thenAnswer((_) async => ApiResult.success(cachedChannels));
+          when(() => mockStorage.getInt(any()))
+              .thenAnswer((_) async => ApiResult.success(staleTimestamp));
+
+          // Mock API response that will happen in background
+          when(() => mockApiClient.getLiveStreams(categoryId: any(named: 'categoryId')))
+              .thenAnswer((_) async => ApiResult.success([]));
+          when(() => mockStorage.setJsonList(any(), any()))
+              .thenAnswer((_) async => ApiResult.success(null));
+          when(() => mockStorage.setInt(any(), any()))
+              .thenAnswer((_) async => ApiResult.success(null));
+
+          // Act
+          final result = await repository.getLiveChannels();
+
+          // Assert
+          // Should return cached data immediately
+          expect(result.isSuccess, isTrue);
+          expect(result.data.length, equals(1));
+          expect(result.data[0].name, equals('Cached Channel'));
+          
+          // Background refresh should be triggered (fire and forget)
+          // Wait a bit to allow background refresh to start
+          await Future.delayed(const Duration(milliseconds: 100));
+          
+          // Verify that background refresh was initiated
+          verify(() => mockApiClient.getLiveStreams(categoryId: any(named: 'categoryId'))).called(1);
+        });
+
+        test('should force refresh when forceRefresh is true', () async {
+          // Arrange
+          final cachedChannels = [
+            {
+              'id': '101',
+              'name': 'Cached Channel',
+              'streamUrl': 'http://test.com/stream',
+              'categoryId': '1',
+              'type': 0,
+            },
+          ];
+          final freshApiStreams = [
+            const XtreamLiveStream(
+              num: '1',
+              name: 'Fresh Channel',
+              streamType: 'live',
+              streamId: '201',
+              streamIcon: '',
+              epgChannelId: '',
+              added: '',
+              categoryId: '1',
+            ),
+          ];
+
+          when(() => mockStorage.getJsonList(any()))
+              .thenAnswer((_) async => ApiResult.success(cachedChannels));
+          when(() => mockStorage.getInt(any()))
+              .thenAnswer((_) async => ApiResult.success(
+                    DateTime.now().millisecondsSinceEpoch,
+                  ));
+          when(() => mockApiClient.getLiveStreams(categoryId: any(named: 'categoryId')))
+              .thenAnswer((_) async => ApiResult.success(freshApiStreams));
+          when(() => mockApiClient.getLiveStreamUrl(any()))
+              .thenReturn('http://test.com/stream');
+          when(() => mockStorage.setJsonList(any(), any()))
+              .thenAnswer((_) async => ApiResult.success(null));
+          when(() => mockStorage.setInt(any(), any()))
+              .thenAnswer((_) async => ApiResult.success(null));
+
+          // Act
+          final result = await repository.getLiveChannels(forceRefresh: true);
+
+          // Assert
+          // Should return fresh data from API
+          expect(result.isSuccess, isTrue);
+          expect(result.data.length, equals(1));
+          expect(result.data[0].name, equals('Fresh Channel'));
+          
+          // API should be called
+          verify(() => mockApiClient.getLiveStreams(categoryId: any(named: 'categoryId'))).called(1);
+        });
+      });
     });
   });
 }
