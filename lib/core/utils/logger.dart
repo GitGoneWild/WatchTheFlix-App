@@ -15,7 +15,6 @@ class AppLogger {
       errorMethodCount: 8,
       dateTimeFormat: DateTimeFormat.onlyTimeAndSinceStart,
       printEmojis: true,
-      printTime: true,
     ),
   );
 
