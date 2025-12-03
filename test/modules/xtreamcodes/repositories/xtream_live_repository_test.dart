@@ -462,5 +462,245 @@ void main() {
         });
       });
     });
+
+    group('Background EPG Enrichment', () {
+      test('should enrich channels with EPG data in background', () async {
+        // Arrange
+        final cachedChannels = [
+          {
+            'id': 'channel_1',
+            'name': 'Channel 1',
+            'streamUrl': 'http://test.com/stream1',
+            'categoryId': '1',
+            'type': 'live',
+            'metadata': {'epgChannelId': 'epg_1'},
+          },
+        ];
+        
+        final epgProgram = EpgProgram(
+          channelId: 'epg_1',
+          start: DateTime.now(),
+          stop: DateTime.now().add(const Duration(hours: 1)),
+          title: 'Test Program',
+        );
+
+        when(() => mockStorage.getJsonList(any()))
+            .thenAnswer((_) async => ApiResult.success(cachedChannels));
+        when(() => mockStorage.getInt(any()))
+            .thenAnswer((_) async => ApiResult.success(
+                  DateTime.now().millisecondsSinceEpoch,
+                ));
+        when(() => mockApiClient.getLiveCategories())
+            .thenAnswer((_) async => ApiResult.success([]));
+        when(() => mockEpgRepository.getCurrentAndNextProgram(any()))
+            .thenAnswer((_) async => ApiResult.success(
+                  EpgProgramPair(current: epgProgram, next: null),
+                ));
+
+        // Act
+        final result = await repository.getLiveChannels();
+
+        // Assert - channels should be returned immediately without EPG
+        expect(result.isSuccess, isTrue);
+        expect(result.data.length, equals(1));
+        
+        // Wait for background enrichment to complete
+        await Future.delayed(const Duration(milliseconds: 200));
+        
+        // Verify EPG repository was called
+        verify(() => mockEpgRepository.getCurrentAndNextProgram('epg_1')).called(1);
+      });
+
+      test('should handle EPG enrichment failures gracefully', () async {
+        // Arrange
+        final cachedChannels = [
+          {
+            'id': 'channel_1',
+            'name': 'Channel 1',
+            'streamUrl': 'http://test.com/stream1',
+            'categoryId': '1',
+            'type': 'live',
+            'metadata': {'epgChannelId': 'epg_1'},
+          },
+        ];
+
+        when(() => mockStorage.getJsonList(any()))
+            .thenAnswer((_) async => ApiResult.success(cachedChannels));
+        when(() => mockStorage.getInt(any()))
+            .thenAnswer((_) async => ApiResult.success(
+                  DateTime.now().millisecondsSinceEpoch,
+                ));
+        when(() => mockApiClient.getLiveCategories())
+            .thenAnswer((_) async => ApiResult.success([]));
+        when(() => mockEpgRepository.getCurrentAndNextProgram(any()))
+            .thenAnswer((_) async => ApiResult.failure(
+                  const ApiError(
+                    type: ApiErrorType.network,
+                    message: 'EPG fetch failed',
+                  ),
+                ));
+
+        // Act
+        final result = await repository.getLiveChannels();
+
+        // Assert - should still return channels even if EPG fails
+        expect(result.isSuccess, isTrue);
+        expect(result.data.length, equals(1));
+        
+        // Wait for background enrichment to complete
+        await Future.delayed(const Duration(milliseconds: 200));
+        
+        // Verify EPG repository was called but failure was handled
+        verify(() => mockEpgRepository.getCurrentAndNextProgram('epg_1')).called(1);
+      });
+
+      test('should skip channels without EPG IDs', () async {
+        // Arrange
+        final cachedChannels = [
+          {
+            'id': 'channel_1',
+            'name': 'Channel 1',
+            'streamUrl': 'http://test.com/stream1',
+            'categoryId': '1',
+            'type': 'live',
+            'metadata': {}, // No epgChannelId
+          },
+        ];
+
+        when(() => mockStorage.getJsonList(any()))
+            .thenAnswer((_) async => ApiResult.success(cachedChannels));
+        when(() => mockStorage.getInt(any()))
+            .thenAnswer((_) async => ApiResult.success(
+                  DateTime.now().millisecondsSinceEpoch,
+                ));
+        when(() => mockApiClient.getLiveCategories())
+            .thenAnswer((_) async => ApiResult.success([]));
+
+        // Act
+        final result = await repository.getLiveChannels();
+
+        // Assert
+        expect(result.isSuccess, isTrue);
+        expect(result.data.length, equals(1));
+        
+        // Wait for background enrichment to complete
+        await Future.delayed(const Duration(milliseconds: 200));
+        
+        // Verify EPG repository was never called
+        verifyNever(() => mockEpgRepository.getCurrentAndNextProgram(any()));
+      });
+
+      test('should prevent concurrent EPG enrichment', () async {
+        // Arrange
+        final cachedChannels = [
+          {
+            'id': 'channel_1',
+            'name': 'Channel 1',
+            'streamUrl': 'http://test.com/stream1',
+            'categoryId': '1',
+            'type': 'live',
+            'metadata': {'epgChannelId': 'epg_1'},
+          },
+        ];
+        
+        final epgProgram = EpgProgram(
+          channelId: 'epg_1',
+          start: DateTime.now(),
+          stop: DateTime.now().add(const Duration(hours: 1)),
+          title: 'Test Program',
+        );
+
+        when(() => mockStorage.getJsonList(any()))
+            .thenAnswer((_) async => ApiResult.success(cachedChannels));
+        when(() => mockStorage.getInt(any()))
+            .thenAnswer((_) async => ApiResult.success(
+                  DateTime.now().millisecondsSinceEpoch,
+                ));
+        when(() => mockApiClient.getLiveCategories())
+            .thenAnswer((_) async => ApiResult.success([]));
+        when(() => mockEpgRepository.getCurrentAndNextProgram(any()))
+            .thenAnswer((_) async {
+          // Simulate slow EPG fetch
+          await Future.delayed(const Duration(milliseconds: 100));
+          return ApiResult.success(
+            EpgProgramPair(current: epgProgram, next: null),
+          );
+        });
+
+        // Act - Make two rapid calls
+        final result1 = await repository.getLiveChannels();
+        final result2 = await repository.getLiveChannels();
+
+        // Assert
+        expect(result1.isSuccess, isTrue);
+        expect(result2.isSuccess, isTrue);
+        
+        // Wait for background enrichment to complete
+        await Future.delayed(const Duration(milliseconds: 300));
+        
+        // Verify EPG repository was called only once (second call skipped)
+        verify(() => mockEpgRepository.getCurrentAndNextProgram('epg_1')).called(1);
+      });
+
+      test('should not lose channels when enriching full cache', () async {
+        // Arrange - Multiple channels with different categories
+        final cachedChannels = [
+          {
+            'id': 'channel_1',
+            'name': 'Sports Channel',
+            'streamUrl': 'http://test.com/stream1',
+            'categoryId': '1',
+            'type': 'live',
+            'metadata': {'epgChannelId': 'epg_1'},
+          },
+          {
+            'id': 'channel_2',
+            'name': 'News Channel',
+            'streamUrl': 'http://test.com/stream2',
+            'categoryId': '2',
+            'type': 'live',
+            'metadata': {'epgChannelId': 'epg_2'},
+          },
+        ];
+        
+        final epgProgram = EpgProgram(
+          channelId: 'epg_1',
+          start: DateTime.now(),
+          stop: DateTime.now().add(const Duration(hours: 1)),
+          title: 'Test Program',
+        );
+
+        when(() => mockStorage.getJsonList(any()))
+            .thenAnswer((_) async => ApiResult.success(cachedChannels));
+        when(() => mockStorage.getInt(any()))
+            .thenAnswer((_) async => ApiResult.success(
+                  DateTime.now().millisecondsSinceEpoch,
+                ));
+        when(() => mockApiClient.getLiveCategories())
+            .thenAnswer((_) async => ApiResult.success([]));
+        when(() => mockEpgRepository.getCurrentAndNextProgram(any()))
+            .thenAnswer((_) async => ApiResult.success(
+                  EpgProgramPair(current: epgProgram, next: null),
+                ));
+
+        // Act - Get channels with category filter
+        final result = await repository.getLiveChannels(categoryId: '1');
+
+        // Assert - Should return only filtered channel
+        expect(result.isSuccess, isTrue);
+        expect(result.data.length, equals(1));
+        expect(result.data[0].name, equals('Sports Channel'));
+        
+        // Wait for background enrichment to complete
+        await Future.delayed(const Duration(milliseconds: 200));
+        
+        // Get all channels again to verify cache integrity
+        final allChannelsResult = await repository.getLiveChannels();
+        
+        // Both channels should still be in cache
+        expect(allChannelsResult.isSuccess, isTrue);
+        expect(allChannelsResult.data.length, equals(2));
+      });
+    });
   });
 }
