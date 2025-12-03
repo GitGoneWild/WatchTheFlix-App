@@ -76,9 +76,10 @@ class XtreamEpgRepository implements IXtreamEpgRepository {
         await _loadFromStorage();
       }
 
-      // Refresh if cache is stale
+      // Refresh in background if cache is stale (non-blocking)
       if (await isCacheStale()) {
-        await refreshEpg();
+        // Fire and forget - refresh happens in background
+        _refreshEpgInBackground();
       }
 
       if (_cachedPrograms == null) {
@@ -323,6 +324,31 @@ class XtreamEpgRepository implements IXtreamEpgRepository {
         stackTrace: stackTrace,
       );
     }
+  }
+
+  /// Refresh EPG in background without blocking
+  void _refreshEpgInBackground() {
+    // Fire and forget - refresh happens asynchronously
+    refreshEpg().then((result) {
+      if (result.isSuccess) {
+        moduleLogger.info(
+          'Background EPG refresh completed successfully',
+          tag: 'XtreamEpg',
+        );
+      } else {
+        moduleLogger.warning(
+          'Background EPG refresh failed: ${result.error.message}',
+          tag: 'XtreamEpg',
+        );
+      }
+    }).catchError((error, stackTrace) {
+      moduleLogger.error(
+        'Background EPG refresh error',
+        tag: 'XtreamEpg',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    });
   }
 
   /// Convert program to JSON

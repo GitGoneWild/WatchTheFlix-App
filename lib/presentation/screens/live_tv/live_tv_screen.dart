@@ -985,6 +985,14 @@ class _LoadingView extends StatelessWidget {
             CircularProgressIndicator(),
             SizedBox(height: 16),
             Text('Loading channels...'),
+            SizedBox(height: 8),
+            Text(
+              'EPG data will load in the background',
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.textSecondary,
+              ),
+            ),
           ],
         ),
       ),
