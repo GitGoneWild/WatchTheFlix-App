@@ -37,26 +37,36 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   void _navigateToNextChannel() {
-    final channelBloc = context.read<ChannelBloc>();
-    if (channelBloc.state is ChannelLoadedState) {
-      final state = channelBloc.state as ChannelLoadedState;
-      final channels = state.filteredChannels;
-      final currentIndex = channels.indexWhere((c) => c.id == _currentChannel.id);
-      if (currentIndex != -1 && currentIndex < channels.length - 1) {
-        _switchChannel(channels[currentIndex + 1]);
+    try {
+      final channelBloc = context.read<ChannelBloc>();
+      if (channelBloc.state is ChannelLoadedState) {
+        final state = channelBloc.state as ChannelLoadedState;
+        final channels = state.filteredChannels;
+        final currentIndex = channels.indexWhere((c) => c.id == _currentChannel.id);
+        if (currentIndex != -1 && currentIndex < channels.length - 1) {
+          _switchChannel(channels[currentIndex + 1]);
+        }
       }
+    } catch (e) {
+      // ChannelBloc not available in context
+      // This can happen when navigating directly to player
     }
   }
 
   void _navigateToPreviousChannel() {
-    final channelBloc = context.read<ChannelBloc>();
-    if (channelBloc.state is ChannelLoadedState) {
-      final state = channelBloc.state as ChannelLoadedState;
-      final channels = state.filteredChannels;
-      final currentIndex = channels.indexWhere((c) => c.id == _currentChannel.id);
-      if (currentIndex > 0) {
-        _switchChannel(channels[currentIndex - 1]);
+    try {
+      final channelBloc = context.read<ChannelBloc>();
+      if (channelBloc.state is ChannelLoadedState) {
+        final state = channelBloc.state as ChannelLoadedState;
+        final channels = state.filteredChannels;
+        final currentIndex = channels.indexWhere((c) => c.id == _currentChannel.id);
+        if (currentIndex > 0) {
+          _switchChannel(channels[currentIndex - 1]);
+        }
       }
+    } catch (e) {
+      // ChannelBloc not available in context
+      // This can happen when navigating directly to player
     }
   }
 
