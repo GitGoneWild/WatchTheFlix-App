@@ -25,6 +25,7 @@ import '../../modules/xtreamcodes/repositories/xtream_vod_repository.dart';
 import '../../modules/xtreamcodes/xtream_service_manager.dart';
 import '../../presentation/blocs/channel/channel_bloc.dart';
 import '../../presentation/blocs/favorites/favorites_bloc.dart';
+import '../../presentation/blocs/movies/movies_bloc.dart';
 import '../../presentation/blocs/navigation/navigation_bloc.dart';
 import '../../presentation/blocs/player/player_bloc.dart';
 import '../../presentation/blocs/playlist/playlist_bloc.dart';
@@ -143,6 +144,13 @@ Future<void> initDependencies() async {
   getIt.registerFactory(
     () => SettingsBloc(
       localStorage: getIt<LocalStorage>(),
+    ),
+  );
+
+  // Movies BLoC
+  getIt.registerFactory(
+    () => MoviesBloc(
+      repository: getIt<ChannelRepository>(),
     ),
   );
 

@@ -5,7 +5,9 @@ import 'package:intl/intl.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../domain/entities/channel.dart';
+import '../../../domain/entities/movie.dart';
 import '../../blocs/channel/channel_bloc.dart';
+import '../../blocs/movies/movies_bloc.dart';
 import '../../blocs/navigation/navigation_bloc.dart';
 import '../../blocs/favorites/favorites_bloc.dart';
 import '../../blocs/playlist/playlist_bloc.dart';
@@ -1155,14 +1157,28 @@ class _EmptyChannelState extends StatelessWidget {
   }
 }
 
-/// Movies tab with categories and favorites
-class MoviesTab extends StatelessWidget {
+/// Movies tab with categories and grid display
+class MoviesTab extends StatefulWidget {
   const MoviesTab({super.key});
 
   @override
+  State<MoviesTab> createState() => _MoviesTabState();
+}
+
+class _MoviesTabState extends State<MoviesTab> {
+  @override
+  void initState() {
+    super.initState();
+    // Load movies when the tab is first displayed
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<MoviesBloc>().add(const LoadMoviesEvent());
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return BlocBuilder<FavoritesBloc, FavoritesState>(
-      builder: (context, favoritesState) {
+    return BlocBuilder<MoviesBloc, MoviesState>(
+      builder: (context, moviesState) {
         return CustomScrollView(
           slivers: [
             SliverAppBar(
@@ -1170,9 +1186,11 @@ class MoviesTab extends StatelessWidget {
               title: const Text('Movies'),
               actions: [
                 IconButton(
-                  icon: const Icon(Icons.filter_list),
-                  onPressed: () {},
-                  tooltip: 'Filter',
+                  icon: const Icon(Icons.refresh),
+                  onPressed: () {
+                    context.read<MoviesBloc>().add(const LoadMoviesEvent());
+                  },
+                  tooltip: 'Refresh',
                 ),
                 IconButton(
                   icon: const Icon(Icons.search),
@@ -1182,45 +1200,328 @@ class MoviesTab extends StatelessWidget {
                 ),
               ],
             ),
-            SliverFillRemaining(
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: const BoxDecoration(
-                        color: AppColors.surface,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.movie_outlined,
+
+            // Category filter chips
+            if (moviesState is MoviesLoadedState &&
+                moviesState.categories.isNotEmpty)
+              SliverToBoxAdapter(
+                child: SizedBox(
+                  height: 50,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: moviesState.categories.length + 1,
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    itemBuilder: (context, index) {
+                      if (index == 0) {
+                        return CategoryChip(
+                          label: 'All',
+                          isSelected: moviesState.selectedCategory == null,
+                          onTap: () => context
+                              .read<MoviesBloc>()
+                              .add(const SelectMovieCategoryEvent(null)),
+                        );
+                      }
+                      final category = moviesState.categories[index - 1];
+                      return CategoryChip(
+                        label: category.name,
+                        isSelected:
+                            moviesState.selectedCategory?.id == category.id,
+                        onTap: () => context
+                            .read<MoviesBloc>()
+                            .add(SelectMovieCategoryEvent(category)),
+                      );
+                    },
+                  ),
+                ),
+              ),
+
+            // Movies grid or loading/empty/error states
+            if (moviesState is MoviesLoadingState)
+              const SliverFillRemaining(
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (moviesState is MoviesErrorState)
+              SliverFillRemaining(
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.error_outline,
                         size: 48,
-                        color: AppColors.textSecondary,
+                        color: AppColors.error,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Failed to load movies',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        moviesState.message,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          context.read<MoviesBloc>().add(const LoadMoviesEvent());
+                        },
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else if (moviesState is MoviesLoadedState)
+              if (moviesState.filteredMovies.isEmpty)
+                SliverFillRemaining(
+                  child: _EmptyMoviesState(),
+                )
+              else
+                SliverPadding(
+                  padding: const EdgeInsets.all(16),
+                  sliver: SliverGrid(
+                    gridDelegate:
+                        const SliverGridDelegateWithMaxCrossAxisExtent(
+                      maxCrossAxisExtent: 180,
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      childAspectRatio: 0.65,
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final movie = moviesState.filteredMovies[index];
+                        return _MovieGridCard(
+                          movie: movie,
+                          onTap: () {
+                            // Navigate to play the movie using toChannel() adapter
+                            Navigator.pushNamed(
+                              context,
+                              AppRoutes.player,
+                              arguments: movie.toChannel(),
+                            );
+                          },
+                        );
+                      },
+                      childCount: moviesState.filteredMovies.length,
+                    ),
+                  ),
+                )
+            else
+              SliverFillRemaining(
+                child: _EmptyMoviesState(),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// Movie grid card widget
+class _MovieGridCard extends StatelessWidget {
+  const _MovieGridCard({
+    required this.movie,
+    this.onTap,
+  });
+  final Movie movie;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.backgroundCard,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                flex: 4,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    ClipRRect(
+                      borderRadius:
+                          const BorderRadius.vertical(top: Radius.circular(7)),
+                      child: ColoredBox(
+                        color: AppColors.surface,
+                        child: movie.posterUrl != null
+                            ? Image.network(
+                                movie.posterUrl!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => const Center(
+                                  child: Icon(Icons.movie,
+                                      size: 48, color: AppColors.textSecondary),
+                                ),
+                              )
+                            : const Center(
+                                child: Icon(Icons.movie,
+                                    size: 48, color: AppColors.textSecondary),
+                              ),
                       ),
                     ),
-                    const SizedBox(height: 20),
-                    Text(
-                      'Movies',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
+                    // Rating badge if available
+                    if (movie.rating != null && movie.rating! > 0)
+                      Positioned(
+                        top: 6,
+                        right: 6,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
                           ),
+                          decoration: BoxDecoration(
+                            color: AppColors.overlay,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.star,
+                                color: AppColors.warning,
+                                size: 12,
+                              ),
+                              const SizedBox(width: 2),
+                              Text(
+                                movie.rating!.toStringAsFixed(1),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    // Play overlay
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(7),
+                          ),
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.transparent,
+                              AppColors.background.withOpacity(0.7),
+                            ],
+                            stops: const [0.6, 1.0],
+                          ),
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Browse your movie collection\nAdd a playlist with VOD content to get started',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
+                    // Play button
+                    Center(
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.9),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.play_arrow,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
                     ),
                   ],
                 ),
               ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        movie.name,
+                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (movie.releaseDate != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          movie.releaseDate!.length >= 4
+                              ? movie.releaseDate!.substring(0, 4)
+                              : movie.releaseDate!,
+                          style:
+                              Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 10,
+                                  ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Empty movies state
+class _EmptyMoviesState extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: const BoxDecoration(
+              color: AppColors.surface,
+              shape: BoxShape.circle,
             ),
-          ],
-        );
-      },
+            child: const Icon(
+              Icons.movie_outlined,
+              size: 48,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'No Movies Available',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Movies will appear here once they are loaded\nfrom your IPTV provider',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+          ),
+        ],
+      ),
     );
   }
 }

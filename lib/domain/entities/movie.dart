@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import 'channel.dart';
+
 /// Movie entity
 class Movie extends Equatable {
   const Movie({
@@ -32,6 +34,30 @@ class Movie extends Equatable {
   final String? director;
   final List<String>? cast;
   final Map<String, dynamic>? metadata;
+
+  /// Convert movie to a Channel for playback compatibility
+  /// This allows movies to be played using the same player infrastructure as live channels
+  Channel toChannel() {
+    return Channel(
+      id: id,
+      name: name,
+      streamUrl: streamUrl,
+      logoUrl: posterUrl,
+      categoryId: categoryId,
+      type: ContentType.movie,
+      metadata: {
+        ...?metadata,
+        'description': description,
+        'releaseDate': releaseDate,
+        'rating': rating,
+        'duration': duration,
+        'genre': genre,
+        'director': director,
+        'cast': cast,
+        'backdropUrl': backdropUrl,
+      },
+    );
+  }
 
   Movie copyWith({
     String? id,

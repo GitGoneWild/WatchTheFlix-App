@@ -7,6 +7,7 @@ import 'core/theme/app_theme.dart';
 import 'modules/core/storage/storage_service.dart';
 import 'presentation/blocs/channel/channel_bloc.dart';
 import 'presentation/blocs/favorites/favorites_bloc.dart';
+import 'presentation/blocs/movies/movies_bloc.dart';
 import 'presentation/blocs/navigation/navigation_bloc.dart';
 import 'presentation/blocs/playlist/playlist_bloc.dart';
 import 'presentation/blocs/settings/settings_bloc.dart' as settings;
@@ -73,6 +74,9 @@ class _WatchTheFlixAppState extends State<WatchTheFlixApp> {
         ),
         BlocProvider<ChannelBloc>(
           create: (_) => getIt<ChannelBloc>()..add(const LoadChannelsEvent()),
+        ),
+        BlocProvider<MoviesBloc>(
+          create: (_) => getIt<MoviesBloc>(),
         ),
         BlocProvider<NavigationBloc>(
           create: (_) => getIt<NavigationBloc>(),
