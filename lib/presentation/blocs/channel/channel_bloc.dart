@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/constants/app_constants.dart';
 import '../../../core/utils/logger.dart';
 import '../../../domain/entities/channel.dart';
 import '../../../domain/entities/category.dart';
