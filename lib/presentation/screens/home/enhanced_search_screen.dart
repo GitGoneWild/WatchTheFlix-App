@@ -22,6 +22,9 @@ class EnhancedSearchScreen extends StatefulWidget {
 
 class _EnhancedSearchScreenState extends State<EnhancedSearchScreen>
     with SingleTickerProviderStateMixin {
+  static const int _maxRecentSearches = 10;
+  static const int _maxFavoritesDisplay = 8;
+  
   final _searchController = TextEditingController();
   late final FocusNode _focusNode;
   late final TabController _tabController;
@@ -35,6 +38,13 @@ class _EnhancedSearchScreenState extends State<EnhancedSearchScreen>
     _focusNode = FocusNode();
     _tabController = TabController(length: 3, vsync: this);
     _focusNode.requestFocus();
+    
+    // Listen to focus changes to rebuild border color
+    _focusNode.addListener(() {
+      if (mounted) {
+        setState(() {});
+      }
+    });
   }
 
   @override
@@ -56,7 +66,7 @@ class _EnhancedSearchScreenState extends State<EnhancedSearchScreen>
       if (query.length >= AppConstants.minSearchLength) {
         // Trigger search in channel bloc
         context.read<ChannelBloc>().add(SearchChannelsEvent(query));
-        // TODO: Add movie and series search when those blocs support it
+        // TODO: Movie and series search not yet implemented. Track with follow-up issue.
       } else if (query.isEmpty) {
         context.read<ChannelBloc>().add(const ClearSearchEvent());
       }
@@ -67,7 +77,7 @@ class _EnhancedSearchScreenState extends State<EnhancedSearchScreen>
     if (query.isNotEmpty && !_recentSearches.contains(query)) {
       setState(() {
         _recentSearches.insert(0, query);
-        if (_recentSearches.length > 10) {
+        if (_recentSearches.length > _maxRecentSearches) {
           _recentSearches.removeLast();
         }
       });
@@ -128,45 +138,50 @@ class _EnhancedSearchScreenState extends State<EnhancedSearchScreen>
             onPressed: () => Navigator.pop(context),
           ),
           Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: _focusNode.hasFocus
-                      ? AppColors.primary
-                      : AppColors.border,
-                  width: _focusNode.hasFocus ? 2 : 1,
-                ),
-              ),
-              child: TextField(
-                controller: _searchController,
-                focusNode: _focusNode,
-                autofocus: true,
-                decoration: InputDecoration(
-                  hintText: 'Search channels, movies, series...',
-                  border: InputBorder.none,
-                  hintStyle: const TextStyle(color: AppColors.textTertiary),
-                  prefixIcon: const Icon(
-                    Icons.search,
-                    color: AppColors.textSecondary,
+            child: ValueListenableBuilder<TextEditingValue>(
+              valueListenable: _searchController,
+              builder: (context, value, child) {
+                return Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _focusNode.hasFocus
+                          ? AppColors.primary
+                          : AppColors.border,
+                      width: _focusNode.hasFocus ? 2 : 1,
+                    ),
                   ),
-                  suffixIcon: _searchController.text.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear, size: 20),
-                          onPressed: _clearSearch,
-                          color: AppColors.textSecondary,
-                        )
-                      : null,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
+                  child: TextField(
+                    controller: _searchController,
+                    focusNode: _focusNode,
+                    autofocus: true,
+                    decoration: InputDecoration(
+                      hintText: 'Search channels, movies, series...',
+                      border: InputBorder.none,
+                      hintStyle: const TextStyle(color: AppColors.textTertiary),
+                      prefixIcon: const Icon(
+                        Icons.search,
+                        color: AppColors.textSecondary,
+                      ),
+                      suffixIcon: value.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear, size: 20),
+                              onPressed: _clearSearch,
+                              color: AppColors.textSecondary,
+                            )
+                          : null,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                    ),
+                    style: const TextStyle(color: AppColors.textPrimary),
+                    onChanged: _onSearchChanged,
+                    onSubmitted: _onSearchSubmitted,
                   ),
-                ),
-                style: const TextStyle(color: AppColors.textPrimary),
-                onChanged: _onSearchChanged,
-                onSubmitted: _onSearchSubmitted,
-              ),
+                );
+              },
             ),
           ),
         ],
@@ -414,7 +429,7 @@ class _EnhancedSearchScreenState extends State<EnhancedSearchScreen>
           height: 100,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            itemCount: state.favorites.take(8).length,
+            itemCount: state.favorites.take(_maxFavoritesDisplay).length,
             separatorBuilder: (_, __) => const SizedBox(width: 12),
             itemBuilder: (context, index) {
               final channel = state.favorites[index];

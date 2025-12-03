@@ -22,9 +22,11 @@ class MoviesOptimizedScreen extends StatefulWidget {
 }
 
 class _MoviesOptimizedScreenState extends State<MoviesOptimizedScreen> {
+  static const int _itemsPerPage = 50;
+  static const double _scrollTriggerDistance = 200.0;
+  
   final ScrollController _scrollController = ScrollController();
   final ScrollController _categoryScrollController = ScrollController();
-  static const int _itemsPerPage = 50;
   int _currentPage = 1;
   bool _isLoadingMore = false;
 
@@ -52,23 +54,26 @@ class _MoviesOptimizedScreenState extends State<MoviesOptimizedScreen> {
     final currentScroll = _scrollController.position.pixels;
     final delta = maxScroll - currentScroll;
 
-    // Load more when user is 200 pixels from the bottom
-    if (delta < 200) {
+    // Load more when user is within trigger distance from the bottom
+    if (delta < _scrollTriggerDistance) {
       _loadMoreMovies();
     }
   }
 
+  /// Loads the next page of movies using lazy pagination
+  /// This is currently a placeholder implementation that increments the page counter
+  /// TODO: Integrate with MoviesBloc to dispatch LoadMoreMoviesEvent for actual pagination
   void _loadMoreMovies() {
     setState(() {
       _isLoadingMore = true;
-      _currentPage++;
     });
 
     // Simulate loading delay for pagination
-    // In real implementation, this would trigger an event to load next page
+    // In production, this would dispatch an event to MoviesBloc
     Future.delayed(const Duration(milliseconds: 300), () {
       if (mounted) {
         setState(() {
+          _currentPage++;
           _isLoadingMore = false;
         });
       }
@@ -185,6 +190,7 @@ class _MoviesOptimizedScreenState extends State<MoviesOptimizedScreen> {
                   label: category.name,
                   icon: Icons.folder_outlined,
                   isSelected: selectedCategory?.id == category.id,
+                  // Note: Category entity uses channelCount for all content types
                   movieCount: category.channelCount,
                   onTap: () {
                     context.read<MoviesBloc>().add(
@@ -301,22 +307,34 @@ class _MoviesOptimizedScreenState extends State<MoviesOptimizedScreen> {
               _SortOption(
                 icon: Icons.abc,
                 title: 'Name (A-Z)',
-                onTap: () => Navigator.pop(context),
+                onTap: () {
+                  // TODO: Dispatch sort event to MoviesBloc when sorting is implemented
+                  Navigator.pop(context);
+                },
               ),
               _SortOption(
                 icon: Icons.star,
                 title: 'Rating (High to Low)',
-                onTap: () => Navigator.pop(context),
+                onTap: () {
+                  // TODO: Dispatch sort event to MoviesBloc when sorting is implemented
+                  Navigator.pop(context);
+                },
               ),
               _SortOption(
                 icon: Icons.calendar_today,
                 title: 'Release Date (Newest)',
-                onTap: () => Navigator.pop(context),
+                onTap: () {
+                  // TODO: Dispatch sort event to MoviesBloc when sorting is implemented
+                  Navigator.pop(context);
+                },
               ),
               _SortOption(
                 icon: Icons.trending_up,
                 title: 'Most Popular',
-                onTap: () => Navigator.pop(context),
+                onTap: () {
+                  // TODO: Dispatch sort event to MoviesBloc when sorting is implemented
+                  Navigator.pop(context);
+                },
               ),
               const SizedBox(height: 16),
             ],
@@ -534,9 +552,11 @@ class _MovieCard extends StatelessWidget {
                               fit: BoxFit.cover,
                               placeholder: (_, __) => _buildPlaceholder(),
                               errorWidget: (_, __, ___) => _buildPlaceholder(),
-                              // Use memory cache for performance
+                              // Use memory and disk cache for performance
                               memCacheWidth: 180,
                               memCacheHeight: 270,
+                              maxWidthDiskCache: 180,
+                              maxHeightDiskCache: 270,
                             )
                           : _buildPlaceholder(),
                     ),

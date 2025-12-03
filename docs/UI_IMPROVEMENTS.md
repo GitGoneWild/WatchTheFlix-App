@@ -74,7 +74,7 @@ Navigator.push(
 - **Search Bar**: 
   - Auto-focus on open
   - Clear button when text entered
-  - Real-time search with debouncing (300ms)
+  - Real-time search with debouncing (500ms)
   - Minimum 2 characters for search
 
 #### Tabbed Content Filtering
