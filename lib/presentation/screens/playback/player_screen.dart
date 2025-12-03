@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/config/dependency_injection.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../domain/entities/channel.dart';
 import '../../blocs/channel/channel_bloc.dart';
@@ -29,7 +30,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   void initState() {
     super.initState();
     _currentChannel = widget.channel;
-    _playerBloc = PlayerBloc()..add(InitializePlayerEvent(_currentChannel));
+    _playerBloc = getIt<PlayerBloc>()..add(InitializePlayerEvent(_currentChannel));
   }
 
   @override
@@ -56,30 +57,47 @@ class _PlayerScreenState extends State<PlayerScreen> {
       return false;
     }
     
-    // Block IPv6 private ranges
-    if (host.startsWith('fc00:') || host.startsWith('fd00:')) {
+    // Block IPv6 private and link-local ranges
+    // fc00::/7 (unique local addresses) includes fc00::/8 and fd00::/8
+    // fe80::/10 (link-local addresses)
+    if (host.startsWith('fc') || 
+        host.startsWith('fd') || 
+        host.startsWith('fe8') ||
+        host.startsWith('fe9') ||
+        host.startsWith('fea') ||
+        host.startsWith('feb')) {
       return false;
     }
     
     // Block private IPv4 ranges
-    final ipv4Pattern = RegExp(r'^(\d+)\.(\d+)\.(\d+)\.(\d+)$');
+    final ipv4Pattern = RegExp(r'^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$');
     final match = ipv4Pattern.firstMatch(host);
     if (match != null) {
-      final octets = [
-        int.parse(match.group(1)!),
-        int.parse(match.group(2)!),
-        int.parse(match.group(3)!),
-        int.parse(match.group(4)!),
-      ];
-      
-      // 10.0.0.0/8
-      if (octets[0] == 10) return false;
-      
-      // 172.16.0.0/12
-      if (octets[0] == 172 && octets[1] >= 16 && octets[1] <= 31) return false;
-      
-      // 192.168.0.0/16
-      if (octets[0] == 192 && octets[1] == 168) return false;
+      try {
+        final octets = [
+          int.parse(match.group(1)!),
+          int.parse(match.group(2)!),
+          int.parse(match.group(3)!),
+          int.parse(match.group(4)!),
+        ];
+        
+        // Validate octet range (0-255)
+        if (octets.any((octet) => octet < 0 || octet > 255)) {
+          return false;
+        }
+        
+        // 10.0.0.0/8
+        if (octets[0] == 10) return false;
+        
+        // 172.16.0.0/12
+        if (octets[0] == 172 && octets[1] >= 16 && octets[1] <= 31) return false;
+        
+        // 192.168.0.0/16
+        if (octets[0] == 192 && octets[1] == 168) return false;
+      } catch (e) {
+        // Invalid IP format
+        return false;
+      }
     }
     
     return true;
