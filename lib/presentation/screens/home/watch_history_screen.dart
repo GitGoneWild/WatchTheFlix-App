@@ -194,10 +194,10 @@ class _HistoryItem extends StatelessWidget {
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (channel.categoryName != null) ...[
+          if (channel.groupTitle != null) ...[
             const SizedBox(height: 4),
             Text(
-              channel.categoryName!,
+              channel.groupTitle!,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColors.textSecondary,
                   ),
@@ -205,10 +205,10 @@ class _HistoryItem extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
           ],
-          if (channel.epgInfo?.currentProgramTitle != null) ...[
+          if (channel.epgInfo?.currentProgram != null) ...[
             const SizedBox(height: 4),
             Text(
-              channel.epgInfo!.currentProgramTitle!,
+              channel.epgInfo!.currentProgram!,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColors.accent,
                   ),

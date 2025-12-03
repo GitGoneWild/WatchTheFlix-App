@@ -76,13 +76,31 @@ class ChannelLoadedState extends ChannelState {
   final String? searchQuery;
 
   List<Channel> get filteredChannels {
-    if (searchQuery == null || searchQuery!.isEmpty) {
-      return channels;
+    var result = channels;
+    
+    // Filter by category first (including special categories)
+    if (selectedCategory != null) {
+      if (selectedCategory!.id == '_favorites' || selectedCategory!.id == '_recent') {
+        // Special categories are handled in the UI layer
+        // Don't filter here as we don't have access to favorites/recent data
+        result = channels;
+      } else {
+        // Regular category filtering
+        result = result
+            .where((c) => c.categoryId == selectedCategory!.id)
+            .toList();
+      }
     }
-    final lowerQuery = searchQuery!.toLowerCase();
-    return channels
-        .where((c) => c.name.toLowerCase().contains(lowerQuery))
-        .toList();
+    
+    // Then apply search filter
+    if (searchQuery != null && searchQuery!.isNotEmpty) {
+      final lowerQuery = searchQuery!.toLowerCase();
+      result = result
+          .where((c) => c.name.toLowerCase().contains(lowerQuery))
+          .toList();
+    }
+    
+    return result;
   }
 
   ChannelLoadedState copyWith({
