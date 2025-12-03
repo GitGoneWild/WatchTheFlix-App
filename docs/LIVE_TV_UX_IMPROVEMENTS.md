@@ -263,6 +263,6 @@ Enrich with EPG (background)
 
 ## References
 
-- **Issue**: #XXX - Improve Live TV UX
-- **PR**: #XXX - Live TV UX improvements
+- **Issue**: #82 - Improve Live TV UX: Category Display, Channel List UI, Non-blocking EPG, Persistent User Data
+- **PR**: #83 - Live TV UX improvements
 - **Related**: `docs/xtream.md`, `docs/architecture.md`

@@ -108,9 +108,10 @@ class XtreamLiveRepository implements IXtreamLiveRepository {
       channels = await _enrichChannelsWithCategoryNames(channels);
 
       // Enrich channels with EPG data in background (non-blocking)
-      if (_epgRepository != null) {
+      // Pass the full cache, not filtered channels, to avoid losing data
+      if (_epgRepository != null && _cachedChannels != null) {
         // Fire and forget - EPG enrichment happens in background
-        _enrichChannelsWithEpgInBackground(channels);
+        _enrichChannelsWithEpgInBackground(_cachedChannels!);
         // Return channels immediately without EPG data
       }
 
@@ -593,7 +594,7 @@ class XtreamLiveRepository implements IXtreamLiveRepository {
 
   /// Enrich channels with EPG data in background (non-blocking)
   void _enrichChannelsWithEpgInBackground(List<DomainChannel> channels) {
-    // Prevent concurrent enrichment
+    // Atomically check and set the flag to prevent concurrent enrichment
     if (_isEnrichingEpg) {
       moduleLogger.info(
         'EPG enrichment already in progress, skipping',
@@ -601,7 +602,8 @@ class XtreamLiveRepository implements IXtreamLiveRepository {
       );
       return;
     }
-
+    
+    // Set flag immediately to prevent race condition
     _isEnrichingEpg = true;
 
     // Fire and forget - don't block the main flow
